@@ -1,0 +1,6 @@
+{
+  "name": "BettaTraka",
+  "description": "Multi-tenant CRM & automated operating system for Payment-on-Delivery (POD) e-commerce businesses.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

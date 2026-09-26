@@ -1,0 +1,326 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    color-scheme: dark;
+  }
+
+  html.light {
+    color-scheme: light;
+  }
+  
+  .font-mono, .tabular-nums {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Smooth theme transition */
+body, aside, header, main, div, button, input, select, textarea {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease-in-out;
+}
+
+/* Custom minimal scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.4);
+}
+
+/* Mobile-friendly hide scrollbar helper */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* =========================================================
+   TRUE PITCH BLACK / NIGHT SETTING STYLES
+   Eliminates all blue/slate hue in night mode, delivering
+   pure OLED obsidian black backgrounds and dark cards.
+   ========================================================= */
+
+html:not(.light) body,
+html.dark body {
+  background-color: #000000 !important;
+  color: #f8fafc !important;
+}
+
+html:not(.light) .bg-slate-950,
+html.dark .bg-slate-950 {
+  background-color: #000000 !important;
+}
+
+html:not(.light) .bg-slate-900,
+html:not(.light) .bg-slate-900\/95,
+html:not(.light) .bg-slate-900\/90,
+html:not(.light) .bg-slate-900\/80,
+html:not(.light) .bg-slate-900\/70,
+html:not(.light) .bg-slate-900\/60,
+html:not(.light) .bg-slate-900\/40,
+html.dark .bg-slate-900,
+html.dark .bg-slate-900\/95,
+html.dark .bg-slate-900\/90,
+html.dark .bg-slate-900\/80,
+html.dark .bg-slate-900\/70,
+html.dark .bg-slate-900\/60,
+html.dark .bg-slate-900\/40 {
+  background-color: #0c0c0c !important;
+}
+
+html:not(.light) .bg-slate-950\/80,
+html:not(.light) .bg-slate-950\/60,
+html:not(.light) .bg-slate-950\/40,
+html:not(.light) .bg-slate-800,
+html:not(.light) .bg-slate-800\/80,
+html:not(.light) .bg-slate-800\/60,
+html:not(.light) .bg-slate-800\/50,
+html:not(.light) .bg-slate-800\/40,
+html:not(.light) .bg-slate-800\/30,
+html:not(.light) .bg-slate-800\/20,
+html.dark .bg-slate-800,
+html.dark .bg-slate-800\/80,
+html.dark .bg-slate-800\/60,
+html.dark .bg-slate-800\/50,
+html.dark .bg-slate-800\/40 {
+  background-color: #161616 !important;
+}
+
+html:not(.light) .hover\:bg-slate-800:hover,
+html:not(.light) .hover\:bg-slate-800\/60:hover,
+html:not(.light) .hover\:bg-slate-800\/40:hover,
+html.dark .hover\:bg-slate-800:hover {
+  background-color: #222222 !important;
+}
+
+html:not(.light) .border-slate-800,
+html:not(.light) .border-slate-800\/80,
+html:not(.light) .border-slate-800\/60,
+html:not(.light) .border-slate-800\/50,
+html:not(.light) .border-slate-800\/40,
+html:not(.light) .border-slate-700,
+html:not(.light) .border-slate-700\/80,
+html:not(.light) .border-slate-700\/60,
+html:not(.light) .border-slate-700\/50,
+html:not(.light) .border-slate-600,
+html.dark .border-slate-800,
+html.dark .border-slate-700 {
+  border-color: #1e1e1e !important;
+}
+
+html:not(.light) .divide-slate-800\/60 > :not([hidden]) ~ :not([hidden]),
+html:not(.light) .divide-slate-800 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-slate-800 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1e1e1e !important;
+}
+
+/* Neutralize any legacy blue containers in night mode */
+html:not(.light) .bg-blue-950,
+html:not(.light) .bg-blue-950\/80,
+html:not(.light) .bg-blue-950\/60,
+html:not(.light) .bg-blue-950\/40,
+html:not(.light) .bg-blue-950\/20,
+html.dark .bg-blue-950 {
+  background-color: rgba(5, 46, 22, 0.45) !important;
+  border-color: rgba(6, 95, 70, 0.6) !important;
+}
+
+html:not(.light) .text-blue-400,
+html.dark .text-blue-400 {
+  color: #34d399 !important;
+}
+
+/* Night mode inputs */
+html:not(.light) input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+html:not(.light) select,
+html:not(.light) textarea {
+  background-color: #0c0c0c !important;
+  border-color: #242424 !important;
+  color: #f8fafc !important;
+}
+
+html:not(.light) input:focus,
+html:not(.light) select:focus,
+html:not(.light) textarea:focus {
+  border-color: #059669 !important;
+}
+
+/* =========================================================
+   LIGHT / DAY MODE STYLES
+   Provides an ultra-clean, elegant, high-contrast Day setting
+   ========================================================= */
+
+html.light body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+html.light .bg-slate-950 {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+html.light .bg-slate-900,
+html.light .bg-slate-900\/95,
+html.light .bg-slate-900\/90,
+html.light .bg-slate-900\/80,
+html.light .bg-slate-900\/70,
+html.light .bg-slate-900\/60,
+html.light .bg-slate-900\/40 {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+}
+
+html.light .bg-slate-950\/80,
+html.light .bg-slate-950\/60,
+html.light .bg-slate-950\/40,
+html.light .bg-slate-800,
+html.light .bg-slate-800\/80,
+html.light .bg-slate-800\/60,
+html.light .bg-slate-800\/50,
+html.light .bg-slate-800\/40,
+html.light .bg-slate-800\/30,
+html.light .bg-slate-800\/20 {
+  background-color: #f1f5f9 !important;
+}
+
+html.light .hover\:bg-slate-800:hover,
+html.light .hover\:bg-slate-800\/60:hover,
+html.light .hover\:bg-slate-800\/40:hover,
+html.light .hover\:bg-slate-800\/30:hover {
+  background-color: #e2e8f0 !important;
+}
+
+html.light .border-slate-800,
+html.light .border-slate-800\/80,
+html.light .border-slate-800\/60,
+html.light .border-slate-800\/50,
+html.light .border-slate-800\/40,
+html.light .border-slate-700,
+html.light .border-slate-700\/80,
+html.light .border-slate-700\/60,
+html.light .border-slate-700\/50,
+html.light .border-slate-600 {
+  border-color: #e2e8f0 !important;
+}
+
+html.light .divide-slate-800\/60 > :not([hidden]) ~ :not([hidden]),
+html.light .divide-slate-800 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #e2e8f0 !important;
+}
+
+/* Light mode text colors */
+html.light .text-white,
+html.light .text-slate-100 {
+  color: #0f172a;
+}
+
+html.light .text-slate-200 {
+  color: #1e293b;
+}
+
+html.light .text-slate-300 {
+  color: #334155;
+}
+
+html.light .text-slate-400 {
+  color: #64748b;
+}
+
+html.light .text-slate-500 {
+  color: #94a3b8;
+}
+
+/* Ensure button and badge text on solid colored backgrounds remains pure white in Light mode */
+html.light .bg-blue-600,
+html.light .bg-blue-500,
+html.light .bg-emerald-600,
+html.light .bg-emerald-500,
+html.light .bg-red-600,
+html.light .bg-indigo-600,
+html.light .bg-slate-900 button.bg-blue-600,
+html.light button.bg-emerald-600,
+html.light a.bg-emerald-600 {
+  color: #ffffff !important;
+}
+
+html.light button.bg-emerald-600 *,
+html.light a.bg-emerald-600 * {
+  color: #ffffff !important;
+}
+
+/* Form inputs & controls in light mode */
+html.light input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+html.light select,
+html.light textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light input:focus:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+html.light select:focus,
+html.light textarea:focus {
+  border-color: #059669 !important;
+  box-shadow: 0 0 0 1px #059669 !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Light mode modal overlays */
+html.light .bg-black\/80,
+html.light .bg-black\/85,
+html.light .bg-black\/75,
+html.light .bg-black\/70,
+html.light .bg-black\/50 {
+  background-color: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* Status badge pills in light mode */
+html.light .bg-emerald-950,
+html.light .bg-emerald-950\/80,
+html.light .bg-emerald-950\/60,
+html.light .bg-emerald-950\/40,
+html.light .bg-emerald-950\/20 {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+}
+
+html.light .text-emerald-400 {
+  color: #059669 !important;
+}
+
+html.light .bg-amber-950,
+html.light .bg-amber-950\/80,
+html.light .bg-amber-950\/60,
+html.light .bg-amber-950\/40,
+html.light .bg-amber-950\/20 {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
+html.light .text-amber-400,
+html.light .text-amber-300 {
+  color: #d97706 !important;
+}

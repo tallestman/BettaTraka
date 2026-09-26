@@ -1,0 +1,1423 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  CurrencyCode,
+  User,
+  Product,
+  DeliveryAgent,
+  AgentStockItem,
+  Order,
+  AbandonedCart,
+  StockMovement,
+  SalesTeam,
+  RoundRobinState,
+  Expense,
+  CustomerRecord,
+  MediaBuyer,
+  AICallLog,
+  TokenTransaction,
+  ReferralRecord,
+  ChatMessage,
+  NotificationItem,
+  EmbedFormConfig,
+  OrderFormRecord,
+  OrganizationSettings,
+  Remittance,
+  OrderStatus,
+  CartStatus,
+  PayrollRun,
+  PayrollItem,
+  ProductPackage,
+  ProductPricing
+} from '../types/crm';
+import {
+  INITIAL_ORG_SETTINGS,
+  INITIAL_USERS,
+  INITIAL_PRODUCTS,
+  INITIAL_AGENTS,
+  INITIAL_AGENT_STOCK,
+  INITIAL_ORDERS,
+  INITIAL_ABANDONED_CARTS,
+  INITIAL_STOCK_MOVEMENTS,
+  INITIAL_SALES_TEAMS,
+  INITIAL_ROUND_ROBIN,
+  INITIAL_EXPENSES,
+  INITIAL_CUSTOMERS,
+  INITIAL_MEDIA_BUYERS,
+  INITIAL_REMITTANCES,
+  INITIAL_AI_LOGS,
+  INITIAL_TOKEN_LEDGER,
+  INITIAL_REFERRALS,
+  INITIAL_CHAT_MESSAGES,
+  INITIAL_NOTIFICATIONS,
+  DEFAULT_FORM_CONFIG,
+  INITIAL_ORDER_FORMS
+} from '../data/initialData';
+
+export type ActivePersona = 'admin' | 'rep' | 'inventory' | 'public_form' | 'marketing';
+
+interface CrmContextType {
+  // Navigation & Personas
+  persona: ActivePersona;
+  setPersona: (p: ActivePersona) => void;
+  adminActiveTab: string;
+  setAdminActiveTab: (tab: string) => void;
+  repActiveTab: string;
+  setRepActiveTab: (tab: string) => void;
+  invActiveTab: string;
+  setInvActiveTab: (tab: string) => void;
+  isMobileSidebarOpen: boolean;
+  setIsMobileSidebarOpen: (open: boolean) => void;
+  toggleMobileSidebar: () => void;
+  
+  // Organization & Currency
+  settings: OrganizationSettings;
+  updateSettings: (newSettings: Partial<OrganizationSettings>) => void;
+  currency: CurrencyCode;
+  setCurrency: (c: CurrencyCode) => void;
+  themeMode: 'dark' | 'light';
+  setThemeMode: (mode: 'dark' | 'light') => void;
+  toggleThemeMode: () => void;
+
+  // Users & Staff
+  users: User[];
+  currentUser: User;
+  setCurrentUser: (u: User) => void;
+  addUser: (user: Omit<User, 'id' | 'createdAt'>) => void;
+  updateUser: (id: string, updates: Partial<User>) => void;
+
+  // Products & Inventory
+  products: Product[];
+  addProduct: (product: Omit<Product, 'id'>) => Product;
+  updateProduct: (id: string, updates: Partial<Product>) => void;
+  updateProductPricing: (productId: string, pricingList: ProductPricing[]) => void;
+  addPackageToProduct: (productId: string, pkg: Omit<ProductPackage, 'id' | 'productId'>) => void;
+  updatePackage: (productId: string, pkgId: string, updates: Partial<ProductPackage>) => void;
+  deletePackageFromProduct: (productId: string, pkgId: string) => void;
+
+  // Delivery Agents & Stock
+  agents: DeliveryAgent[];
+  agentStock: AgentStockItem[];
+  stockMovements: StockMovement[];
+  assignStockToAgent: (agentId: string, productId: string, units: number) => void;
+  transferStockAgentToAgent: (fromAgentId: string, toAgentId: string, productId: string, units: number) => void;
+  reconcileAgentStock: (agentId: string, productId: string, defectiveDelta: number, missingDelta: number) => void;
+
+  // Orders
+  orders: Order[];
+  createOrder: (orderData: Partial<Order>) => Order;
+  updateOrderStatus: (orderId: string, newStatus: OrderStatus) => void;
+  assignOrderRep: (orderId: string, repId: string) => void;
+  assignOrderAgent: (orderId: string, agentId: string) => void;
+  deleteOrder: (orderId: string) => void;
+  deletedOrders: Order[];
+  restoreOrder: (orderId: string) => void;
+
+  // Abandoned Carts
+  abandonedCarts: AbandonedCart[];
+  createAbandonedCart: (cartData: Partial<AbandonedCart>) => AbandonedCart;
+  updateCartStatus: (cartId: string, newStatus: CartStatus) => void;
+  reassignCartRep: (cartId: string, repId: string) => void;
+  convertCartToOrder: (cartId: string) => Order | null;
+
+  // Teams & Round Robin
+  salesTeams: SalesTeam[];
+  addSalesTeam: (team: Omit<SalesTeam, 'id'>) => void;
+  roundRobin: RoundRobinState;
+  updateRoundRobinPool: (poolType: 'order' | 'cart', repId: string, updates: { weight?: number; isIncluded?: number | boolean; isAvailable?: boolean }) => void;
+  skipRoundRobinRep: (poolType: 'order' | 'cart') => void;
+  resetRoundRobinSequence: (poolType: 'order' | 'cart') => void;
+
+  // Expenses & Remittances
+  expenses: Expense[];
+  addExpense: (expense: Omit<Expense, 'id'>) => void;
+  remittances: Remittance[];
+  markRemittanceAsPaid: (remittanceId: string) => void;
+
+  // Payroll
+  payrollRuns: PayrollRun[];
+  runPayroll: (month: string, currency: CurrencyCode) => PayrollRun;
+  approvePayroll: (payrollId: string) => void;
+
+  // Customers
+  customers: CustomerRecord[];
+  toggleCustomerBlock: (customerId: string) => void;
+
+  // Media Buyers
+  mediaBuyers: MediaBuyer[];
+  addMediaBuyer: (buyer: Omit<MediaBuyer, 'id'>) => void;
+
+  // AI & Tokens
+  aiLogs: AICallLog[];
+  triggerAICall: (orderId: string) => void;
+  tokenTransactions: TokenTransaction[];
+  buyTokens: (amount: number, costNgn: number) => void;
+
+  // Chat & Notifications
+  chatMessages: ChatMessage[];
+  sendChatMessage: (content: string) => void;
+  notifications: NotificationItem[];
+  markNotificationAsRead: (id: string) => void;
+  markAllNotificationsAsRead: () => void;
+  addNotification: (n: Omit<NotificationItem, 'id' | 'timestamp' | 'isRead'>) => void;
+
+  // Referrals
+  referrals: ReferralRecord[];
+  requestReferralPayout: (referralId: string) => void;
+
+  // Multi-Product Order Forms Management
+  orderForms: OrderFormRecord[];
+  selectedFormId: string;
+  setSelectedFormId: (id: string) => void;
+  activeOrderForm: OrderFormRecord | undefined;
+  createOrderForm: (newForm: Partial<OrderFormRecord>) => OrderFormRecord;
+  updateOrderForm: (id: string, updates: Partial<OrderFormRecord>) => void;
+  deleteOrderForm: (id: string) => void;
+  duplicateOrderForm: (id: string) => OrderFormRecord;
+  formConfig: EmbedFormConfig;
+  updateFormConfig: (config: Partial<EmbedFormConfig>) => void;
+}
+
+const CrmContext = createContext<CrmContextType | undefined>(undefined);
+
+const STORAGE_KEY = 'bettatraka_crm_state_v2';
+
+export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Load initial from localStorage if available
+  const [persona, setPersona] = useState<ActivePersona>('admin');
+  const [adminActiveTab, setAdminActiveTabState] = useState<string>('dashboard');
+  const [repActiveTab, setRepActiveTab] = useState<string>('dashboard');
+  const [invActiveTab, setInvActiveTab] = useState<string>('inventory');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  const toggleMobileSidebar = () => setIsMobileSidebarOpen(prev => !prev);
+  const setAdminActiveTab = (tab: string) => {
+    setAdminActiveTabState(tab);
+    setIsMobileSidebarOpen(false);
+  };
+
+  const [settings, setSettings] = useState<OrganizationSettings>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_settings`);
+      return saved ? JSON.parse(saved) : INITIAL_ORG_SETTINGS;
+    } catch {
+      return INITIAL_ORG_SETTINGS;
+    }
+  });
+
+  const [currency, setCurrencyState] = useState<CurrencyCode>(settings.currency || 'NGN');
+
+  const setCurrency = (c: CurrencyCode) => {
+    setCurrencyState(c);
+    setSettings(prev => ({ ...prev, currency: c }));
+  };
+
+  const updateSettings = (newSettings: Partial<OrganizationSettings>) => {
+    setSettings(prev => ({ ...prev, ...newSettings }));
+  };
+
+  // Day (Light) and Night (Dark) mode state
+  const [themeMode, setThemeModeState] = useState<'dark' | 'light'>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_theme`);
+      if (saved === 'light' || saved === 'dark') return saved;
+      return settings.themeMode || 'dark';
+    } catch {
+      return 'dark';
+    }
+  });
+
+  const setThemeMode = (mode: 'dark' | 'light') => {
+    setThemeModeState(mode);
+    setSettings(prev => ({ ...prev, themeMode: mode }));
+    try {
+      localStorage.setItem(`${STORAGE_KEY}_theme`, mode);
+    } catch (e) {}
+  };
+
+  const toggleThemeMode = () => {
+    setThemeMode(themeMode === 'dark' ? 'light' : 'dark');
+  };
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (themeMode === 'light') {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    } else {
+      root.classList.remove('light');
+      root.classList.add('dark');
+    }
+  }, [themeMode]);
+
+  const [users, setUsers] = useState<User[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_users`);
+      return saved ? JSON.parse(saved) : INITIAL_USERS;
+    } catch {
+      return INITIAL_USERS;
+    }
+  });
+
+  const [currentUser, setCurrentUser] = useState<User>(() => users[0] || INITIAL_USERS[0]);
+
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_products`);
+      return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
+    } catch {
+      return INITIAL_PRODUCTS;
+    }
+  });
+
+  const [agents, setAgents] = useState<DeliveryAgent[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_agents`);
+      return saved ? JSON.parse(saved) : INITIAL_AGENTS;
+    } catch {
+      return INITIAL_AGENTS;
+    }
+  });
+
+  const [agentStock, setAgentStock] = useState<AgentStockItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_agent_stock`);
+      return saved ? JSON.parse(saved) : INITIAL_AGENT_STOCK;
+    } catch {
+      return INITIAL_AGENT_STOCK;
+    }
+  });
+
+  const [orders, setOrders] = useState<Order[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_orders`);
+      return saved ? JSON.parse(saved) : INITIAL_ORDERS;
+    } catch {
+      return INITIAL_ORDERS;
+    }
+  });
+
+  const [deletedOrders, setDeletedOrders] = useState<Order[]>([]);
+
+  const [abandonedCarts, setAbandonedCarts] = useState<AbandonedCart[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_carts`);
+      return saved ? JSON.parse(saved) : INITIAL_ABANDONED_CARTS;
+    } catch {
+      return INITIAL_ABANDONED_CARTS;
+    }
+  });
+
+  const [stockMovements, setStockMovements] = useState<StockMovement[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_stock_movements`);
+      return saved ? JSON.parse(saved) : INITIAL_STOCK_MOVEMENTS;
+    } catch {
+      return INITIAL_STOCK_MOVEMENTS;
+    }
+  });
+
+  const [salesTeams, setSalesTeams] = useState<SalesTeam[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_teams`);
+      return saved ? JSON.parse(saved) : INITIAL_SALES_TEAMS;
+    } catch {
+      return INITIAL_SALES_TEAMS;
+    }
+  });
+
+  const [roundRobin, setRoundRobin] = useState<RoundRobinState>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_round_robin`);
+      return saved ? JSON.parse(saved) : INITIAL_ROUND_ROBIN;
+    } catch {
+      return INITIAL_ROUND_ROBIN;
+    }
+  });
+
+  const [expenses, setExpenses] = useState<Expense[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_expenses`);
+      return saved ? JSON.parse(saved) : INITIAL_EXPENSES;
+    } catch {
+      return INITIAL_EXPENSES;
+    }
+  });
+
+  const [remittances, setRemittances] = useState<Remittance[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_remittances`);
+      return saved ? JSON.parse(saved) : INITIAL_REMITTANCES;
+    } catch {
+      return INITIAL_REMITTANCES;
+    }
+  });
+
+  const [customers, setCustomers] = useState<CustomerRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_customers`);
+      return saved ? JSON.parse(saved) : INITIAL_CUSTOMERS;
+    } catch {
+      return INITIAL_CUSTOMERS;
+    }
+  });
+
+  const [mediaBuyers, setMediaBuyers] = useState<MediaBuyer[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_media_buyers`);
+      return saved ? JSON.parse(saved) : INITIAL_MEDIA_BUYERS;
+    } catch {
+      return INITIAL_MEDIA_BUYERS;
+    }
+  });
+
+  const [aiLogs, setAiLogs] = useState<AICallLog[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_ai_logs`);
+      return saved ? JSON.parse(saved) : INITIAL_AI_LOGS;
+    } catch {
+      return INITIAL_AI_LOGS;
+    }
+  });
+
+  const [tokenTransactions, setTokenTransactions] = useState<TokenTransaction[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_tokens`);
+      return saved ? JSON.parse(saved) : INITIAL_TOKEN_LEDGER;
+    } catch {
+      return INITIAL_TOKEN_LEDGER;
+    }
+  });
+
+  const [referrals, setReferrals] = useState<ReferralRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_referrals`);
+      return saved ? JSON.parse(saved) : INITIAL_REFERRALS;
+    } catch {
+      return INITIAL_REFERRALS;
+    }
+  });
+
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_chat`);
+      return saved ? JSON.parse(saved) : INITIAL_CHAT_MESSAGES;
+    } catch {
+      return INITIAL_CHAT_MESSAGES;
+    }
+  });
+
+  const [notifications, setNotifications] = useState<NotificationItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_notifications`);
+      return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
+    } catch {
+      return INITIAL_NOTIFICATIONS;
+    }
+  });
+
+  // Order Forms Management (Multi-product / campaign forms)
+  const [orderForms, setOrderForms] = useState<OrderFormRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_order_forms`);
+      return saved ? JSON.parse(saved) : INITIAL_ORDER_FORMS;
+    } catch {
+      return INITIAL_ORDER_FORMS;
+    }
+  });
+
+  const [selectedFormId, setSelectedFormId] = useState<string>(() => {
+    return orderForms[0]?.id || 'form-1';
+  });
+
+  const activeOrderForm = orderForms.find(f => f.id === selectedFormId) || orderForms[0];
+  const formConfig = activeOrderForm?.config || DEFAULT_FORM_CONFIG;
+
+  const updateFormConfig = (newConfig: Partial<EmbedFormConfig>) => {
+    setOrderForms(prev => prev.map(f => {
+      if (f.id !== selectedFormId) return f;
+      return {
+        ...f,
+        config: { ...f.config, ...newConfig }
+      };
+    }));
+  };
+
+  const createOrderForm = (formData: Partial<OrderFormRecord>): OrderFormRecord => {
+    const prod = products.find(p => p.id === formData.productId) || products[0];
+    const formId = `form-${Date.now()}`;
+    const slug = formData.slug || formData.title?.toLowerCase().replace(/[^a-z0-9]/g, '-') || `form-${formId}`;
+
+    const newForm: OrderFormRecord = {
+      id: formId,
+      title: formData.title || `${prod.name} Checkout Form`,
+      slug,
+      productId: prod.id,
+      status: formData.status || 'Active',
+      viewsCount: 1,
+      ordersCount: 0,
+      conversionRate: 0,
+      createdAt: new Date().toISOString().split('T')[0],
+      config: formData.config || {
+        ...DEFAULT_FORM_CONFIG,
+        productId: prod.id,
+        formTitle: prod.name,
+        buttonText: `ORDER ${prod.name.split(' ')[0].toUpperCase()} (PAY ON DELIVERY)`,
+        buttonColor: '#059669'
+      }
+    };
+
+    setOrderForms(prev => [newForm, ...prev]);
+    setSelectedFormId(newForm.id);
+    return newForm;
+  };
+
+  const updateOrderForm = (id: string, updates: Partial<OrderFormRecord>) => {
+    setOrderForms(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
+  };
+
+  const deleteOrderForm = (id: string) => {
+    if (orderForms.length <= 1) {
+      alert("At least one order form must remain active in the system.");
+      return;
+    }
+    setOrderForms(prev => prev.filter(f => f.id !== id));
+    if (selectedFormId === id) {
+      const remaining = orderForms.filter(f => f.id !== id);
+      if (remaining.length > 0) setSelectedFormId(remaining[0].id);
+    }
+  };
+
+  const duplicateOrderForm = (id: string): OrderFormRecord => {
+    const source = orderForms.find(f => f.id === id) || orderForms[0];
+    const newForm: OrderFormRecord = {
+      ...source,
+      id: `form-${Date.now()}`,
+      title: `${source.title} (Copy)`,
+      slug: `${source.slug}-copy`,
+      viewsCount: 0,
+      ordersCount: 0,
+      conversionRate: 0,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    setOrderForms(prev => [newForm, ...prev]);
+    setSelectedFormId(newForm.id);
+    return newForm;
+  };
+
+  const [payrollRuns, setPayrollRuns] = useState<PayrollRun[]>([
+    {
+      id: 'pay-aug-2026',
+      month: 'August 2026',
+      currency: 'NGN',
+      createdAt: '2026-09-01',
+      status: 'Paid',
+      totalPayout: 1845000,
+      topPerformerRepId: 'user-rep-1',
+      items: [
+        {
+          userId: 'user-rep-1',
+          userName: 'Chioma Adeyemi',
+          role: 'Sales Representative',
+          payStructure: 'Hybrid',
+          fixedBase: 75000,
+          deliveredOrders: 114,
+          commissionEarned: 171000,
+          bonusEarned: 50000,
+          totalPayout: 296000,
+          currency: 'NGN'
+        },
+        {
+          userId: 'user-rep-2',
+          userName: 'Emeka Okafor',
+          role: 'Sales Representative',
+          payStructure: 'Commission',
+          fixedBase: 0,
+          deliveredOrders: 88,
+          commissionEarned: 158400,
+          bonusEarned: 0,
+          totalPayout: 158400,
+          currency: 'NGN'
+        },
+        {
+          userId: 'user-inv-mgr',
+          userName: 'Babajide Cole',
+          role: 'Inventory Manager',
+          payStructure: 'Fixed',
+          fixedBase: 180000,
+          deliveredOrders: 0,
+          commissionEarned: 0,
+          bonusEarned: 0,
+          totalPayout: 180000,
+          currency: 'NGN'
+        }
+      ]
+    }
+  ]);
+
+  // Sync back to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(`${STORAGE_KEY}_settings`, JSON.stringify(settings));
+      localStorage.setItem(`${STORAGE_KEY}_users`, JSON.stringify(users));
+      localStorage.setItem(`${STORAGE_KEY}_products`, JSON.stringify(products));
+      localStorage.setItem(`${STORAGE_KEY}_agents`, JSON.stringify(agents));
+      localStorage.setItem(`${STORAGE_KEY}_agent_stock`, JSON.stringify(agentStock));
+      localStorage.setItem(`${STORAGE_KEY}_orders`, JSON.stringify(orders));
+      localStorage.setItem(`${STORAGE_KEY}_carts`, JSON.stringify(abandonedCarts));
+      localStorage.setItem(`${STORAGE_KEY}_stock_movements`, JSON.stringify(stockMovements));
+      localStorage.setItem(`${STORAGE_KEY}_expenses`, JSON.stringify(expenses));
+      localStorage.setItem(`${STORAGE_KEY}_remittances`, JSON.stringify(remittances));
+      localStorage.setItem(`${STORAGE_KEY}_customers`, JSON.stringify(customers));
+      localStorage.setItem(`${STORAGE_KEY}_round_robin`, JSON.stringify(roundRobin));
+      localStorage.setItem(`${STORAGE_KEY}_chat`, JSON.stringify(chatMessages));
+      localStorage.setItem(`${STORAGE_KEY}_notifications`, JSON.stringify(notifications));
+      localStorage.setItem(`${STORAGE_KEY}_order_forms`, JSON.stringify(orderForms));
+      localStorage.setItem(`${STORAGE_KEY}_form_config`, JSON.stringify(formConfig));
+    } catch {
+      // LocalStorage quotas handled silently
+    }
+  }, [settings, users, products, agents, agentStock, orders, abandonedCarts, stockMovements, expenses, remittances, customers, roundRobin, chatMessages, notifications, formConfig, orderForms]);
+
+  // Round-Robin Assignment helper
+  const getNextAssignedRep = (poolType: 'order' | 'cart', customerPhone?: string): { repId: string; repName: string } => {
+    // 1. Returning customer check
+    if (customerPhone && roundRobin.routeReturningCustomersToPreviousRep) {
+      const prevOrder = orders.find(o => o.customerPhone === customerPhone && o.salesRepId);
+      if (prevOrder && prevOrder.salesRepId) {
+        const eligibleRep = users.find(u => u.id === prevOrder.salesRepId && u.status === 'Active');
+        if (eligibleRep) {
+          return { repId: eligibleRep.id, repName: eligibleRep.name };
+        }
+      }
+    }
+
+    // 2. Pool selection
+    const pool = poolType === 'order' ? [...roundRobin.orderPool] : [...roundRobin.cartPool];
+    const eligibleReps = pool.filter(r => r.isIncluded && r.isAvailable);
+
+    if (eligibleReps.length === 0) {
+      // Fallback to current user or first admin
+      return { repId: users[0].id, repName: users[0].name };
+    }
+
+    // Weighted index selection
+    const currentIndex = poolType === 'order' ? roundRobin.nextRepIndexOrder : roundRobin.nextRepIndexCart;
+    const assignedRep = eligibleReps[currentIndex % eligibleReps.length];
+    const nextIndex = (currentIndex + 1) % eligibleReps.length;
+
+    // Update round robin state
+    setRoundRobin(prev => {
+      if (poolType === 'order') {
+        const updatedPool = prev.orderPool.map(r => 
+          r.repId === assignedRep.repId 
+            ? { ...r, assignedOrderCount: r.assignedOrderCount + 1, lastAssignedAt: new Date().toISOString() } 
+            : r
+        );
+        return { ...prev, orderPool: updatedPool, nextRepIndexOrder: nextIndex };
+      } else {
+        const updatedPool = prev.cartPool.map(r => 
+          r.repId === assignedRep.repId 
+            ? { ...r, assignedOrderCount: r.assignedOrderCount + 1, lastAssignedAt: new Date().toISOString() } 
+            : r
+        );
+        return { ...prev, cartPool: updatedPool, nextRepIndexCart: nextIndex };
+      }
+    });
+
+    return { repId: assignedRep.repId, repName: assignedRep.repName };
+  };
+
+  // Agent assignment heuristic based on state/city
+  const getMatchingAgent = (state: string): { agentId?: string; agentName?: string } => {
+    const stateLower = state.toLowerCase();
+    if (stateLower.includes('lagos')) {
+      const mainland = agents.find(a => a.id === 'agent-1');
+      return mainland ? { agentId: mainland.id, agentName: mainland.name } : {};
+    }
+    if (stateLower.includes('abuja') || stateLower.includes('fct')) {
+      const abuja = agents.find(a => a.id === 'agent-3');
+      return abuja ? { agentId: abuja.id, agentName: abuja.name } : {};
+    }
+    if (stateLower.includes('river') || stateLower.includes('port harcourt')) {
+      const ph = agents.find(a => a.id === 'agent-4');
+      return ph ? { agentId: ph.id, agentName: ph.name } : {};
+    }
+    if (stateLower.includes('kano') || stateLower.includes('kaduna')) {
+      const kano = agents.find(a => a.id === 'agent-5');
+      return kano ? { agentId: kano.id, agentName: kano.name } : {};
+    }
+    // Default fallback to first active agent
+    const active = agents[0];
+    return active ? { agentId: active.id, agentName: active.name } : {};
+  };
+
+  // Create Order Action
+  const createOrder = (orderData: Partial<Order>): Order => {
+    const orderNum = `ORD-${10500 + orders.length}`;
+    
+    // Assign rep if not provided
+    let repId = orderData.salesRepId;
+    let repName = orderData.salesRepName;
+    if (!repId) {
+      const assigned = getNextAssignedRep('order', orderData.customerPhone);
+      repId = assigned.repId;
+      repName = assigned.repName;
+    }
+
+    // Assign agent based on delivery state if not provided
+    let agentId = orderData.agentId;
+    let agentName = orderData.agentName;
+    if (!agentId && orderData.deliveryState) {
+      const matched = getMatchingAgent(orderData.deliveryState);
+      agentId = matched.agentId;
+      agentName = matched.agentName;
+    }
+
+    const newOrder: Order = {
+      id: `ord-${Date.now()}`,
+      orderNumber: orderNum,
+      customerName: orderData.customerName || 'Anonymous Customer',
+      customerPhone: orderData.customerPhone || '+234 800 000 0000',
+      customerWhatsApp: orderData.customerWhatsApp || orderData.customerPhone,
+      customerEmail: orderData.customerEmail,
+      deliveryAddress: orderData.deliveryAddress || 'Address Pending',
+      deliveryCity: orderData.deliveryCity || 'City Center',
+      deliveryState: orderData.deliveryState || 'Lagos',
+      items: orderData.items || [],
+      totalAmount: orderData.totalAmount || 0,
+      currency: orderData.currency || currency,
+      source: orderData.source || 'Order Form',
+      utmSource: orderData.utmSource || 'direct',
+      utmCampaign: orderData.utmCampaign || 'organic',
+      utmCreative: orderData.utmCreative,
+      salesRepId: repId,
+      salesRepName: repName,
+      agentId: agentId,
+      agentName: agentName,
+      status: orderData.status || 'NEW',
+      responseTimeMinutes: 2,
+      createdAt: new Date().toISOString(),
+      isSandbox: orderData.isSandbox || false,
+      deliveryWindowPreference: orderData.deliveryWindowPreference,
+      commitmentFeePaid: orderData.commitmentFeePaid
+    };
+
+    setOrders(prev => [newOrder, ...prev]);
+
+    // Upsert customer record
+    if (orderData.customerPhone && !orderData.isSandbox) {
+      setCustomers(prev => {
+        const existing = prev.find(c => c.phone === orderData.customerPhone);
+        if (existing) {
+          return prev.map(c => c.id === existing.id ? {
+            ...c,
+            totalOrders: c.totalOrders + 1,
+            lastOrderDate: new Date().toISOString()
+          } : c);
+        } else {
+          return [
+            {
+              id: `cust-${Date.now()}`,
+              name: orderData.customerName || 'Customer',
+              phone: orderData.customerPhone!,
+              whatsapp: orderData.customerWhatsApp,
+              email: orderData.customerEmail,
+              city: orderData.deliveryCity || 'Lagos',
+              state: orderData.deliveryState || 'Lagos',
+              totalOrders: 1,
+              successfulOrders: 0,
+              cancelledOrders: 0,
+              totalSpend: 0,
+              reliabilityScore: 80,
+              source: orderData.source || 'Order Form',
+              isBlocked: false,
+              lastOrderDate: new Date().toISOString()
+            },
+            ...prev
+          ];
+        }
+      });
+    }
+
+    // Add In-App Notification
+    addNotification({
+      title: `New Order Received #${orderNum}`,
+      message: `${newOrder.customerName} ordered ${newOrder.items[0]?.productName || 'products'} (${newOrder.currency} ${newOrder.totalAmount}). Assigned to ${repName}.`,
+      type: 'order_received',
+      linkTab: 'orders'
+    });
+
+    return newOrder;
+  };
+
+  // Update Order Status
+  const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
+    setOrders(prev => prev.map(order => {
+      if (order.id !== orderId) return order;
+
+      const isDeliveredNow = newStatus === 'DELIVERED' && order.status !== 'DELIVERED';
+      const deliveredDate = isDeliveredNow ? new Date().toISOString() : order.deliveredDate;
+      const fulfillmentDays = isDeliveredNow ? 1 : order.fulfillmentDays;
+
+      // When marked DELIVERED, generate pending agent remittance and update customer stats
+      if (isDeliveredNow && order.agentId) {
+        const agentCut = 2500;
+        const amountToRemit = Math.max(0, order.totalAmount - agentCut);
+        const newRemittance: Remittance = {
+          id: `remit-${Date.now()}`,
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          agentId: order.agentId,
+          agentName: order.agentName || 'Assigned Agent',
+          agentZone: order.deliveryState,
+          customerName: order.customerName,
+          customerPhone: order.customerPhone,
+          productSummary: order.items.map(i => `${i.quantity}x ${i.productName}`).join(', '),
+          amountToRemit: amountToRemit,
+          currency: order.currency,
+          deliveredDate: new Date().toISOString().split('T')[0],
+          status: 'Pending'
+        };
+        setRemittances(r => [newRemittance, ...r]);
+
+        // Stock movement: Agent to Customer
+        order.items.forEach(item => {
+          setStockMovements(m => [
+            {
+              id: `mov-${Date.now()}-${item.productId}`,
+              date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+              productId: item.productId,
+              productName: item.productName,
+              type: 'Agent to Customer',
+              fromLocation: order.agentName || 'Agent Stock',
+              toLocation: `${order.customerName} (${order.deliveryCity})`,
+              quantity: item.quantity,
+              referenceOrderOrAgent: order.orderNumber
+            },
+            ...m
+          ]);
+
+          // Deduct from agent stock
+          setAgentStock(stocks => stocks.map(s => {
+            if (s.agentId === order.agentId && s.productId === item.productId) {
+              return { ...s, unitsHeld: Math.max(0, s.unitsHeld - item.quantity) };
+            }
+            return s;
+          }));
+        });
+
+        // Update customer reliability and spend
+        setCustomers(custs => custs.map(c => {
+          if (c.phone === order.customerPhone) {
+            const successful = c.successfulOrders + 1;
+            const total = c.totalOrders;
+            const newReliability = Math.min(100, Math.round((successful / Math.max(1, total)) * 100));
+            return {
+              ...c,
+              successfulOrders: successful,
+              totalSpend: c.totalSpend + order.totalAmount,
+              reliabilityScore: newReliability
+            };
+          }
+          return c;
+        }));
+
+        addNotification({
+          title: `Delivery Completed #${order.orderNumber}`,
+          message: `${order.agentName} completed delivery for ${order.customerName}. Remittance pending: ₦${amountToRemit.toLocaleString()}.`,
+          type: 'delivery_completed',
+          linkTab: 'deliveries'
+        });
+      }
+
+      return {
+        ...order,
+        status: newStatus,
+        deliveredDate,
+        fulfillmentDays
+      };
+    }));
+  };
+
+  const assignOrderRep = (orderId: string, repId: string) => {
+    const rep = users.find(u => u.id === repId);
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, salesRepId: repId, salesRepName: rep?.name || 'Rep' } : o));
+  };
+
+  const assignOrderAgent = (orderId: string, agentId: string) => {
+    const agent = agents.find(a => a.id === agentId);
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, agentId: agentId, agentName: agent?.name || 'Agent' } : o));
+  };
+
+  const deleteOrder = (orderId: string) => {
+    const target = orders.find(o => o.id === orderId);
+    if (target) {
+      setDeletedOrders(d => [target, ...d]);
+      setOrders(prev => prev.filter(o => o.id !== orderId));
+    }
+  };
+
+  const restoreOrder = (orderId: string) => {
+    const target = deletedOrders.find(o => o.id === orderId);
+    if (target) {
+      setOrders(prev => [target, ...prev]);
+      setDeletedOrders(d => d.filter(o => o.id !== orderId));
+    }
+  };
+
+  // Abandoned Carts
+  const createAbandonedCart = (cartData: Partial<AbandonedCart>): AbandonedCart => {
+    const cartNum = `CART-${800 + abandonedCarts.length + 1}`;
+    const assigned = getNextAssignedRep('cart', cartData.customerPhone);
+
+    const newCart: AbandonedCart = {
+      id: `cart-${Date.now()}`,
+      cartNumber: cartNum,
+      customerName: cartData.customerName || 'Incomplete Lead',
+      customerPhone: cartData.customerPhone || '',
+      customerWhatsApp: cartData.customerWhatsApp,
+      customerEmail: cartData.customerEmail,
+      deliveryAddress: cartData.deliveryAddress,
+      deliveryCity: cartData.deliveryCity,
+      deliveryState: cartData.deliveryState || 'Lagos',
+      productId: cartData.productId || products[0].id,
+      productName: cartData.productName || products[0].name,
+      packageId: cartData.packageId,
+      packageName: cartData.packageName,
+      amount: cartData.amount || 24500,
+      currency: cartData.currency || currency,
+      status: 'ASSIGNED',
+      assignedRepId: assigned.repId,
+      assignedRepName: assigned.repName,
+      createdAt: new Date().toISOString(),
+      lastActivity: 'Just now',
+      utmSource: cartData.utmSource,
+      utmCampaign: cartData.utmCampaign
+    };
+
+    setAbandonedCarts(prev => [newCart, ...prev]);
+
+    if (settings.notifyAdminsOnNewCarts) {
+      addNotification({
+        title: `Abandoned Cart Alert #${cartNum}`,
+        message: `${newCart.customerName} dropped off at package selection. Assigned to ${assigned.repName} for instant follow-up.`,
+        type: 'cart_abandoned',
+        linkTab: 'abandoned-carts'
+      });
+    }
+
+    return newCart;
+  };
+
+  const updateCartStatus = (cartId: string, newStatus: CartStatus) => {
+    setAbandonedCarts(prev => prev.map(c => c.id === cartId ? { ...c, status: newStatus, lastActivity: 'Updated just now' } : c));
+  };
+
+  const reassignCartRep = (cartId: string, repId: string) => {
+    const rep = users.find(u => u.id === repId);
+    setAbandonedCarts(prev => prev.map(c => c.id === cartId ? { ...c, assignedRepId: repId, assignedRepName: rep?.name || 'Rep' } : c));
+  };
+
+  const convertCartToOrder = (cartId: string): Order | null => {
+    const cart = abandonedCarts.find(c => c.id === cartId);
+    if (!cart) return null;
+
+    const prod = products.find(p => p.id === cart.productId) || products[0];
+    const order = createOrder({
+      customerName: cart.customerName,
+      customerPhone: cart.customerPhone,
+      customerWhatsApp: cart.customerWhatsApp || cart.customerPhone,
+      customerEmail: cart.customerEmail,
+      deliveryAddress: cart.deliveryAddress || 'Pending confirmation with rep',
+      deliveryCity: cart.deliveryCity || 'Lagos',
+      deliveryState: cart.deliveryState || 'Lagos',
+      totalAmount: cart.amount,
+      currency: cart.currency,
+      source: 'Abandoned Cart Recovery',
+      salesRepId: cart.assignedRepId,
+      salesRepName: cart.assignedRepName,
+      items: [
+        {
+          productId: prod.id,
+          productName: prod.name,
+          quantity: 1,
+          unitPrice: cart.amount,
+          packageId: cart.packageId,
+          packageName: cart.packageName
+        }
+      ]
+    });
+
+    updateCartStatus(cartId, 'CONVERTED');
+    return order;
+  };
+
+  // Inventory Management
+  const addProduct = (prodData: Omit<Product, 'id'>): Product => {
+    const newProd: Product = {
+      ...prodData,
+      id: `prod-${Date.now()}`
+    };
+    setProducts(prev => [...prev, newProd]);
+    return newProd;
+  };
+
+  const updateProduct = (id: string, updates: Partial<Product>) => {
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+  };
+
+  const updateProductPricing = (productId: string, pricingList: ProductPricing[]) => {
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, pricing: pricingList } : p));
+  };
+
+  const addPackageToProduct = (productId: string, pkg: Omit<ProductPackage, 'id' | 'productId'>) => {
+    const newPkg: ProductPackage = {
+      ...pkg,
+      id: `pkg-${Date.now()}`,
+      productId
+    };
+    setProducts(prev => prev.map(p => {
+      if (p.id !== productId) return p;
+      return { ...p, packages: [...p.packages, newPkg] };
+    }));
+  };
+
+  const updatePackage = (productId: string, pkgId: string, updates: Partial<ProductPackage>) => {
+    setProducts(prev => prev.map(p => {
+      if (p.id !== productId) return p;
+      return {
+        ...p,
+        packages: p.packages.map(pkg => pkg.id === pkgId ? { ...pkg, ...updates } : pkg)
+      };
+    }));
+  };
+
+  const deletePackageFromProduct = (productId: string, pkgId: string) => {
+    setProducts(prev => prev.map(p => {
+      if (p.id !== productId) return p;
+      return {
+        ...p,
+        packages: p.packages.filter(pkg => pkg.id !== pkgId)
+      };
+    }));
+  };
+
+  // Stock assignment & transfer
+  const assignStockToAgent = (agentId: string, productId: string, units: number) => {
+    const agent = agents.find(a => a.id === agentId);
+    const prod = products.find(p => p.id === productId);
+    if (!agent || !prod || prod.stockWarehouse < units) return;
+
+    // Deduct from warehouse
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, stockWarehouse: p.stockWarehouse - units } : p));
+
+    // Increase in agent stock
+    setAgentStock(prev => {
+      const existing = prev.find(s => s.agentId === agentId && s.productId === productId);
+      if (existing) {
+        return prev.map(s => s.agentId === agentId && s.productId === productId ? { ...s, unitsHeld: s.unitsHeld + units } : s);
+      } else {
+        return [...prev, { agentId, productId, unitsHeld: units, defectiveUnits: 0, missingUnits: 0 }];
+      }
+    });
+
+    // Update agent total stock held
+    setAgents(prev => prev.map(a => a.id === agentId ? { ...a, totalStockHeld: a.totalStockHeld + units } : a));
+
+    // Log movement
+    setStockMovements(m => [
+      {
+        id: `mov-${Date.now()}`,
+        date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        productId: prod.id,
+        productName: prod.name,
+        type: 'Warehouse to Agent',
+        fromLocation: 'Central Warehouse (Ikeja)',
+        toLocation: agent.name,
+        quantity: units,
+        referenceOrderOrAgent: `Dispatched to ${agent.primaryZone}`
+      },
+      ...m
+    ]);
+  };
+
+  const transferStockAgentToAgent = (fromAgentId: string, toAgentId: string, productId: string, units: number) => {
+    const fromAgent = agents.find(a => a.id === fromAgentId);
+    const toAgent = agents.find(a => a.id === toAgentId);
+    const prod = products.find(p => p.id === productId);
+    if (!fromAgent || !toAgent || !prod) return;
+
+    setAgentStock(prev => prev.map(s => {
+      if (s.agentId === fromAgentId && s.productId === productId) {
+        return { ...s, unitsHeld: Math.max(0, s.unitsHeld - units) };
+      }
+      if (s.agentId === toAgentId && s.productId === productId) {
+        return { ...s, unitsHeld: s.unitsHeld + units };
+      }
+      return s;
+    }));
+
+    setStockMovements(m => [
+      {
+        id: `mov-${Date.now()}`,
+        date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        productId: prod.id,
+        productName: prod.name,
+        type: 'Agent to Agent Transfer',
+        fromLocation: fromAgent.name,
+        toLocation: toAgent.name,
+        quantity: units,
+        referenceOrderOrAgent: 'Inter-hub rebalancing'
+      },
+      ...m
+    ]);
+  };
+
+  const reconcileAgentStock = (agentId: string, productId: string, defectiveDelta: number, missingDelta: number) => {
+    setAgentStock(prev => prev.map(s => {
+      if (s.agentId === agentId && s.productId === productId) {
+        return {
+          ...s,
+          defectiveUnits: Math.max(0, s.defectiveUnits + defectiveDelta),
+          missingUnits: Math.max(0, s.missingUnits + missingDelta),
+          unitsHeld: Math.max(0, s.unitsHeld - defectiveDelta - missingDelta)
+        };
+      }
+      return s;
+    }));
+  };
+
+  // Users
+  const addUser = (userData: Omit<User, 'id' | 'createdAt'>) => {
+    const newUser: User = {
+      ...userData,
+      id: `user-${Date.now()}`,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    setUsers(prev => [...prev, newUser]);
+  };
+
+  const updateUser = (id: string, updates: Partial<User>) => {
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u));
+  };
+
+  // Teams & Round Robin
+  const addSalesTeam = (team: Omit<SalesTeam, 'id'>) => {
+    setSalesTeams(prev => [...prev, { ...team, id: `team-${Date.now()}` }]);
+  };
+
+  const updateRoundRobinPool = (poolType: 'order' | 'cart', repId: string, updates: { weight?: number; isIncluded?: number | boolean; isAvailable?: boolean }) => {
+    setRoundRobin(prev => {
+      const poolKey = poolType === 'order' ? 'orderPool' : 'cartPool';
+      const updated = prev[poolKey].map(r => {
+        if (r.repId !== repId) return r;
+        return {
+          ...r,
+          weight: updates.weight !== undefined ? updates.weight : r.weight,
+          isIncluded: updates.isIncluded !== undefined ? Boolean(updates.isIncluded) : r.isIncluded,
+          isAvailable: updates.isAvailable !== undefined ? updates.isAvailable : r.isAvailable
+        };
+      });
+      return { ...prev, [poolKey]: updated };
+    });
+  };
+
+  const skipRoundRobinRep = (poolType: 'order' | 'cart') => {
+    setRoundRobin(prev => {
+      if (poolType === 'order') {
+        return { ...prev, nextRepIndexOrder: (prev.nextRepIndexOrder + 1) % prev.orderPool.length };
+      } else {
+        return { ...prev, nextRepIndexCart: (prev.nextRepIndexCart + 1) % prev.cartPool.length };
+      }
+    });
+  };
+
+  const resetRoundRobinSequence = (poolType: 'order' | 'cart') => {
+    setRoundRobin(prev => {
+      if (poolType === 'order') {
+        return { ...prev, nextRepIndexOrder: 0 };
+      } else {
+        return { ...prev, nextRepIndexCart: 0 };
+      }
+    });
+  };
+
+  // Expenses & Remittances
+  const addExpense = (expense: Omit<Expense, 'id'>) => {
+    const newExp: Expense = {
+      ...expense,
+      id: `exp-${Date.now()}`
+    };
+    setExpenses(prev => [newExp, ...prev]);
+  };
+
+  const markRemittanceAsPaid = (remittanceId: string) => {
+    setRemittances(prev => prev.map(r => r.id === remittanceId ? { ...r, status: 'Remitted', remittedAt: new Date().toISOString() } : r));
+  };
+
+  // Customers
+  const toggleCustomerBlock = (customerId: string) => {
+    setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, isBlocked: !c.isBlocked } : c));
+  };
+
+  // Media Buyers
+  const addMediaBuyer = (buyer: Omit<MediaBuyer, 'id'>) => {
+    setMediaBuyers(prev => [...prev, { ...buyer, id: `mb-${Date.now()}` }]);
+  };
+
+  // AI Calling & Tokens
+  const triggerAICall = (orderId: string) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    if (settings.tokenBalance < 2) {
+      alert("Insufficient AI tokens! Please top up your token pack.");
+      return;
+    }
+
+    // Deduct 2 tokens
+    const newBal = settings.tokenBalance - 2;
+    setSettings(prev => ({ ...prev, tokenBalance: newBal }));
+    setTokenTransactions(prev => [
+      {
+        id: `tok-${Date.now()}`,
+        date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        type: 'AI Call Used',
+        tokensChanged: -2,
+        tokenBalanceAfter: newBal,
+        description: `Triggered Vapi AI confirmation call for ${order.orderNumber}`
+      },
+      ...prev
+    ]);
+
+    const newLog: AICallLog = {
+      id: `ai-${Date.now()}`,
+      orderNumber: order.orderNumber,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      productName: order.items[0]?.productName || 'Product',
+      attempts: 1,
+      maxAttempts: 5,
+      cycle: 1,
+      outcome: 'ANSWERED',
+      durationSeconds: 65,
+      orderStatus: 'CONFIRMED',
+      date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+      transcriptSnippet: `AI: Hello ${order.customerName}, calling from BettaTraka fulfillment regarding your order #${order.orderNumber} for delivery to ${order.deliveryCity}. Can we dispatch today? Customer: Yes please, am ready with cash!`
+    };
+
+    setAiLogs(prev => [newLog, ...prev]);
+    updateOrderStatus(orderId, 'CONFIRMED');
+  };
+
+  const buyTokens = (amount: number, costNgn: number) => {
+    const newBal = settings.tokenBalance + amount;
+    setSettings(prev => ({ ...prev, tokenBalance: newBal }));
+    setTokenTransactions(prev => [
+      {
+        id: `tok-${Date.now()}`,
+        date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        type: 'Purchase',
+        tokensChanged: amount,
+        tokenBalanceAfter: newBal,
+        description: `Purchased ${amount} Tokens (₦${costNgn.toLocaleString()})`
+      },
+      ...prev
+    ]);
+  };
+
+  // Chat & Notifications
+  const sendChatMessage = (content: string) => {
+    const newMsg: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userRole: currentUser.role,
+      content,
+      timestamp: 'Just now'
+    };
+    setChatMessages(prev => [...prev, newMsg]);
+  };
+
+  const addNotification = (n: Omit<NotificationItem, 'id' | 'timestamp' | 'isRead'>) => {
+    const item: NotificationItem = {
+      ...n,
+      id: `notif-${Date.now()}`,
+      timestamp: 'Just now',
+      isRead: false
+    };
+    setNotifications(prev => [item, ...prev]);
+  };
+
+  const markNotificationAsRead = (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+  };
+
+  const markAllNotificationsAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
+
+  // Referrals
+  const requestReferralPayout = (referralId: string) => {
+    setReferrals(prev => prev.map(r => r.id === referralId ? { ...r, status: 'Paid Out' } : r));
+    alert("Payout request submitted! Transfer will reflect in verified bank account within 24 hours.");
+  };
+
+  // Payroll calculation
+  const runPayroll = (month: string, runCurrency: CurrencyCode): PayrollRun => {
+    // Reps performance: count delivered orders per rep
+    const items: PayrollItem[] = users
+      .filter(u => u.status === 'Active' && u.role !== 'Owner')
+      .map(u => {
+        const deliveredOrders = orders.filter(o => o.salesRepId === u.id && o.status === 'DELIVERED').length;
+        let fixed = u.fixedSalary || 0;
+        let comm = (u.commissionPerOrder || 0) * deliveredOrders;
+        let bonus = 0;
+
+        return {
+          userId: u.id,
+          userName: u.name,
+          role: u.role,
+          payStructure: u.payStructure,
+          fixedBase: fixed,
+          deliveredOrders: deliveredOrders,
+          commissionEarned: comm,
+          bonusEarned: bonus,
+          totalPayout: fixed + comm + bonus,
+          currency: runCurrency
+        };
+      });
+
+    // Best converter bonus (top rep gets ₦50,000 monthly bonus)
+    const sorted = [...items].sort((a, b) => b.deliveredOrders - a.deliveredOrders);
+    if (sorted.length > 0 && sorted[0].deliveredOrders > 0) {
+      sorted[0].bonusEarned = 50000;
+      sorted[0].totalPayout += 50000;
+    }
+
+    const total = items.reduce((acc, curr) => acc + curr.totalPayout, 0);
+
+    const newRun: PayrollRun = {
+      id: `pay-${Date.now()}`,
+      month,
+      currency: runCurrency,
+      createdAt: new Date().toISOString().split('T')[0],
+      status: 'Approved',
+      totalPayout: total,
+      topPerformerRepId: sorted[0]?.userId,
+      items
+    };
+
+    setPayrollRuns(prev => [newRun, ...prev]);
+    return newRun;
+  };
+
+  const approvePayroll = (payrollId: string) => {
+    setPayrollRuns(prev => prev.map(p => p.id === payrollId ? { ...p, status: 'Paid' } : p));
+  };
+
+  return (
+    <CrmContext.Provider
+      value={{
+        persona,
+        setPersona,
+        adminActiveTab,
+        setAdminActiveTab,
+        repActiveTab,
+        setRepActiveTab,
+        invActiveTab,
+        setInvActiveTab,
+        isMobileSidebarOpen,
+        setIsMobileSidebarOpen,
+        toggleMobileSidebar,
+        settings,
+        updateSettings,
+        currency,
+        setCurrency,
+        users,
+        currentUser,
+        setCurrentUser,
+        addUser,
+        updateUser,
+        products,
+        addProduct,
+        updateProduct,
+        updateProductPricing,
+        addPackageToProduct,
+        updatePackage,
+        deletePackageFromProduct,
+        agents,
+        agentStock,
+        stockMovements,
+        assignStockToAgent,
+        transferStockAgentToAgent,
+        reconcileAgentStock,
+        orders,
+        createOrder,
+        updateOrderStatus,
+        assignOrderRep,
+        assignOrderAgent,
+        deleteOrder,
+        deletedOrders,
+        restoreOrder,
+        abandonedCarts,
+        createAbandonedCart,
+        updateCartStatus,
+        reassignCartRep,
+        convertCartToOrder,
+        salesTeams,
+        addSalesTeam,
+        roundRobin,
+        updateRoundRobinPool,
+        skipRoundRobinRep,
+        resetRoundRobinSequence,
+        expenses,
+        addExpense,
+        remittances,
+        markRemittanceAsPaid,
+        payrollRuns,
+        runPayroll,
+        approvePayroll,
+        customers,
+        toggleCustomerBlock,
+        mediaBuyers,
+        addMediaBuyer,
+        aiLogs,
+        triggerAICall,
+        tokenTransactions,
+        buyTokens,
+        chatMessages,
+        sendChatMessage,
+        notifications,
+        markNotificationAsRead,
+        markAllNotificationsAsRead,
+        addNotification,
+        referrals,
+        requestReferralPayout,
+        orderForms,
+        selectedFormId,
+        setSelectedFormId,
+        activeOrderForm,
+        createOrderForm,
+        updateOrderForm,
+        deleteOrderForm,
+        duplicateOrderForm,
+        formConfig,
+        updateFormConfig,
+        themeMode,
+        setThemeMode,
+        toggleThemeMode
+      }}
+    >
+      {children}
+    </CrmContext.Provider>
+  );
+};
+
+export const useCrm = () => {
+  const context = useContext(CrmContext);
+  if (!context) {
+    throw new Error('useCrm must be used within a CrmProvider');
+  }
+  return context;
+};
