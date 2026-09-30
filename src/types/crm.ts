@@ -30,7 +30,7 @@ export type CartStatus =
 
 export type AICallOutcome = 'ANSWERED' | 'NO_ANSWER' | 'VOICEMAIL' | 'PENDING';
 
-export type PayStructure = 'Fixed' | 'Commission' | 'Hybrid' | 'Performance-based';
+export type PayStructure = 'Fixed' | 'Commission' | 'Hybrid' | 'Performance-based' | 'Not set';
 
 export interface ManagerPermissions {
   sales: {
@@ -75,8 +75,26 @@ export interface User {
   createdAt: string;
   teamId?: string;
   payStructure: PayStructure;
+  payCurrency?: CurrencyCode;
   fixedSalary?: number;
   commissionPerOrder?: number;
+  targetDeliveries?: number;
+  bonusCurrency?: CurrencyCode;
+  deliveryBonusAmount?: number;
+  lastPayRateUpdated?: string;
+  commissionType?: 'flat' | 'percentage';
+  commissionPercentage?: number;
+  targetBonus?: number;
+  deductCancelledOrders?: boolean;
+  penaltyPerCancelledOrder?: number;
+  tier1Max?: number;
+  tier1Rate?: number;
+  tier2Max?: number;
+  tier2Rate?: number;
+  tier3Rate?: number;
+  bankName?: string;
+  accountNumber?: string;
+  accountName?: string;
   permissions?: ManagerPermissions;
 }
 
@@ -113,6 +131,11 @@ export interface Product {
   unitCost: number; // in NGN
   sellingPrice: number; // in NGN
   stockWarehouse: number;
+  reorderThreshold?: number;
+  reorderQuantity?: number;
+  leadTimeDays?: number;
+  supplierName?: string;
+  safetyStock?: number;
   pricing: ProductPricing[];
   packages: ProductPackage[];
   category: string;
@@ -226,7 +249,7 @@ export interface StockMovement {
   date: string;
   productId: string;
   productName: string;
-  type: 'Warehouse to Agent' | 'Agent to Customer' | 'Agent to Agent Transfer' | 'Restock' | 'Defective Return';
+  type: 'Warehouse to Agent' | 'Agent to Customer' | 'Agent to Agent Transfer' | 'Restock' | 'Defective Return' | 'Agent Return to Warehouse';
   fromLocation: string;
   toLocation: string;
   quantity: number;
@@ -310,10 +333,14 @@ export interface Remittance {
   customerPhone: string;
   productSummary: string;
   amountToRemit: number; // collected from customer minus delivery fee
+  orderTotal?: number;
+  deliveryFeeDeducted?: number;
   currency: CurrencyCode;
   deliveredDate: string;
   status: 'Pending' | 'Remitted';
   remittedAt?: string;
+  paymentReference?: string;
+  notes?: string;
 }
 
 export interface CustomerRecord {
@@ -338,10 +365,35 @@ export interface MediaBuyer {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   budgetMonthly: number;
   blendedCpa: number;
+  targetCpa?: number;
   activeCampaigns: string[];
   teamId?: string;
+  trafficPlatform?: string;
+  status?: 'Active' | 'Paused' | 'Archived';
+  commissionType?: 'per_delivered_order' | 'percentage_revenue' | 'fixed_monthly';
+  commissionRate?: number; // e.g. 1500 for N1,500/order, or 5 for 5% of revenue
+  totalSpendRecorded?: number;
+  avatarUrl?: string;
+  joinedDate?: string;
+  notes?: string;
+}
+
+export interface MediaBuyerSpendLog {
+  id: string;
+  mediaBuyerId: string;
+  mediaBuyerName: string;
+  date: string;
+  platform: 'Facebook' | 'TikTok' | 'Google' | 'Instagram' | 'Snapchat';
+  campaignName: string;
+  productId?: string;
+  amount: number;
+  currency: CurrencyCode;
+  impressions?: number;
+  clicks?: number;
+  notes?: string;
 }
 
 export interface AICallLog {
@@ -368,6 +420,10 @@ export interface TokenTransaction {
   tokensChanged: number;
   tokenBalanceAfter: number;
   description: string;
+  amountPaidNgn?: number;
+  paymentReference?: string;
+  paymentMethod?: string;
+  orderNumber?: string;
 }
 
 export interface ReferralRecord {
@@ -396,7 +452,7 @@ export interface NotificationItem {
   title: string;
   message: string;
   timestamp: string;
-  type: 'order_assigned' | 'order_received' | 'delivery_completed' | 'low_stock' | 'cart_abandoned' | 'ai_call';
+  type: 'order_assigned' | 'order_received' | 'delivery_completed' | 'low_stock' | 'cart_abandoned' | 'ai_call' | 'info' | 'success';
   isRead: boolean;
   linkTab?: string;
   linkParam?: string;
@@ -446,6 +502,23 @@ export interface EmbedFormConfig {
   enableRedirect?: boolean;
   redirectUrl?: string;
   redirectDelaySeconds?: number;
+  showAltPhoneField?: boolean;
+  isAltPhoneRequired?: boolean;
+  formHeadline?: string;
+  formSubheadline?: string;
+  showWarningNotice?: boolean;
+  warningNotice?: string;
+  showTrustBadges?: boolean;
+  showUrgencyTimer?: boolean;
+  urgencyMinutes?: number;
+  showStockScarcity?: boolean;
+  stockScarcityUnits?: number;
+  metaPixelId?: string;
+  tiktokPixelId?: string;
+  googleTagId?: string;
+  packageDisplayStyle?: 'cards' | 'radio' | 'dropdown';
+  buttonSubtext?: string;
+  webhookUrl?: string;
 }
 
 export interface OrganizationSettings {

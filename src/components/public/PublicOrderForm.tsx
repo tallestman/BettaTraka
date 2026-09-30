@@ -14,7 +14,10 @@ import {
   ArrowRight,
   PhoneCall,
   Check,
-  ExternalLink
+  ExternalLink,
+  Flame,
+  ShieldAlert,
+  Timer
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -52,6 +55,7 @@ export const PublicOrderForm: React.FC = () => {
   // Customer info
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [altPhone, setAltPhone] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
@@ -164,6 +168,20 @@ export const PublicOrderForm: React.FC = () => {
       });
     }
 
+    // Include selected order bumps / upsells added from inventory
+    selectedBumps.forEach(bumpId => {
+      const bump = activeConfig.orderBumps.find(b => b.id === bumpId);
+      if (bump) {
+        orderItems.push({
+          productId: bump.productId || `bump-${bump.id}`,
+          productName: `⚡ UPSELL: ${bump.name}`,
+          quantity: 1,
+          unitPrice: bump.price,
+          packageName: 'Order Bump / Upsell'
+        });
+      }
+    });
+
     const newOrder = createOrder({
       customerName: name,
       customerPhone: phone,
@@ -199,9 +217,9 @@ export const PublicOrderForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 py-8 px-4 text-slate-100 flex flex-col justify-between">
+    <div className="min-h-screen bg-black py-4 sm:py-8 px-2.5 sm:px-4 text-slate-100 flex flex-col justify-between">
       {/* Top Demo Context Bar with Product Form Switcher */}
-      <div className="max-w-2xl mx-auto w-full mb-6 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs space-y-3 shadow-md">
+      <div className="max-w-2xl mx-auto w-full mb-4 sm:mb-6 p-3 sm:p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 text-xs space-y-2.5 sm:space-y-3 shadow-md">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -265,18 +283,50 @@ export const PublicOrderForm: React.FC = () => {
 
       {/* Main Order Form Card */}
       <div className="max-w-xl mx-auto w-full rounded-2xl border border-slate-800 bg-slate-900/90 shadow-2xl p-6 lg:p-8 space-y-6">
+        
+        {/* URGENCY & SCARCITY NOTICE (If enabled in form builder) */}
+        {(activeConfig.showUrgencyTimer || activeConfig.showStockScarcity) && (
+          <div className="space-y-2">
+            {activeConfig.showUrgencyTimer && (
+              <div className="bg-rose-950/60 border border-rose-800/80 rounded-xl p-2.5 text-center flex items-center justify-center gap-2 text-rose-300 text-xs font-bold">
+                <Flame className="w-4 h-4 text-rose-400 animate-pulse" />
+                <span>Special Promo Pricing Reserved For Next {activeConfig.urgencyMinutes || 15}:00 Mins</span>
+              </div>
+            )}
+            {activeConfig.showStockScarcity && (
+              <div className="bg-amber-950/60 border border-amber-800/80 rounded-xl p-2 text-center flex items-center justify-center gap-1.5 text-amber-300 text-xs font-semibold">
+                <Timer className="w-3.5 h-3.5 text-amber-400" />
+                <span>⚡ Only {activeConfig.stockScarcityUnits || 7} units remaining in stock today!</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Product Brand Header */}
         <div className="text-center space-y-2 pb-4 border-b border-slate-800">
           <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800/80 inline-flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5" /> 100% Cash On Delivery (POD)
           </span>
-          <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-white">
-            {selectedProduct.name}
+          <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-white uppercase">
+            {activeConfig.formHeadline || selectedProduct.name}
           </h1>
           <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
-            {selectedProduct.description}
+            {activeConfig.formSubheadline || selectedProduct.description}
           </p>
         </div>
+
+        {/* ANTI-FAKE-ORDER NOTICE BANNER */}
+        {activeConfig.showWarningNotice && (
+          <div className="p-3.5 rounded-xl border border-amber-600/70 bg-amber-950/40 text-amber-200 space-y-1 text-xs">
+            <div className="flex items-center gap-1.5 font-bold text-amber-300 text-xs">
+              <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>PLEASE READ BEFORE ORDERING:</span>
+            </div>
+            <p className="text-[11px] text-amber-100/90 leading-relaxed">
+              {activeConfig.warningNotice || '⚠️ Please do NOT submit this order form if you will be travelling in the next 48 hours or will not have cash/transfer ready at delivery.'}
+            </p>
+          </div>
+        )}
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="space-y-6 text-xs">
@@ -349,11 +399,15 @@ export const PublicOrderForm: React.FC = () => {
           {/* 2. ORDER BUMPS */}
           {activeConfig.orderBumps.length > 0 && (
             <div className="space-y-2.5 pt-2">
-              <label className="font-mono text-[11px] uppercase tracking-wider text-amber-400 font-bold">
-                Special One-Time Add-on Deals
+              <label className="font-mono text-[11px] uppercase tracking-wider text-amber-400 font-bold flex items-center gap-1.5">
+                <span>⚡ Special One-Time Add-on Deals</span>
               </label>
               {activeConfig.orderBumps.map((bump) => {
                 const isChecked = selectedBumps.includes(bump.id);
+                const origPrice = bump.originalPrice;
+                const hasDiscount = origPrice && origPrice > bump.price;
+                const discountPct = hasDiscount ? Math.round(((origPrice - bump.price) / origPrice) * 100) : 0;
+
                 return (
                   <div
                     key={bump.id}
@@ -362,25 +416,45 @@ export const PublicOrderForm: React.FC = () => {
                         isChecked ? prev.filter(id => id !== bump.id) : [...prev, bump.id]
                       );
                     }}
-                    className={`p-3 rounded-xl border cursor-pointer transition ${
-                      isChecked ? 'border-amber-500/80 bg-amber-950/20' : 'border-slate-800 bg-slate-950/40'
+                    className={`p-3.5 rounded-xl border cursor-pointer transition select-none ${
+                      isChecked 
+                        ? 'border-amber-500 bg-amber-950/30 ring-1 ring-amber-500/50' 
+                        : 'border-neutral-800 bg-neutral-950 hover:border-neutral-700'
                     }`}
                   >
-                    <div className="flex items-start gap-2.5">
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        readOnly
-                        className="mt-0.5 accent-amber-500"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="font-semibold text-white text-xs">{bump.name}</p>
-                          <span className="font-mono font-bold text-amber-400">
-                            +{formatCurrency(bump.price, 'NGN')}
-                          </span>
+                    <div className="flex items-start gap-3">
+                      <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition flex-shrink-0 ${
+                        isChecked ? 'bg-amber-500 border-amber-500 text-black' : 'border-neutral-700 bg-neutral-900'
+                      }`}>
+                        {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-bold text-white text-xs sm:text-sm">{bump.name}</span>
+                            {bump.badge && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                {bump.badge}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            {hasDiscount && (
+                              <span className="text-[11px] text-slate-500 line-through font-mono">
+                                {formatCurrency(origPrice, 'NGN')}
+                              </span>
+                            )}
+                            <span className="font-mono font-bold text-amber-400 text-xs sm:text-sm">
+                              +{formatCurrency(bump.price, 'NGN')}
+                            </span>
+                            {hasDiscount && (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800/60">
+                                SAVE {discountPct}%
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-[11px] text-slate-400 mt-0.5">{bump.description}</p>
+                        <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">{bump.description}</p>
                       </div>
                     </div>
                   </div>
@@ -430,6 +504,21 @@ export const PublicOrderForm: React.FC = () => {
                     className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 font-mono text-white focus:outline-none focus:border-emerald-500 text-xs"
                   />
                 </div>
+                {activeConfig.showAltPhoneField && (
+                  <div className="sm:col-span-2">
+                    <label className="text-slate-400 block mb-1">
+                      Alternative Phone Number {activeConfig.isAltPhoneRequired && <span className="text-red-400">*</span>}
+                    </label>
+                    <input
+                      type="tel"
+                      required={activeConfig.isAltPhoneRequired}
+                      placeholder="Backup MTN/Airtel/Glo line (in case primary is unreachable)"
+                      value={altPhone}
+                      onChange={(e) => setAltPhone(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 font-mono text-white focus:outline-none focus:border-emerald-500 text-xs"
+                    />
+                  </div>
+                )}
               </div>
 
               <div>
@@ -526,6 +615,38 @@ export const PublicOrderForm: React.FC = () => {
               <Lock className="w-4 h-4" />
               <span>{activeConfig.buttonText}</span>
             </button>
+
+            {activeConfig.buttonSubtext && (
+              <p className="text-center text-xs font-semibold text-emerald-400">
+                {activeConfig.buttonSubtext}
+              </p>
+            )}
+
+            {/* TRUST BADGES */}
+            {activeConfig.showTrustBadges && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-800 text-center">
+                <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 space-y-0.5">
+                  <span className="text-base block">🚚</span>
+                  <span className="font-bold text-[10px] text-white block">Nationwide Delivery</span>
+                  <span className="text-[9px] text-slate-400 block">Fast 24-48h dispatch</span>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 space-y-0.5">
+                  <span className="text-base block">💵</span>
+                  <span className="font-bold text-[10px] text-white block">Pay On Delivery</span>
+                  <span className="text-[9px] text-slate-400 block">Inspect before pay</span>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 space-y-0.5">
+                  <span className="text-base block">🛡️</span>
+                  <span className="font-bold text-[10px] text-white block">100% Genuine</span>
+                  <span className="text-[9px] text-slate-400 block">Original products</span>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 space-y-0.5">
+                  <span className="text-base block">🔄</span>
+                  <span className="font-bold text-[10px] text-white block">Easy Exchange</span>
+                  <span className="text-[9px] text-slate-400 block">Dedicated support</span>
+                </div>
+              </div>
+            )}
 
             <p className="text-center text-[10px] text-slate-500">
               🔒 Encrypted 256-bit checkout · Verified Nigerian POD courier dispatch

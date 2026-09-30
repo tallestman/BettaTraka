@@ -53,104 +53,116 @@ body, aside, header, main, div, button, input, select, textarea {
 
 /* =========================================================
    TRUE PITCH BLACK / NIGHT SETTING STYLES
-   Eliminates all blue/slate hue in night mode, delivering
-   pure OLED obsidian black backgrounds and dark cards.
+   Pure OLED pitch black backgrounds (#000000) and dark neutral cards.
+   Eliminates all blue/slate hue in night mode.
    ========================================================= */
 
+html:not(.light),
+html.dark {
+  background-color: #000000 !important;
+  color-scheme: dark;
+}
+
 html:not(.light) body,
-html.dark body {
+html.dark body,
+html:not(.light) #root,
+html.dark #root {
   background-color: #000000 !important;
   color: #f8fafc !important;
 }
 
-html:not(.light) .bg-slate-950,
-html.dark .bg-slate-950 {
+html:not(.light) main,
+html.dark main {
   background-color: #000000 !important;
 }
 
-html:not(.light) .bg-slate-900,
-html:not(.light) .bg-slate-900\/95,
-html:not(.light) .bg-slate-900\/90,
-html:not(.light) .bg-slate-900\/80,
-html:not(.light) .bg-slate-900\/70,
-html:not(.light) .bg-slate-900\/60,
-html:not(.light) .bg-slate-900\/40,
-html.dark .bg-slate-900,
-html.dark .bg-slate-900\/95,
-html.dark .bg-slate-900\/90,
-html.dark .bg-slate-900\/80,
-html.dark .bg-slate-900\/70,
-html.dark .bg-slate-900\/60,
-html.dark .bg-slate-900\/40 {
-  background-color: #0c0c0c !important;
+/* Base night backgrounds */
+html:not(.light) [class*="bg-slate-950"],
+html.dark [class*="bg-slate-950"],
+html:not(.light) .bg-slate-950,
+html.dark .bg-slate-950,
+html:not(.light) .bg-black,
+html.dark .bg-black {
+  background-color: #000000 !important;
 }
 
-html:not(.light) .bg-slate-950\/80,
-html:not(.light) .bg-slate-950\/60,
-html:not(.light) .bg-slate-950\/40,
+/* Neutral night cards - clean obsidian #0a0a0a, zero blue tint */
+html:not(.light) [class*="bg-slate-900"],
+html.dark [class*="bg-slate-900"],
+html:not(.light) [class*="bg-neutral-950"],
+html.dark [class*="bg-neutral-950"],
+html:not(.light) [class*="bg-[#090d14]"],
+html.dark [class*="bg-[#090d14]"],
+html:not(.light) .bg-slate-900,
+html.dark .bg-slate-900,
+html:not(.light) .bg-neutral-950,
+html.dark .bg-neutral-950 {
+  background-color: #0a0a0a !important;
+}
+
+/* Night elevated components & chips */
+html:not(.light) [class*="bg-slate-800"],
+html.dark [class*="bg-slate-800"],
+html:not(.light) [class*="bg-neutral-900"],
+html.dark [class*="bg-neutral-900"],
 html:not(.light) .bg-slate-800,
-html:not(.light) .bg-slate-800\/80,
-html:not(.light) .bg-slate-800\/60,
-html:not(.light) .bg-slate-800\/50,
-html:not(.light) .bg-slate-800\/40,
-html:not(.light) .bg-slate-800\/30,
-html:not(.light) .bg-slate-800\/20,
 html.dark .bg-slate-800,
-html.dark .bg-slate-800\/80,
-html.dark .bg-slate-800\/60,
-html.dark .bg-slate-800\/50,
-html.dark .bg-slate-800\/40 {
-  background-color: #161616 !important;
+html:not(.light) .bg-neutral-900,
+html.dark .bg-neutral-900 {
+  background-color: #141414 !important;
 }
 
 html:not(.light) .hover\:bg-slate-800:hover,
-html:not(.light) .hover\:bg-slate-800\/60:hover,
-html:not(.light) .hover\:bg-slate-800\/40:hover,
-html.dark .hover\:bg-slate-800:hover {
-  background-color: #222222 !important;
+html:not(.light) [class*="hover:bg-slate-800"]:hover,
+html:not(.light) [class*="hover:bg-neutral-900"]:hover,
+html:not(.light) [class*="hover:bg-neutral-800"]:hover,
+html.dark .hover\:bg-slate-800:hover,
+html.dark [class*="hover:bg-slate-800"]:hover,
+html.dark [class*="hover:bg-neutral-900"]:hover,
+html.dark [class*="hover:bg-neutral-800"]:hover {
+  background-color: #1c1c1c !important;
 }
 
-html:not(.light) .border-slate-800,
-html:not(.light) .border-slate-800\/80,
-html:not(.light) .border-slate-800\/60,
-html:not(.light) .border-slate-800\/50,
-html:not(.light) .border-slate-800\/40,
-html:not(.light) .border-slate-700,
-html:not(.light) .border-slate-700\/80,
-html:not(.light) .border-slate-700\/60,
-html:not(.light) .border-slate-700\/50,
-html:not(.light) .border-slate-600,
-html.dark .border-slate-800,
-html.dark .border-slate-700 {
-  border-color: #1e1e1e !important;
+/* Neutral borders in night mode - clean dark charcoal with zero blue */
+html:not(.light) [class*="border-slate-800"],
+html.dark [class*="border-slate-800"],
+html:not(.light) [class*="border-slate-700"],
+html.dark [class*="border-slate-700"],
+html:not(.light) [class*="border-slate-600"],
+html.dark [class*="border-slate-600"],
+html:not(.light) [class*="border-neutral-800"],
+html.dark [class*="border-neutral-800"],
+html:not(.light) [class*="border-neutral-700"],
+html.dark [class*="border-neutral-700"] {
+  border-color: #1f1f1f !important;
 }
 
-html:not(.light) .divide-slate-800\/60 > :not([hidden]) ~ :not([hidden]),
-html:not(.light) .divide-slate-800 > :not([hidden]) ~ :not([hidden]),
-html.dark .divide-slate-800 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #1e1e1e !important;
+html:not(.light) [class*="divide-slate-800"] > :not([hidden]) ~ :not([hidden]),
+html.dark [class*="divide-slate-800"] > :not([hidden]) ~ :not([hidden]),
+html:not(.light) [class*="divide-neutral-800"] > :not([hidden]) ~ :not([hidden]),
+html.dark [class*="divide-neutral-800"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1f1f1f !important;
 }
 
 /* Neutralize any legacy blue containers in night mode */
-html:not(.light) .bg-blue-950,
-html:not(.light) .bg-blue-950\/80,
-html:not(.light) .bg-blue-950\/60,
-html:not(.light) .bg-blue-950\/40,
-html:not(.light) .bg-blue-950\/20,
-html.dark .bg-blue-950 {
+html:not(.light) [class*="bg-blue-950"],
+html.dark [class*="bg-blue-950"] {
   background-color: rgba(5, 46, 22, 0.45) !important;
   border-color: rgba(6, 95, 70, 0.6) !important;
 }
 
-html:not(.light) .text-blue-400,
-html.dark .text-blue-400 {
+html:not(.light) [class*="text-blue-400"],
+html.dark [class*="text-blue-400"] {
   color: #34d399 !important;
 }
 
 /* Night mode inputs */
 html:not(.light) input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
 html:not(.light) select,
-html:not(.light) textarea {
+html:not(.light) textarea,
+html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+html.dark select,
+html.dark textarea {
   background-color: #0c0c0c !important;
   border-color: #242424 !important;
   color: #f8fafc !important;
@@ -158,7 +170,10 @@ html:not(.light) textarea {
 
 html:not(.light) input:focus,
 html:not(.light) select:focus,
-html:not(.light) textarea:focus {
+html:not(.light) textarea:focus,
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
   border-color: #059669 !important;
 }
 
@@ -167,103 +182,207 @@ html:not(.light) textarea:focus {
    Provides an ultra-clean, elegant, high-contrast Day setting
    ========================================================= */
 
-html.light body {
+html.light,
+html.light body,
+html.light #root {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  color-scheme: light;
+}
+
+html.light main,
+html.light .min-h-screen {
   background-color: #f8fafc !important;
   color: #0f172a !important;
 }
 
-html.light .bg-slate-950 {
+html.light .bg-slate-950,
+html.light [class*="bg-slate-950"],
+html.light .bg-black,
+html.light [class*="bg-black"]:not([class*="bg-black\/"]):not([class*="hover:bg-black"]) {
   background-color: #f8fafc !important;
   color: #0f172a !important;
 }
 
+/* Clean Daylight Header & Sidebar */
+html.light header {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+html.light aside {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html.light aside div[class*="bg-neutral-950"] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Daylight Cards & Surfaces */
 html.light .bg-slate-900,
 html.light .bg-slate-900\/95,
 html.light .bg-slate-900\/90,
 html.light .bg-slate-900\/80,
 html.light .bg-slate-900\/70,
 html.light .bg-slate-900\/60,
-html.light .bg-slate-900\/40 {
+html.light .bg-slate-900\/40,
+html.light [class*="bg-slate-900"],
+html.light [class*="bg-neutral-950"],
+html.light [class*="bg-[#090d14]"],
+html.light .bg-neutral-950 {
   background-color: #ffffff !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04) !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
 }
 
+/* Daylight Secondary Containers & Controls */
 html.light .bg-slate-950\/80,
 html.light .bg-slate-950\/60,
 html.light .bg-slate-950\/40,
 html.light .bg-slate-800,
-html.light .bg-slate-800\/80,
-html.light .bg-slate-800\/60,
-html.light .bg-slate-800\/50,
-html.light .bg-slate-800\/40,
-html.light .bg-slate-800\/30,
-html.light .bg-slate-800\/20 {
+html.light [class*="bg-slate-800"],
+html.light [class*="bg-neutral-900"]:not(button):not([class*="hover:"]),
+html.light .bg-neutral-900:not(button),
+html.light [class*="bg-black\/80"],
+html.light [class*="bg-black\/90"],
+html.light [class*="bg-black\/60"],
+html.light [class*="bg-black\/40"] {
   background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #1e293b !important;
 }
 
+/* Daylight Hover States */
 html.light .hover\:bg-slate-800:hover,
-html.light .hover\:bg-slate-800\/60:hover,
-html.light .hover\:bg-slate-800\/40:hover,
-html.light .hover\:bg-slate-800\/30:hover {
+html.light [class*="hover:bg-slate-800"]:hover,
+html.light [class*="hover:bg-neutral-900"]:hover,
+html.light [class*="hover:bg-neutral-800"]:hover {
   background-color: #e2e8f0 !important;
+  color: #0f172a !important;
 }
 
+/* Daylight Borders & Dividers */
 html.light .border-slate-800,
-html.light .border-slate-800\/80,
-html.light .border-slate-800\/60,
-html.light .border-slate-800\/50,
-html.light .border-slate-800\/40,
-html.light .border-slate-700,
-html.light .border-slate-700\/80,
-html.light .border-slate-700\/60,
-html.light .border-slate-700\/50,
-html.light .border-slate-600 {
+html.light [class*="border-slate-800"],
+html.light [class*="border-slate-700"],
+html.light [class*="border-slate-600"],
+html.light [class*="border-neutral-800"],
+html.light [class*="border-neutral-700"] {
   border-color: #e2e8f0 !important;
 }
 
 html.light .divide-slate-800\/60 > :not([hidden]) ~ :not([hidden]),
-html.light .divide-slate-800 > :not([hidden]) ~ :not([hidden]) {
+html.light [class*="divide-slate-800"] > :not([hidden]) ~ :not([hidden]),
+html.light [class*="divide-neutral-800"] > :not([hidden]) ~ :not([hidden]) {
   border-color: #e2e8f0 !important;
 }
 
-/* Light mode text colors */
-html.light .text-white,
-html.light .text-slate-100 {
-  color: #0f172a;
+/* Daylight Headings & Text */
+html.light h1,
+html.light h2,
+html.light h3,
+html.light h4,
+html.light h5,
+html.light h6 {
+  color: #0f172a !important;
 }
 
-html.light .text-slate-200 {
-  color: #1e293b;
+/* Non-button text in Daylight mode */
+html.light div:not([class*="bg-[#0088"]):not([class*="bg-[#0077"]):not([class*="bg-emerald-600"]):not([class*="bg-blue-6"]):not([class*="bg-red-6"]) > .text-white,
+html.light p.text-white,
+html.light span.text-white:not([class*="bg-"]):not(button *),
+html.light td .text-white,
+html.light .text-slate-100:not(button *) {
+  color: #0f172a !important;
 }
 
-html.light .text-slate-300 {
-  color: #334155;
+html.light .text-slate-200:not(button *) {
+  color: #1e293b !important;
 }
 
-html.light .text-slate-400 {
-  color: #64748b;
+html.light .text-slate-300:not(button *) {
+  color: #334155 !important;
 }
 
-html.light .text-slate-500 {
-  color: #94a3b8;
+html.light .text-slate-400:not(button *) {
+  color: #64748b !important;
 }
 
-/* Ensure button and badge text on solid colored backgrounds remains pure white in Light mode */
+html.light .text-slate-500:not(button *) {
+  color: #94a3b8 !important;
+}
+
+/* Preserve pure white text on solid/colored buttons in Light mode */
 html.light .bg-blue-600,
 html.light .bg-blue-500,
 html.light .bg-emerald-600,
 html.light .bg-emerald-500,
 html.light .bg-red-600,
 html.light .bg-indigo-600,
-html.light .bg-slate-900 button.bg-blue-600,
+html.light [class*="bg-[#0088ff]"],
+html.light [class*="bg-[#0077ee]"],
 html.light button.bg-emerald-600,
-html.light a.bg-emerald-600 {
+html.light a.bg-emerald-600,
+html.light button[class*="bg-[#0088ff]"],
+html.light button[class*="bg-[#0077ee]"] {
   color: #ffffff !important;
 }
 
 html.light button.bg-emerald-600 *,
-html.light a.bg-emerald-600 * {
+html.light a.bg-emerald-600 *,
+html.light [class*="bg-[#0088ff]"] *,
+html.light [class*="bg-[#0077ee]"] *,
+html.light .bg-emerald-600 *,
+html.light .bg-blue-600 * {
   color: #ffffff !important;
+}
+
+/* Secondary / Neutral dark buttons in Daylight mode */
+html.light button.bg-neutral-900,
+html.light button[class*="bg-neutral-900"],
+html.light button.bg-slate-900,
+html.light button[class*="bg-slate-900"],
+html.light div[class*="bg-neutral-900"] > button:not([class*="bg-[#0088ff]"]) {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+html.light button.bg-neutral-900:hover,
+html.light button[class*="bg-neutral-900"]:hover,
+html.light button.bg-slate-900:hover,
+html.light button[class*="bg-slate-900"]:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html.light button.bg-neutral-900 *,
+html.light button[class*="bg-neutral-900"] *,
+html.light button.bg-slate-900 *,
+html.light button[class*="bg-slate-900"] * {
+  color: #1e293b !important;
+}
+
+/* Delete / Danger buttons in Light mode */
+html.light button[class*="bg-red-950"],
+html.light [class*="bg-red-950"] {
+  background-color: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #dc2626 !important;
+}
+
+html.light button[class*="bg-red-950"]:hover {
+  background-color: #fee2e2 !important;
+}
+
+html.light button[class*="bg-red-950"] * {
+  color: #dc2626 !important;
 }
 
 /* Form inputs & controls in light mode */
@@ -278,13 +397,29 @@ html.light textarea {
 html.light input:focus:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
 html.light select:focus,
 html.light textarea:focus {
-  border-color: #059669 !important;
-  box-shadow: 0 0 0 1px #059669 !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 1px #0284c7 !important;
 }
 
 html.light input::placeholder,
 html.light textarea::placeholder {
   color: #94a3b8 !important;
+}
+
+/* Table headers & cells in light mode */
+html.light table th {
+  background-color: #f8fafc !important;
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light table td {
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html.light table tr:hover {
+  background-color: #f8fafc !important;
 }
 
 /* Light mode modal overlays */
@@ -293,7 +428,7 @@ html.light .bg-black\/85,
 html.light .bg-black\/75,
 html.light .bg-black\/70,
 html.light .bg-black\/50 {
-  background-color: rgba(15, 23, 42, 0.65) !important;
+  background-color: rgba(15, 23, 42, 0.55) !important;
   backdrop-filter: blur(8px) !important;
 }
 
@@ -305,6 +440,7 @@ html.light .bg-emerald-950\/40,
 html.light .bg-emerald-950\/20 {
   background-color: #ecfdf5 !important;
   border-color: #a7f3d0 !important;
+  color: #047857 !important;
 }
 
 html.light .text-emerald-400 {
@@ -318,9 +454,25 @@ html.light .bg-amber-950\/40,
 html.light .bg-amber-950\/20 {
   background-color: #fffbeb !important;
   border-color: #fde68a !important;
+  color: #b45309 !important;
 }
 
 html.light .text-amber-400,
 html.light .text-amber-300 {
   color: #d97706 !important;
+}
+
+html.light .bg-cyan-950,
+html.light .bg-cyan-950\/80 {
+  background-color: #ecfeff !important;
+  border-color: #a5f3fc !important;
+  color: #0891b2 !important;
+}
+
+html.light .text-cyan-400 {
+  color: #0891b2 !important;
+}
+
+html.light .text-sky-400 {
+  color: #0284c7 !important;
 }

@@ -13,6 +13,7 @@ import {
   Expense,
   CustomerRecord,
   MediaBuyer,
+  MediaBuyerSpendLog,
   AICallLog,
   TokenTransaction,
   ReferralRecord,
@@ -43,6 +44,7 @@ import {
   INITIAL_EXPENSES,
   INITIAL_CUSTOMERS,
   INITIAL_MEDIA_BUYERS,
+  INITIAL_MEDIA_BUYER_SPEND_LOGS,
   INITIAL_REMITTANCES,
   INITIAL_AI_LOGS,
   INITIAL_TOKEN_LEDGER,
@@ -68,6 +70,9 @@ interface CrmContextType {
   isMobileSidebarOpen: boolean;
   setIsMobileSidebarOpen: (open: boolean) => void;
   toggleMobileSidebar: () => void;
+  isSidebarCollapsed: boolean;
+  setIsSidebarCollapsed: (v: boolean | ((prev: boolean) => boolean)) => void;
+  toggleSidebarCollapse: () => void;
   
   // Organization & Currency
   settings: OrganizationSettings;
@@ -82,8 +87,9 @@ interface CrmContextType {
   users: User[];
   currentUser: User;
   setCurrentUser: (u: User) => void;
-  addUser: (user: Omit<User, 'id' | 'createdAt'>) => void;
+  addUser: (user: Omit<User, 'id' | 'createdAt'>) => User;
   updateUser: (id: string, updates: Partial<User>) => void;
+  deleteUser: (id: string) => void;
 
   // Products & Inventory
   products: Product[];
@@ -93,12 +99,19 @@ interface CrmContextType {
   addPackageToProduct: (productId: string, pkg: Omit<ProductPackage, 'id' | 'productId'>) => void;
   updatePackage: (productId: string, pkgId: string, updates: Partial<ProductPackage>) => void;
   deletePackageFromProduct: (productId: string, pkgId: string) => void;
+  deleteProduct: (id: string) => void;
 
   // Delivery Agents & Stock
   agents: DeliveryAgent[];
   agentStock: AgentStockItem[];
   stockMovements: StockMovement[];
+  addAgent: (agent: Omit<DeliveryAgent, 'id'>) => DeliveryAgent;
+  updateAgent: (id: string, updates: Partial<DeliveryAgent>) => void;
+  deleteAgent: (id: string) => void;
   assignStockToAgent: (agentId: string, productId: string, units: number) => void;
+  returnStockFromAgent: (agentId: string, productId: string, units: number, note?: string) => void;
+  setAgentStockLevel: (agentId: string, productId: string, unitsHeld: number, note?: string) => void;
+  addWarehouseStock: (productId: string, units: number, supplier?: string, note?: string) => void;
   transferStockAgentToAgent: (fromAgentId: string, toAgentId: string, productId: string, units: number) => void;
   reconcileAgentStock: (agentId: string, productId: string, defectiveDelta: number, missingDelta: number) => void;
 
@@ -122,6 +135,10 @@ interface CrmContextType {
   // Teams & Round Robin
   salesTeams: SalesTeam[];
   addSalesTeam: (team: Omit<SalesTeam, 'id'>) => void;
+  updateSalesTeam: (teamId: string, updates: Partial<SalesTeam>) => void;
+  deleteSalesTeam: (teamId: string) => void;
+  addRepToTeam: (teamId: string, repId: string) => void;
+  removeRepFromTeam: (teamId: string, repId: string) => void;
   roundRobin: RoundRobinState;
   updateRoundRobinPool: (poolType: 'order' | 'cart', repId: string, updates: { weight?: number; isIncluded?: number | boolean; isAvailable?: boolean }) => void;
   skipRoundRobinRep: (poolType: 'order' | 'cart') => void;
@@ -130,6 +147,8 @@ interface CrmContextType {
   // Expenses & Remittances
   expenses: Expense[];
   addExpense: (expense: Omit<Expense, 'id'>) => void;
+  updateExpense: (id: string, updates: Partial<Expense>) => void;
+  deleteExpense: (id: string) => void;
   remittances: Remittance[];
   markRemittanceAsPaid: (remittanceId: string) => void;
 
@@ -145,12 +164,18 @@ interface CrmContextType {
   // Media Buyers
   mediaBuyers: MediaBuyer[];
   addMediaBuyer: (buyer: Omit<MediaBuyer, 'id'>) => void;
+  updateMediaBuyer: (id: string, updates: Partial<MediaBuyer>) => void;
+  deleteMediaBuyer: (id: string) => void;
+  mediaBuyerSpendLogs: MediaBuyerSpendLog[];
+  addMediaBuyerSpendLog: (log: Omit<MediaBuyerSpendLog, 'id'>) => void;
+  deleteMediaBuyerSpendLog: (id: string) => void;
 
   // AI & Tokens
   aiLogs: AICallLog[];
   triggerAICall: (orderId: string) => void;
   tokenTransactions: TokenTransaction[];
-  buyTokens: (amount: number, costNgn: number) => void;
+  buyTokens: (amount: number, costNgn: number, paymentRef?: string, paymentMethod?: string) => void;
+  allocateTokens: (amount: number, note?: string) => void;
 
   // Chat & Notifications
   chatMessages: ChatMessage[];
@@ -158,6 +183,9 @@ interface CrmContextType {
   notifications: NotificationItem[];
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
+  deleteNotification: (id: string) => void;
+  deleteReadNotifications: () => void;
+  clearAllNotifications: () => void;
   addNotification: (n: Omit<NotificationItem, 'id' | 'timestamp' | 'isRead'>) => void;
 
   // Referrals
@@ -188,6 +216,28 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [repActiveTab, setRepActiveTab] = useState<string>('dashboard');
   const [invActiveTab, setInvActiveTab] = useState<string>('inventory');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsedState] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_sidebar_collapsed`);
+      return saved === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const setIsSidebarCollapsed = (val: boolean | ((prev: boolean) => boolean)) => {
+    setIsSidebarCollapsedState(prev => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      try {
+        localStorage.setItem(`${STORAGE_KEY}_sidebar_collapsed`, String(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const toggleSidebarCollapse = () => {
+    setIsSidebarCollapsed(prev => !prev);
+  };
 
   const toggleMobileSidebar = () => setIsMobileSidebarOpen(prev => !prev);
   const setAdminActiveTab = (tab: string) => {
@@ -212,7 +262,16 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateSettings = (newSettings: Partial<OrganizationSettings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
+    setSettings(prev => {
+      const next = { ...prev, ...newSettings };
+      if (newSettings.themeMode && newSettings.themeMode !== themeMode) {
+        setThemeModeState(newSettings.themeMode);
+        try {
+          localStorage.setItem(`${STORAGE_KEY}_theme`, newSettings.themeMode);
+        } catch (e) {}
+      }
+      return next;
+    });
   };
 
   // Day (Light) and Night (Dark) mode state
@@ -232,6 +291,14 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       localStorage.setItem(`${STORAGE_KEY}_theme`, mode);
     } catch (e) {}
+    const root = document.documentElement;
+    if (mode === 'light') {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    } else {
+      root.classList.remove('light');
+      root.classList.add('dark');
+    }
   };
 
   const toggleThemeMode = () => {
@@ -367,6 +434,15 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return saved ? JSON.parse(saved) : INITIAL_MEDIA_BUYERS;
     } catch {
       return INITIAL_MEDIA_BUYERS;
+    }
+  });
+
+  const [mediaBuyerSpendLogs, setMediaBuyerSpendLogs] = useState<MediaBuyerSpendLog[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_media_buyer_spends`);
+      return saved ? JSON.parse(saved) : INITIAL_MEDIA_BUYER_SPEND_LOGS;
+    } catch {
+      return INITIAL_MEDIA_BUYER_SPEND_LOGS;
     }
   });
 
@@ -565,6 +641,7 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem(`${STORAGE_KEY}_orders`, JSON.stringify(orders));
       localStorage.setItem(`${STORAGE_KEY}_carts`, JSON.stringify(abandonedCarts));
       localStorage.setItem(`${STORAGE_KEY}_stock_movements`, JSON.stringify(stockMovements));
+      localStorage.setItem(`${STORAGE_KEY}_teams`, JSON.stringify(salesTeams));
       localStorage.setItem(`${STORAGE_KEY}_expenses`, JSON.stringify(expenses));
       localStorage.setItem(`${STORAGE_KEY}_remittances`, JSON.stringify(remittances));
       localStorage.setItem(`${STORAGE_KEY}_customers`, JSON.stringify(customers));
@@ -573,10 +650,12 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem(`${STORAGE_KEY}_notifications`, JSON.stringify(notifications));
       localStorage.setItem(`${STORAGE_KEY}_order_forms`, JSON.stringify(orderForms));
       localStorage.setItem(`${STORAGE_KEY}_form_config`, JSON.stringify(formConfig));
+      localStorage.setItem(`${STORAGE_KEY}_media_buyers`, JSON.stringify(mediaBuyers));
+      localStorage.setItem(`${STORAGE_KEY}_media_buyer_spends`, JSON.stringify(mediaBuyerSpendLogs));
     } catch {
       // LocalStorage quotas handled silently
     }
-  }, [settings, users, products, agents, agentStock, orders, abandonedCarts, stockMovements, expenses, remittances, customers, roundRobin, chatMessages, notifications, formConfig, orderForms]);
+  }, [settings, users, products, agents, agentStock, orders, abandonedCarts, stockMovements, salesTeams, expenses, remittances, customers, roundRobin, chatMessages, notifications, formConfig, orderForms]);
 
   // Round-Robin Assignment helper
   const getNextAssignedRep = (poolType: 'order' | 'cart', customerPhone?: string): { repId: string; repName: string } => {
@@ -1002,6 +1081,10 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
+  const deleteProduct = (id: string) => {
+    setProducts(prev => prev.filter(p => p.id !== id));
+  };
+
   // Stock assignment & transfer
   const assignStockToAgent = (agentId: string, productId: string, units: number) => {
     const agent = agents.find(a => a.id === agentId);
@@ -1036,6 +1119,105 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toLocation: agent.name,
         quantity: units,
         referenceOrderOrAgent: `Dispatched to ${agent.primaryZone}`
+      },
+      ...m
+    ]);
+  };
+
+  const returnStockFromAgent = (agentId: string, productId: string, units: number, note?: string) => {
+    const agent = agents.find(a => a.id === agentId);
+    const prod = products.find(p => p.id === productId);
+    if (!agent || !prod || units <= 0) return;
+
+    const existing = agentStock.find(s => s.agentId === agentId && s.productId === productId);
+    const currentHeld = existing?.unitsHeld || 0;
+    const actualReturn = Math.min(units, currentHeld);
+    if (actualReturn <= 0) return;
+
+    setAgentStock(prev => prev.map(s => {
+      if (s.agentId === agentId && s.productId === productId) {
+        return { ...s, unitsHeld: Math.max(0, s.unitsHeld - actualReturn) };
+      }
+      return s;
+    }));
+
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, stockWarehouse: p.stockWarehouse + actualReturn } : p));
+
+    setAgents(prev => prev.map(a => a.id === agentId ? { ...a, totalStockHeld: Math.max(0, a.totalStockHeld - actualReturn) } : a));
+
+    setStockMovements(m => [
+      {
+        id: `mov-${Date.now()}`,
+        date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        productId: prod.id,
+        productName: prod.name,
+        type: 'Agent Return to Warehouse',
+        fromLocation: `${agent.name} (${agent.primaryZone})`,
+        toLocation: 'Central Warehouse (Ikeja)',
+        quantity: actualReturn,
+        referenceOrderOrAgent: note || `Returned to central warehouse`
+      },
+      ...m
+    ]);
+  };
+
+  const addWarehouseStock = (productId: string, units: number, supplier?: string, note?: string) => {
+    const prod = products.find(p => p.id === productId);
+    if (!prod || units <= 0) return;
+
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, stockWarehouse: p.stockWarehouse + units } : p));
+
+    setStockMovements(m => [
+      {
+        id: `mov-${Date.now()}`,
+        date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        productId: prod.id,
+        productName: prod.name,
+        type: 'Restock',
+        fromLocation: supplier || 'Supplier Inflow',
+        toLocation: 'Central Warehouse (Ikeja)',
+        quantity: units,
+        referenceOrderOrAgent: note || 'Batch restock received'
+      },
+      ...m
+    ]);
+  };
+
+  const setAgentStockLevel = (agentId: string, productId: string, unitsHeld: number, note?: string) => {
+    const agent = agents.find(a => a.id === agentId);
+    const prod = products.find(p => p.id === productId);
+    if (!agent || !prod) return;
+
+    const safeUnits = Math.max(0, unitsHeld);
+    setAgentStock(prev => {
+      const existing = prev.find(s => s.agentId === agentId && s.productId === productId);
+      if (existing) {
+        return prev.map(s => s.agentId === agentId && s.productId === productId ? { ...s, unitsHeld: safeUnits } : s);
+      } else {
+        return [...prev, { agentId, productId, unitsHeld: safeUnits, defectiveUnits: 0, missingUnits: 0 }];
+      }
+    });
+
+    setAgents(prev => prev.map(a => {
+      if (a.id === agentId) {
+        const otherStocks = agentStock.filter(s => s.agentId === agentId && s.productId !== productId);
+        const total = otherStocks.reduce((sum, s) => sum + s.unitsHeld, 0) + safeUnits;
+        return { ...a, totalStockHeld: total };
+      }
+      return a;
+    }));
+
+    setStockMovements(m => [
+      {
+        id: `mov-${Date.now()}`,
+        date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        productId: prod.id,
+        productName: prod.name,
+        type: 'Warehouse to Agent',
+        fromLocation: 'Stock Calibration',
+        toLocation: `${agent.name} (${agent.primaryZone})`,
+        quantity: safeUnits,
+        referenceOrderOrAgent: note || `Stock level set to ${safeUnits} units`
       },
       ...m
     ]);
@@ -1087,23 +1269,72 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
+  const addAgent = (agentData: Omit<DeliveryAgent, 'id'>): DeliveryAgent => {
+    const newAgent: DeliveryAgent = {
+      ...agentData,
+      id: `agent-${Date.now()}`
+    };
+    setAgents(prev => [newAgent, ...prev]);
+    return newAgent;
+  };
+
+  const updateAgent = (id: string, updates: Partial<DeliveryAgent>) => {
+    setAgents(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
+  };
+
+  const deleteAgent = (id: string) => {
+    setAgents(prev => prev.filter(a => a.id !== id));
+    setAgentStock(prev => prev.filter(s => s.agentId !== id));
+  };
+
   // Users
-  const addUser = (userData: Omit<User, 'id' | 'createdAt'>) => {
+  const addUser = (userData: Omit<User, 'id' | 'createdAt'>): User => {
     const newUser: User = {
       ...userData,
       id: `user-${Date.now()}`,
       createdAt: new Date().toISOString().split('T')[0]
     };
     setUsers(prev => [...prev, newUser]);
+    return newUser;
   };
 
   const updateUser = (id: string, updates: Partial<User>) => {
     setUsers(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u));
   };
 
+  const deleteUser = (id: string) => {
+    setUsers(prev => prev.filter(u => u.id !== id));
+  };
+
   // Teams & Round Robin
   const addSalesTeam = (team: Omit<SalesTeam, 'id'>) => {
     setSalesTeams(prev => [...prev, { ...team, id: `team-${Date.now()}` }]);
+  };
+
+  const updateSalesTeam = (teamId: string, updates: Partial<SalesTeam>) => {
+    setSalesTeams(prev => prev.map(t => t.id === teamId ? { ...t, ...updates } : t));
+  };
+
+  const deleteSalesTeam = (teamId: string) => {
+    setSalesTeams(prev => prev.filter(t => t.id !== teamId));
+    setUsers(prev => prev.map(u => u.teamId === teamId ? { ...u, teamId: undefined } : u));
+  };
+
+  const addRepToTeam = (teamId: string, repId: string) => {
+    setSalesTeams(prev => prev.map(t => {
+      if (t.id !== teamId) return t;
+      if (t.repIds.includes(repId)) return t;
+      return { ...t, repIds: [...t.repIds, repId] };
+    }));
+    setUsers(prev => prev.map(u => u.id === repId ? { ...u, teamId } : u));
+  };
+
+  const removeRepFromTeam = (teamId: string, repId: string) => {
+    setSalesTeams(prev => prev.map(t => {
+      if (t.id !== teamId) return t;
+      return { ...t, repIds: t.repIds.filter(id => id !== repId) };
+    }));
+    setUsers(prev => prev.map(u => (u.id === repId && u.teamId === teamId) ? { ...u, teamId: undefined } : u));
   };
 
   const updateRoundRobinPool = (poolType: 'order' | 'cart', repId: string, updates: { weight?: number; isIncluded?: number | boolean; isAvailable?: boolean }) => {
@@ -1151,6 +1382,14 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setExpenses(prev => [newExp, ...prev]);
   };
 
+  const updateExpense = (id: string, updates: Partial<Expense>) => {
+    setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+  };
+
+  const deleteExpense = (id: string) => {
+    setExpenses(prev => prev.filter(e => e.id !== id));
+  };
+
   const markRemittanceAsPaid = (remittanceId: string) => {
     setRemittances(prev => prev.map(r => r.id === remittanceId ? { ...r, status: 'Remitted', remittedAt: new Date().toISOString() } : r));
   };
@@ -1165,13 +1404,43 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setMediaBuyers(prev => [...prev, { ...buyer, id: `mb-${Date.now()}` }]);
   };
 
+  const updateMediaBuyer = (id: string, updates: Partial<MediaBuyer>) => {
+    setMediaBuyers(prev => prev.map(mb => mb.id === id ? { ...mb, ...updates } : mb));
+  };
+
+  const deleteMediaBuyer = (id: string) => {
+    setMediaBuyers(prev => prev.filter(mb => mb.id !== id));
+  };
+
+  const addMediaBuyerSpendLog = (log: Omit<MediaBuyerSpendLog, 'id'>) => {
+    const newLog: MediaBuyerSpendLog = {
+      ...log,
+      id: `spend-${Date.now()}`
+    };
+    setMediaBuyerSpendLogs(prev => [newLog, ...prev]);
+    // Also increment recorded spend on the media buyer
+    setMediaBuyers(prev => prev.map(mb => {
+      if (mb.id === log.mediaBuyerId) {
+        return {
+          ...mb,
+          totalSpendRecorded: (mb.totalSpendRecorded || 0) + log.amount
+        };
+      }
+      return mb;
+    }));
+  };
+
+  const deleteMediaBuyerSpendLog = (id: string) => {
+    setMediaBuyerSpendLogs(prev => prev.filter(s => s.id !== id));
+  };
+
   // AI Calling & Tokens
   const triggerAICall = (orderId: string) => {
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
 
     if (settings.tokenBalance < 2) {
-      alert("Insufficient AI tokens! Please top up your token pack.");
+      alert("Insufficient AI tokens! Please allocate more tokens under Token Metering in admin view.");
       return;
     }
 
@@ -1210,9 +1479,13 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateOrderStatus(orderId, 'CONFIRMED');
   };
 
-  const buyTokens = (amount: number, costNgn: number) => {
+  const buyTokens = (amount: number, costNgn: number, paymentRef?: string, paymentMethod?: string) => {
     const newBal = settings.tokenBalance + amount;
+    const ref = paymentRef || `PSTK-TK-${Date.now().toString().slice(-8)}`;
+    const method = paymentMethod || 'Paystack (Card / USSD)';
+    
     setSettings(prev => ({ ...prev, tokenBalance: newBal }));
+    
     setTokenTransactions(prev => [
       {
         id: `tok-${Date.now()}`,
@@ -1220,10 +1493,61 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         type: 'Purchase',
         tokensChanged: amount,
         tokenBalanceAfter: newBal,
-        description: `Purchased ${amount} Tokens (₦${costNgn.toLocaleString()})`
+        description: `Purchased ${amount} Tokens (${method})`,
+        amountPaidNgn: costNgn,
+        paymentReference: ref,
+        paymentMethod: method
       },
       ...prev
     ]);
+
+    // Automatically record as an operating expense for transparent P&L tracking
+    setExpenses(prev => [
+      {
+        id: `exp-${Date.now()}`,
+        description: `AI Voice & SMS Token Pack (${amount} tokens)`,
+        amount: costNgn,
+        type: 'Software & Tools',
+        date: new Date().toISOString().split('T')[0],
+        currency: 'NGN',
+        reference: ref
+      },
+      ...prev
+    ]);
+
+    addNotification({
+      title: 'Tokens Credited Successfully',
+      message: `Purchased ${amount} tokens for ₦${costNgn.toLocaleString()}. New balance: ${newBal} tokens. Ref: ${ref}`,
+      type: 'success'
+    });
+  };
+
+  const allocateTokens = (amount: number, note?: string) => {
+    const newBal = settings.tokenBalance + amount;
+    const ref = `ADM-ALLOC-${Date.now().toString().slice(-6)}`;
+    const description = note || `Admin System Token Allocation (+${amount} Tokens)`;
+    
+    setSettings(prev => ({ ...prev, tokenBalance: newBal }));
+    
+    setTokenTransactions(prev => [
+      {
+        id: `alloc-${Date.now()}`,
+        date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        type: 'Bonus Credit',
+        tokensChanged: amount,
+        tokenBalanceAfter: newBal,
+        description,
+        paymentReference: ref,
+        paymentMethod: 'Admin Direct Allocation'
+      },
+      ...prev
+    ]);
+
+    addNotification({
+      title: 'System Tokens Allocated',
+      message: `Allocated +${amount} tokens to system quota. Available: ${newBal} tokens.`,
+      type: 'success'
+    });
   };
 
   // Chat & Notifications
@@ -1255,6 +1579,18 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const markAllNotificationsAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
+
+  const deleteNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const deleteReadNotifications = () => {
+    setNotifications(prev => prev.filter(n => !n.isRead));
+  };
+
+  const clearAllNotifications = () => {
+    setNotifications([]);
   };
 
   // Referrals
@@ -1330,6 +1666,9 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isMobileSidebarOpen,
         setIsMobileSidebarOpen,
         toggleMobileSidebar,
+        isSidebarCollapsed,
+        setIsSidebarCollapsed,
+        toggleSidebarCollapse,
         settings,
         updateSettings,
         currency,
@@ -1339,6 +1678,7 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCurrentUser,
         addUser,
         updateUser,
+        deleteUser,
         products,
         addProduct,
         updateProduct,
@@ -1346,10 +1686,17 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addPackageToProduct,
         updatePackage,
         deletePackageFromProduct,
+        deleteProduct,
         agents,
         agentStock,
         stockMovements,
+        addAgent,
+        updateAgent,
+        deleteAgent,
         assignStockToAgent,
+        returnStockFromAgent,
+        setAgentStockLevel,
+        addWarehouseStock,
         transferStockAgentToAgent,
         reconcileAgentStock,
         orders,
@@ -1367,12 +1714,18 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         convertCartToOrder,
         salesTeams,
         addSalesTeam,
+        updateSalesTeam,
+        deleteSalesTeam,
+        addRepToTeam,
+        removeRepFromTeam,
         roundRobin,
         updateRoundRobinPool,
         skipRoundRobinRep,
         resetRoundRobinSequence,
         expenses,
         addExpense,
+        updateExpense,
+        deleteExpense,
         remittances,
         markRemittanceAsPaid,
         payrollRuns,
@@ -1382,15 +1735,24 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toggleCustomerBlock,
         mediaBuyers,
         addMediaBuyer,
+        updateMediaBuyer,
+        deleteMediaBuyer,
+        mediaBuyerSpendLogs,
+        addMediaBuyerSpendLog,
+        deleteMediaBuyerSpendLog,
         aiLogs,
         triggerAICall,
         tokenTransactions,
         buyTokens,
+        allocateTokens,
         chatMessages,
         sendChatMessage,
         notifications,
         markNotificationAsRead,
         markAllNotificationsAsRead,
+        deleteNotification,
+        deleteReadNotifications,
+        clearAllNotifications,
         addNotification,
         referrals,
         requestReferralPayout,

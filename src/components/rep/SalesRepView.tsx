@@ -21,7 +21,8 @@ import {
   TrendingUp,
   Plus,
   Eye,
-  ArrowRight
+  ArrowRight,
+  LogOut
 } from 'lucide-react';
 
 export const SalesRepView: React.FC = () => {
@@ -36,14 +37,29 @@ export const SalesRepView: React.FC = () => {
     updateOrderStatus,
     users,
     chatMessages,
-    sendChatMessage
+    sendChatMessage,
+    setPersona,
+    addNotification
   } = useCrm();
 
   const [repTab, setRepTab] = useState<string>('dashboard');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [targetExtraDeliveries, setTargetExtraDeliveries] = useState<number>(10);
   const [chatInput, setChatInput] = useState('');
+
+  const handleLogout = () => {
+    setShowLogoutConfirm(false);
+    setPersona('marketing');
+    if (addNotification) {
+      addNotification({
+        title: 'Signed Out',
+        message: 'You have been logged out of your session.',
+        type: 'info'
+      });
+    }
+  };
 
   // Rep-specific assigned data
   const myOrders = orders.filter(o => o.salesRepId === currentUser.id);
@@ -66,43 +82,58 @@ export const SalesRepView: React.FC = () => {
   return (
     <div className="flex h-[calc(100vh-3.5rem)] bg-slate-950">
       {/* Rep Left Sidebar */}
-      <aside className="w-56 bg-slate-900 border-r border-slate-800 flex flex-col p-3 space-y-1 select-none">
-        <div className="pb-3 border-b border-slate-800 mb-2">
-          <p className="font-semibold text-white text-xs">{currentUser.name}</p>
-          <p className="text-[10px] text-emerald-400 font-mono">Sales Representative</p>
+      <aside className="w-56 bg-slate-900 border-r border-slate-800 flex flex-col justify-between p-3 select-none">
+        <div className="space-y-1">
+          <div className="pb-3 border-b border-slate-800 mb-2">
+            <p className="font-semibold text-white text-xs">{currentUser.name}</p>
+            <p className="text-[10px] text-emerald-400 font-mono">Sales Representative</p>
+          </div>
+
+          {[
+            { id: 'dashboard', label: 'My Dashboard', icon: TrendingUp },
+            { id: 'orders', label: 'My Orders', icon: ShoppingCart, badge: myPendingOrders.length },
+            { id: 'abandoned', label: 'My Abandoned Carts', icon: PhoneCall, badge: myCarts.filter(c => c.status === 'ASSIGNED').length },
+            { id: 'agent-stock', label: 'Agent Inventory', icon: Package },
+            { id: 'leaderboard', label: 'Rep Leaderboard', icon: Trophy },
+            { id: 'chat', label: 'Team Chat', icon: MessageSquare },
+            { id: 'settings', label: 'My Settings', icon: Settings },
+          ].map((item) => {
+            const Icon = item.icon;
+            const isActive = repTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setRepTab(item.id)}
+                className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
+                  isActive ? 'bg-emerald-600 text-white font-semibold' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{item.label}</span>
+                </div>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className="font-mono text-[10px] bg-emerald-950 text-emerald-400 px-1.5 rounded">
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        {[
-          { id: 'dashboard', label: 'My Dashboard', icon: TrendingUp },
-          { id: 'orders', label: 'My Orders', icon: ShoppingCart, badge: myPendingOrders.length },
-          { id: 'abandoned', label: 'My Abandoned Carts', icon: PhoneCall, badge: myCarts.filter(c => c.status === 'ASSIGNED').length },
-          { id: 'agent-stock', label: 'Agent Inventory', icon: Package },
-          { id: 'leaderboard', label: 'Rep Leaderboard', icon: Trophy },
-          { id: 'chat', label: 'Team Chat', icon: MessageSquare },
-          { id: 'settings', label: 'My Settings', icon: Settings },
-        ].map((item) => {
-          const Icon = item.icon;
-          const isActive = repTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setRepTab(item.id)}
-              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
-                isActive ? 'bg-emerald-600 text-white font-semibold' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Icon className="w-3.5 h-3.5" />
-                <span>{item.label}</span>
-              </div>
-              {item.badge !== undefined && item.badge > 0 && (
-                <span className="font-mono text-[10px] bg-emerald-950 text-emerald-400 px-1.5 rounded">
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
+        {/* Rep Bottom Session & Log Out */}
+        <div className="pt-3 border-t border-slate-800 space-y-2 mt-4">
+          <button
+            type="button"
+            onClick={() => setShowLogoutConfirm(true)}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/30 hover:border-rose-500/50 text-xs font-semibold transition cursor-pointer"
+            title="Log Out of Session"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Log Out</span>
+          </button>
+        </div>
       </aside>
 
       {/* Main Rep Content Area */}
@@ -386,6 +417,41 @@ export const SalesRepView: React.FC = () => {
 
       {showCreateModal && (
         <CreateOrderModal onClose={() => setShowCreateModal(false)} />
+      )}
+
+      {/* Log Out Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-sm rounded-2xl border border-neutral-800 bg-neutral-950 p-6 space-y-4 shadow-2xl text-slate-100">
+            <div className="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
+              <LogOut className="w-6 h-6" />
+            </div>
+
+            <div className="text-center space-y-1">
+              <h3 className="text-base font-bold text-white">Log Out of BettaTraka?</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                You will be signed out of your sales representative session.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-2 px-3 rounded-xl border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-slate-200 text-xs font-semibold transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow transition cursor-pointer"
+              >
+                Yes, Log Out
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

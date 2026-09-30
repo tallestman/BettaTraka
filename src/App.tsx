@@ -14,11 +14,14 @@ import { ScheduledDeliveriesView } from './components/admin/ScheduledDeliveriesV
 import { DeliveriesView } from './components/admin/DeliveriesView';
 import { InventoryView } from './components/admin/InventoryView';
 import { SalesRepsView, SalesTeamsView } from './components/admin/SalesRepsAndTeams';
+import { TeamPerformanceView } from './components/admin/TeamPerformanceView';
 import { DeliveryAgentsView } from './components/admin/DeliveryAgentsView';
 import { PayrollView } from './components/admin/PayrollView';
 import { CustomersView, ExpensesView } from './components/admin/CustomersAndExpenses';
-import { FinancialReportsView, AdTrackingView, RemittancesView } from './components/admin/ReportsAndTracking';
-import { RoundRobinView, EmbedFormGeneratorView, AIAgentAndTokensView } from './components/admin/AutomationAndAI';
+import { FinancialReportsView, OrderReportsView, AdTrackingView, RemittancesView, MediaBuyersView } from './components/admin/ReportsAndTracking';
+import { RoundRobinView, EmbedFormGeneratorView } from './components/admin/AutomationAndAI';
+import { AIAgentAndTokensView } from './components/admin/TokensAndAIAgentView';
+import { NotificationsView } from './components/admin/NotificationsView';
 import { 
   UserManagementView, 
   TeamChatView, 
@@ -84,19 +87,23 @@ function MainLayout() {
           {adminActiveTab === 'deliveries' && <DeliveriesView />}
           {adminActiveTab === 'inventory' && <InventoryView />}
           {adminActiveTab === 'sales-reps' && <SalesRepsView />}
-          {(adminActiveTab === 'sales-teams' || adminActiveTab === 'team-performance') && <SalesTeamsView />}
+          {adminActiveTab === 'sales-teams' && <SalesTeamsView />}
+          {adminActiveTab === 'team-performance' && <TeamPerformanceView />}
           {adminActiveTab === 'agents' && <DeliveryAgentsView />}
           {adminActiveTab === 'payroll' && <PayrollView />}
           {adminActiveTab === 'customers' && <CustomersView />}
           {adminActiveTab === 'expenses' && <ExpensesView />}
-          {(adminActiveTab === 'financial-reports' || adminActiveTab === 'order-reports') && <FinancialReportsView />}
-          {(adminActiveTab === 'ad-tracking' || adminActiveTab === 'media-buyers') && <AdTrackingView />}
+          {adminActiveTab === 'financial-reports' && <FinancialReportsView />}
+          {adminActiveTab === 'order-reports' && <OrderReportsView />}
+          {adminActiveTab === 'ad-tracking' && <AdTrackingView />}
+          {adminActiveTab === 'media-buyers' && <MediaBuyersView />}
           {adminActiveTab === 'round-robin' && <RoundRobinView />}
           {adminActiveTab === 'embed-forms' && <EmbedFormGeneratorView />}
           {adminActiveTab === 'remittances' && <RemittancesView />}
           {(adminActiveTab === 'ai-agent' || adminActiveTab === 'ai-sandbox' || adminActiveTab === 'tokens') && <AIAgentAndTokensView />}
           {adminActiveTab === 'users' && <UserManagementView />}
           {adminActiveTab === 'team-chat' && <TeamChatView />}
+          {adminActiveTab === 'notifications' && <NotificationsView />}
           {adminActiveTab === 'integrations' && <IntegrationsView />}
           {adminActiveTab === 'referrals' && <ReferralsView />}
           {(adminActiveTab === 'settings' || adminActiveTab === 'support' || adminActiveTab === 'subscription' || adminActiveTab === 'email-usage' || adminActiveTab === 'academy') && (

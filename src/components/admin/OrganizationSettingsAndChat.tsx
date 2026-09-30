@@ -22,120 +22,8 @@ import {
 } from 'lucide-react';
 import { PWAInstallButton } from '../common/PWAInstallButton';
 
-export const UserManagementView: React.FC = () => {
-  const { users, addUser, updateUser } = useCrm();
-  const [selectedUserForPerms, setSelectedUserForPerms] = useState<User | null>(null);
-
-  return (
-    <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800">
-        <div>
-          <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            User Management & Opt-In Permissions
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Role-based access control. Managers see nothing by default until opted-in per operational category.
-          </p>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-slate-800 bg-slate-900/40 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-slate-800 bg-slate-950/60 text-[11px] font-mono text-slate-400">
-                <th className="py-3 px-4 font-medium">User Profile</th>
-                <th className="py-3 px-4 font-medium">Assigned Role</th>
-                <th className="py-3 px-4 font-medium">Status</th>
-                <th className="py-3 px-4 font-medium">Joined Date</th>
-                <th className="py-3 px-4 font-medium text-right">Access Controls</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {users.map((u) => (
-                <tr key={u.id} className="hover:bg-slate-800/30 transition-colors">
-                  <td className="py-3 px-4">
-                    <p className="font-semibold text-white">{u.name}</p>
-                    <p className="text-[10px] text-slate-400">{u.email}</p>
-                  </td>
-                  <td className="py-3 px-4 text-slate-300 font-mono text-[11px]">{u.role}</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-950 text-emerald-400 border border-emerald-800/60">
-                      {u.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-slate-400 font-mono">{u.createdAt}</td>
-                  <td className="py-3 px-4 text-right">
-                    <button
-                      onClick={() => setSelectedUserForPerms(u)}
-                      className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 font-medium"
-                    >
-                      Permissions ({u.role === 'Manager' ? 'Opt-In Matrix' : 'Standard'})
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Permissions Modal */}
-      {selectedUserForPerms && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-xl rounded-xl border border-slate-700 bg-slate-900 shadow-2xl p-6 text-slate-100 max-h-[85vh] overflow-y-auto">
-            <h3 className="font-semibold text-white text-base mb-1">
-              Permission Scopes: {selectedUserForPerms.name} ({selectedUserForPerms.role})
-            </h3>
-            <p className="text-xs text-slate-400 mb-4">
-              Toggle specific category modules permitted for this staff member.
-            </p>
-
-            <div className="space-y-4 text-xs">
-              <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
-                <span className="font-mono uppercase text-emerald-400 font-bold text-[10px]">1. SALES MODULES</span>
-                <div className="grid grid-cols-2 gap-2 text-slate-300">
-                  <label className="flex items-center gap-2"><input type="checkbox" defaultChecked className="accent-emerald-500" /> Orders Access</label>
-                  <label className="flex items-center gap-2"><input type="checkbox" defaultChecked className="accent-emerald-500" /> Sales Reps Dashboard</label>
-                  <label className="flex items-center gap-2"><input type="checkbox" defaultChecked className="accent-emerald-500" /> Customers CRM</label>
-                  <label className="flex items-center gap-2"><input type="checkbox" defaultChecked className="accent-emerald-500" /> Deliveries Queue</label>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
-                <span className="font-mono uppercase text-cyan-400 font-bold text-[10px]">2. OPERATIONS & STOCK</span>
-                <div className="grid grid-cols-2 gap-2 text-slate-300">
-                  <label className="flex items-center gap-2"><input type="checkbox" defaultChecked className="accent-emerald-500" /> Delivery Agents Hub</label>
-                  <label className="flex items-center gap-2"><input type="checkbox" defaultChecked className="accent-emerald-500" /> Global Inventory</label>
-                  <label className="flex items-center gap-2"><input type="checkbox" className="accent-emerald-500" /> Round Robin Config</label>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
-                <span className="font-mono uppercase text-amber-400 font-bold text-[10px]">3. FINANCE & ACCOUNTING</span>
-                <div className="grid grid-cols-2 gap-2 text-slate-300">
-                  <label className="flex items-center gap-2"><input type="checkbox" className="accent-emerald-500" /> Financial Reports & P&L</label>
-                  <label className="flex items-center gap-2"><input type="checkbox" className="accent-emerald-500" /> Expenses Recording</label>
-                  <label className="flex items-center gap-2"><input type="checkbox" defaultChecked className="accent-emerald-500" /> Agent Remittances</label>
-                  <label className="flex items-center gap-2"><input type="checkbox" className="accent-emerald-500" /> Payroll Run & Bonus</label>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 mt-4 border-t border-slate-800 flex justify-end">
-              <button
-                onClick={() => setSelectedUserForPerms(null)}
-                className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs"
-              >
-                Save Permissions
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+export { UserManagementView } from './UserManagementView';
+export { IntegrationsView } from './IntegrationsView';
 
 export const TeamChatView: React.FC = () => {
   const { chatMessages, sendChatMessage, currentUser } = useCrm();
@@ -186,81 +74,6 @@ export const TeamChatView: React.FC = () => {
           <Send className="w-3.5 h-3.5" /> Send
         </button>
       </form>
-    </div>
-  );
-};
-
-export const IntegrationsView: React.FC = () => {
-  return (
-    <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto">
-      <div className="pb-2 border-b border-slate-800">
-        <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-          Store & Marketing Integrations
-        </h1>
-        <p className="text-xs text-slate-400 mt-1">
-          Connect your WooCommerce store, Shopify, Meta CAPI Pixel, and WhatsApp Business API.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* WooCommerce */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-3 text-xs">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-white text-sm">WooCommerce Webhook</h3>
-            <span className="text-emerald-400 font-mono text-[10px]">CONNECTED</span>
-          </div>
-          <p className="text-slate-400">
-            Automatically ingests orders into BettaTraka upon customer submission.
-          </p>
-          <div className="space-y-1 font-mono text-[11px]">
-            <span className="text-slate-500 block">Webhook URL:</span>
-            <input readOnly value="https://api.bettatraka.com/v1/webhooks/woocommerce/ord_live_891" className="w-full bg-slate-950 border border-slate-800 rounded p-1.5 text-slate-300 text-[11px]" />
-          </div>
-        </div>
-
-        {/* WhatsApp Business Meta Cloud API */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-3 text-xs">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-white text-sm">WhatsApp Business Cloud API</h3>
-            <span className="text-emerald-400 font-mono text-[10px]">ACTIVE</span>
-          </div>
-          <p className="text-slate-400">
-            Official Meta Cloud API connection for automated dispatch tracking messages and rep notifications.
-          </p>
-          <button className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200">
-            Send Test Customer Message
-          </button>
-        </div>
-
-        {/* Meta Conversions API (CAPI) */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-3 text-xs">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-white text-sm">Meta Conversions API (CAPI)</h3>
-            <span className="text-emerald-400 font-mono text-[10px]">ACTIVE</span>
-          </div>
-          <p className="text-slate-400">
-            Sends server-side Lead and Purchase events to your Meta Pixel ID to optimize ad conversion delivery.
-          </p>
-          <div className="space-y-1 font-mono text-[11px]">
-            <span className="text-slate-500 block">Pixel ID:</span>
-            <input readOnly value="908124981729012" className="w-full bg-slate-950 border border-slate-800 rounded p-1.5 text-slate-300 text-[11px]" />
-          </div>
-        </div>
-
-        {/* Shopify Store */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-3 text-xs">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-white text-sm">Shopify Store App</h3>
-            <span className="text-slate-400 font-mono text-[10px]">READY</span>
-          </div>
-          <p className="text-slate-400">
-            Sync inventory and orders directly from your Shopify store into BettaTraka.
-          </p>
-          <button className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-medium">
-            Connect Shopify Store
-          </button>
-        </div>
-      </div>
     </div>
   );
 };
@@ -329,60 +142,80 @@ export const SettingsAndSupportView: React.FC = () => {
       </div>
 
       {/* Theme: Night & Day Settings */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-4">
+      <div className={`rounded-xl border p-5 space-y-4 transition ${
+        themeMode === 'light' 
+          ? 'bg-white border-slate-200 shadow-sm text-slate-900' 
+          : 'bg-neutral-950 border-neutral-800 text-white'
+      }`}>
         <div>
-          <h3 className="font-semibold text-white text-sm flex items-center gap-2">
+          <h3 className="font-semibold text-sm flex items-center gap-2">
             <span>Appearance & Theme Settings</span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/60">
-              {themeMode === 'dark' ? 'Night Setting Active' : 'Day Setting Active'}
+            <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+              themeMode === 'dark'
+                ? 'bg-emerald-950 text-emerald-400 border-emerald-800/60'
+                : 'bg-amber-100 text-amber-800 border-amber-300'
+            }`}>
+              {themeMode === 'dark' ? 'Night Setting Active (Pure Black)' : 'Day Setting Active (Clean White)'}
             </span>
           </h3>
-          <p className="text-slate-400 mt-1">
-            Choose between an ultra-clean high-contrast Day setting or a refined dark Night setting.
+          <p className={`mt-1 text-xs ${themeMode === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+            Choose between an ultra-clean high-contrast Day setting or a pure OLED pitch-black Night setting with zero blue hue.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          {/* Night Setting Card */}
           <div
             onClick={() => setThemeMode('dark')}
             className={`p-4 rounded-xl border cursor-pointer transition ${
               themeMode === 'dark' 
                 ? 'border-emerald-500 bg-emerald-950/20 ring-1 ring-emerald-500/50' 
-                : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'
+                : themeMode === 'light'
+                ? 'border-slate-200 bg-slate-50/80 hover:border-slate-300 text-slate-800'
+                : 'border-neutral-800 bg-neutral-900 hover:border-neutral-700'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center text-emerald-400">
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                  themeMode === 'light' ? 'bg-slate-200 text-slate-700' : 'bg-neutral-900 text-emerald-400'
+                }`}>
                   <Moon className="w-4 h-4" />
                 </div>
-                <span className="font-bold text-white text-xs">Night Mode (Dark)</span>
+                <span className={`font-bold text-xs ${themeMode === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                  Night Setting (Pure Black)
+                </span>
               </div>
               {themeMode === 'dark' && <span className="w-2 h-2 rounded-full bg-emerald-400" />}
             </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Refined deep titanium & obsidian palette. Reduces eye fatigue during long shifts and evening dispatch monitoring.
+            <p className={`text-[11px] leading-relaxed ${themeMode === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+              Pure OLED obsidian black background (#000000) with zero blue tint. Maximizes battery life, reduces glare, and provides extreme contrast.
             </p>
           </div>
 
+          {/* Day Setting Card */}
           <div
             onClick={() => setThemeMode('light')}
             className={`p-4 rounded-xl border cursor-pointer transition ${
               themeMode === 'light' 
-                ? 'border-emerald-500 bg-emerald-950/20 ring-1 ring-emerald-500/50' 
-                : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'
+                ? 'border-amber-500 bg-amber-50/90 ring-1 ring-amber-500/40 text-slate-900 shadow-sm' 
+                : 'border-neutral-800 bg-neutral-900/60 hover:border-neutral-700 text-slate-300'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                  themeMode === 'light' ? 'bg-amber-100 text-amber-600' : 'bg-amber-500/10 text-amber-500'
+                }`}>
                   <Sun className="w-4 h-4" />
                 </div>
-                <span className="font-bold text-white text-xs">Day Mode (Light)</span>
+                <span className={`font-bold text-xs ${themeMode === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                  Day Setting (Clean White)
+                </span>
               </div>
-              {themeMode === 'light' && <span className="w-2 h-2 rounded-full bg-emerald-400" />}
+              {themeMode === 'light' && <span className="w-2 h-2 rounded-full bg-amber-500" />}
             </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
+            <p className={`text-[11px] leading-relaxed ${themeMode === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
               Paper-white gallery setting with crisp slate text and high contrast. Ideal for bright offices and daylight viewing.
             </p>
           </div>

@@ -11,6 +11,7 @@ import {
   Expense, 
   CustomerRecord, 
   MediaBuyer, 
+  MediaBuyerSpendLog,
   AICallLog, 
   TokenTransaction, 
   ReferralRecord, 
@@ -82,14 +83,13 @@ export const INITIAL_ORG_SETTINGS: OrganizationSettings = {
 export const INITIAL_USERS: User[] = [
   {
     id: 'user-admin',
-    name: 'Emmanuel Oamen (You)',
-    email: 'admin@apexbrands.ng',
+    name: 'Desmond Ufuoma Okosi',
+    email: 'ifuoma.pay@gmail.com',
     phone: '+234 803 111 2233',
     role: 'Owner',
     status: 'Active',
     createdAt: '2026-01-10',
-    payStructure: 'Fixed',
-    fixedSalary: 850000
+    payStructure: 'Not set'
   },
   {
     id: 'user-rep-1',
@@ -180,6 +180,10 @@ export const INITIAL_PRODUCTS: Product[] = [
     unitCost: 4500,
     sellingPrice: 24500,
     stockWarehouse: 480,
+    reorderThreshold: 200,
+    reorderQuantity: 500,
+    leadTimeDays: 14,
+    supplierName: 'Guangzhou Biotech OEM',
     category: 'Beauty & Skincare',
     pricing: [
       { currency: 'NGN', sellingPrice: 24500, baseCost: 4500, landedCost: 6500, marginPercent: 73.5 },
@@ -238,6 +242,10 @@ export const INITIAL_PRODUCTS: Product[] = [
     unitCost: 8200,
     sellingPrice: 32000,
     stockWarehouse: 290,
+    reorderThreshold: 300,
+    reorderQuantity: 400,
+    leadTimeDays: 12,
+    supplierName: 'Shenzhen Titan Tech',
     category: 'Gadgets & Tech',
     pricing: [
       { currency: 'NGN', sellingPrice: 32000, baseCost: 8200, landedCost: 11000, marginPercent: 65.6 },
@@ -626,6 +634,126 @@ export const INITIAL_ORDERS: Order[] = [
     deliveredDate: '2026-09-24T18:00:00Z',
     fulfillmentDays: 2,
     createdAt: '2026-09-22T10:30:00Z'
+  },
+  {
+    id: 'ord-10499',
+    orderNumber: 'ORD-10499',
+    customerName: 'Mrs. Kemi Johnson',
+    customerPhone: '+234 803 112 3344',
+    deliveryAddress: 'Block 4, Admiralty Way, Lekki Phase 1',
+    deliveryCity: 'Lagos',
+    deliveryState: 'Lagos',
+    items: [
+      {
+        productId: 'prod-1',
+        productName: 'Bella Glow Herbal Clarifying 4-Piece Set',
+        quantity: 1,
+        unitPrice: 24500,
+        packageName: 'Single Complete Set',
+        packageId: 'pkg-1-single'
+      }
+    ],
+    totalAmount: 24500,
+    currency: 'NGN',
+    source: 'Order Form',
+    salesRepId: 'user-rep-1',
+    salesRepName: 'Chioma Adeyemi',
+    agentId: 'agent-1',
+    agentName: 'Musa Garba Express (Lagos Mainland)',
+    status: 'DELIVERED',
+    deliveredDate: '2026-09-27T14:20:00Z',
+    fulfillmentDays: 1,
+    createdAt: '2026-09-27T08:30:00Z'
+  },
+  {
+    id: 'ord-10500',
+    orderNumber: 'ORD-10500',
+    customerName: 'Captain Ibrahim Bello',
+    customerPhone: '+234 809 445 6677',
+    deliveryAddress: 'Wuse 2, Near Banex Plaza',
+    deliveryCity: 'Abuja',
+    deliveryState: 'FCT (Abuja)',
+    items: [
+      {
+        productId: 'prod-2',
+        productName: 'Titan Pro Smartwatch POD Edition',
+        quantity: 1,
+        unitPrice: 32000,
+        packageName: 'Titan Pro Smartwatch (1 Unit)',
+        packageId: 'pkg-2-single'
+      }
+    ],
+    totalAmount: 32000,
+    currency: 'NGN',
+    source: 'Order Form',
+    salesRepId: 'user-rep-2',
+    salesRepName: 'Emeka Okafor',
+    agentId: 'agent-4',
+    agentName: 'Chinedu Eze Speed Deliveries',
+    status: 'DELIVERED',
+    deliveredDate: '2026-09-27T15:10:00Z',
+    fulfillmentDays: 1,
+    createdAt: '2026-09-27T09:45:00Z'
+  },
+  {
+    id: 'ord-10501',
+    orderNumber: 'ORD-10501',
+    customerName: 'Hajiya Zainab Danladi',
+    customerPhone: '+234 814 332 9900',
+    deliveryAddress: 'No. 8 Bompai Road, Fagge',
+    deliveryCity: 'Kano',
+    deliveryState: 'Kano',
+    items: [
+      {
+        productId: 'prod-3',
+        productName: 'AeroKnee Dual Spring Compression Sleeve',
+        quantity: 2,
+        unitPrice: 32000,
+        packageName: '2 Pairs Pack',
+        packageId: 'pkg-3-double'
+      }
+    ],
+    totalAmount: 32000,
+    currency: 'NGN',
+    source: 'TikTok',
+    salesRepId: 'user-rep-3',
+    salesRepName: 'Fatima Dangote',
+    agentId: 'agent-3',
+    agentName: 'Samuel Dike Dispatch (Abuja/North)',
+    status: 'DELIVERED',
+    deliveredDate: '2026-09-27T16:00:00Z',
+    fulfillmentDays: 1,
+    createdAt: '2026-09-27T11:20:00Z'
+  },
+  {
+    id: 'ord-10502',
+    orderNumber: 'ORD-10502',
+    customerName: 'Dr. Obinna Okeke',
+    customerPhone: '+234 802 771 8833',
+    deliveryAddress: 'Victoria Island, Bishop Oluwole St',
+    deliveryCity: 'Lagos',
+    deliveryState: 'Lagos',
+    items: [
+      {
+        productId: 'prod-1',
+        productName: 'Bella Glow Herbal Clarifying 4-Piece Set',
+        quantity: 2,
+        unitPrice: 42000,
+        packageName: 'Double Treatment Bundle',
+        packageId: 'pkg-1-double'
+      }
+    ],
+    totalAmount: 42000,
+    currency: 'NGN',
+    source: 'Order Form',
+    salesRepId: 'user-rep-4',
+    salesRepName: 'Tunde Balogun',
+    agentId: 'agent-2',
+    agentName: 'Kunle Ajayi Express',
+    status: 'DELIVERED',
+    deliveredDate: '2026-09-27T16:40:00Z',
+    fulfillmentDays: 1,
+    createdAt: '2026-09-27T10:15:00Z'
   }
 ];
 
@@ -795,12 +923,34 @@ export const INITIAL_ROUND_ROBIN: RoundRobinState = {
 
 export const INITIAL_EXPENSES: Expense[] = [
   {
+    id: 'exp-today-1',
+    date: '2026-09-28',
+    type: 'Meta / TikTok Ads',
+    amount: 35000,
+    currency: 'NGN',
+    description: 'Meta Ads Mastercard daily budget for Bella Glow & Titan Watch',
+    productId: 'prod-1',
+    productName: 'Bella Glow Herbal Clarifying 4-Piece Set',
+    reference: 'FB-ADS-SEP28'
+  },
+  {
+    id: 'exp-today-2',
+    date: '2026-09-28',
+    type: 'Agent Delivery Fees',
+    amount: 18000,
+    currency: 'NGN',
+    description: 'Daily doorstep rider dispatch allowances & bike fuel (Lagos & Abuja)',
+    reference: 'RIDER-DISPATCH-928'
+  },
+  {
     id: 'exp-1',
     date: '2026-09-24',
     type: 'Meta / TikTok Ads',
     amount: 145000,
     currency: 'NGN',
     description: 'Meta Ads Mastercard billing for Bella Clarifying Sept campaign',
+    productId: 'prod-1',
+    productName: 'Bella Glow Herbal Clarifying 4-Piece Set',
     reference: 'FB-ADS-INV-9901'
   },
   {
@@ -831,6 +981,37 @@ export const INITIAL_EXPENSES: Expense[] = [
     currency: 'NGN',
     description: 'BettaTraka Growth Plan Monthly Renewal',
     reference: 'BT-SUB-SEP26'
+  },
+  {
+    id: 'exp-5',
+    date: '2026-09-10',
+    type: 'Product Manufacturing',
+    amount: 210000,
+    currency: 'NGN',
+    description: 'Local packaging boxes & customized tamper-evident POD tape',
+    productId: 'prod-3',
+    productName: 'AeroKnee Dual Spring Compression Sleeve',
+    reference: 'PKG-BATCH-402'
+  },
+  {
+    id: 'exp-6',
+    date: '2026-08-25',
+    type: 'Meta / TikTok Ads',
+    amount: 180000,
+    currency: 'NGN',
+    description: 'TikTok Ads Agency Top-up August Scale Campaign',
+    productId: 'prod-2',
+    productName: 'Titan Pro Smartwatch POD Edition',
+    reference: 'TT-ADS-AUG'
+  },
+  {
+    id: 'exp-7',
+    date: '2026-08-14',
+    type: 'Office & Staff',
+    amount: 45000,
+    currency: 'NGN',
+    description: 'Ikeja Central Warehouse generator fuel & facility maintenance',
+    reference: 'FACILITY-AUG'
   }
 ];
 
@@ -903,21 +1084,148 @@ export const INITIAL_CUSTOMERS: CustomerRecord[] = [
 export const INITIAL_MEDIA_BUYERS: MediaBuyer[] = [
   {
     id: 'mb-1',
-    name: 'Kayode Daniels (Growth Lead)',
+    name: 'Kayode Daniels',
     email: 'kayode.ads@growthpilot.ng',
+    phone: '+234 802 881 9922',
     budgetMonthly: 1200000,
     blendedCpa: 2850,
+    targetCpa: 3000,
     activeCampaigns: ['clarifying_glow_sept26', 'skincare_retargeting_v2'],
-    teamId: 'team-lagos'
+    teamId: 'team-lagos',
+    trafficPlatform: 'Facebook & Instagram',
+    status: 'Active',
+    commissionType: 'per_delivered_order',
+    commissionRate: 1500,
+    totalSpendRecorded: 840000,
+    joinedDate: '2026-03-10',
+    notes: 'Handles high-volume beauty and skincare offers. Consistently achieves >85% delivery rate.'
   },
   {
     id: 'mb-2',
-    name: 'Blessing Amadi Media',
+    name: 'Blessing Amadi',
     email: 'blessing@amplifimedia.co',
+    phone: '+234 813 445 6677',
     budgetMonthly: 850000,
     blendedCpa: 3100,
+    targetCpa: 3200,
     activeCampaigns: ['smartwatch_gadget_review', 'knee_pain_elderly_relief'],
-    teamId: 'team-abuja'
+    teamId: 'team-abuja',
+    trafficPlatform: 'TikTok Ads',
+    status: 'Active',
+    commissionType: 'percentage_revenue',
+    commissionRate: 5,
+    totalSpendRecorded: 620000,
+    joinedDate: '2026-05-15',
+    notes: 'Specializes in TikTok UGC video creatives and gadget campaigns.'
+  },
+  {
+    id: 'mb-3',
+    name: 'Samuel Okon (Alpha Ads)',
+    email: 'samuel@alphaadventures.ng',
+    phone: '+234 809 112 3344',
+    budgetMonthly: 950000,
+    blendedCpa: 2600,
+    targetCpa: 2800,
+    activeCampaigns: ['titan_amoled_oct_launch', 'posture_corrector_scale'],
+    teamId: 'team-lagos',
+    trafficPlatform: 'TikTok & Meta Ads',
+    status: 'Active',
+    commissionType: 'per_delivered_order',
+    commissionRate: 1800,
+    totalSpendRecorded: 510000,
+    joinedDate: '2026-06-01',
+    notes: 'Scales winner ad sets with strict cost cap bidding.'
+  },
+  {
+    id: 'mb-4',
+    name: 'Damilola Wright',
+    email: 'damilola.w@digitalscale.com',
+    phone: '+234 701 556 7788',
+    budgetMonthly: 500000,
+    blendedCpa: 3450,
+    targetCpa: 3500,
+    activeCampaigns: ['herbal_hair_growth_test'],
+    teamId: 'team-kano',
+    trafficPlatform: 'Google Search & YouTube',
+    status: 'Paused',
+    commissionType: 'fixed_monthly',
+    commissionRate: 150000,
+    totalSpendRecorded: 290000,
+    joinedDate: '2026-07-20',
+    notes: 'Testing Google Intent Search ads for high-ticket COD items.'
+  }
+];
+
+export const INITIAL_MEDIA_BUYER_SPEND_LOGS: MediaBuyerSpendLog[] = [
+  {
+    id: 'spend-1',
+    mediaBuyerId: 'mb-1',
+    mediaBuyerName: 'Kayode Daniels',
+    date: '2026-09-27',
+    platform: 'Facebook',
+    campaignName: 'clarifying_glow_sept26',
+    productId: 'prod-1',
+    amount: 45000,
+    currency: 'NGN',
+    impressions: 28400,
+    clicks: 620,
+    notes: 'Advantage+ Shopping campaign scaling'
+  },
+  {
+    id: 'spend-2',
+    mediaBuyerId: 'mb-1',
+    mediaBuyerName: 'Kayode Daniels',
+    date: '2026-09-26',
+    platform: 'Facebook',
+    campaignName: 'skincare_retargeting_v2',
+    productId: 'prod-1',
+    amount: 32000,
+    currency: 'NGN',
+    impressions: 19500,
+    clicks: 410,
+    notes: 'Retargeting website visitors 7 days'
+  },
+  {
+    id: 'spend-3',
+    mediaBuyerId: 'mb-2',
+    mediaBuyerName: 'Blessing Amadi',
+    date: '2026-09-27',
+    platform: 'TikTok',
+    campaignName: 'smartwatch_gadget_review',
+    productId: 'prod-2',
+    amount: 38000,
+    currency: 'NGN',
+    impressions: 42000,
+    clicks: 890,
+    notes: 'Spark ads with creator unboxing'
+  },
+  {
+    id: 'spend-4',
+    mediaBuyerId: 'mb-2',
+    mediaBuyerName: 'Blessing Amadi',
+    date: '2026-09-25',
+    platform: 'TikTok',
+    campaignName: 'knee_pain_elderly_relief',
+    productId: 'prod-3',
+    amount: 25000,
+    currency: 'NGN',
+    impressions: 31000,
+    clicks: 530,
+    notes: 'Broad targeting 35-65 age group'
+  },
+  {
+    id: 'spend-5',
+    mediaBuyerId: 'mb-3',
+    mediaBuyerName: 'Samuel Okon (Alpha Ads)',
+    date: '2026-09-27',
+    platform: 'TikTok',
+    campaignName: 'titan_amoled_oct_launch',
+    productId: 'prod-2',
+    amount: 35000,
+    currency: 'NGN',
+    impressions: 36000,
+    clicks: 740,
+    notes: 'New creative test variant B'
   }
 ];
 
@@ -932,10 +1240,13 @@ export const INITIAL_REMITTANCES: Remittance[] = [
     customerName: 'Folake Adeleke',
     customerPhone: '+234 802 341 9988',
     productSummary: '2x Bella Glow Set Bundle',
-    amountToRemit: 39500, // ₦42,000 collected - ₦2,500 agent dispatch cut
+    orderTotal: 42000,
+    deliveryFeeDeducted: 2500,
+    amountToRemit: 39500,
     currency: 'NGN',
     deliveredDate: '2026-09-25',
-    status: 'Pending'
+    status: 'Pending',
+    notes: 'Awaiting Friday bulk reconciliation.'
   },
   {
     id: 'remit-2',
@@ -947,11 +1258,89 @@ export const INITIAL_REMITTANCES: Remittance[] = [
     customerName: 'Festus Oghenero',
     customerPhone: '+234 807 554 9922',
     productSummary: '1x Titan Pro Smartwatch',
-    amountToRemit: 29500, // ₦32,000 - ₦2,500 agent cut
+    orderTotal: 32000,
+    deliveryFeeDeducted: 2500,
+    amountToRemit: 29500,
     currency: 'NGN',
     deliveredDate: '2026-09-24',
     status: 'Remitted',
-    remittedAt: '2026-09-25 11:30'
+    remittedAt: '2026-09-25 11:30',
+    paymentReference: 'GTB-TRF-908124',
+    notes: 'Direct GTBank transfer received.'
+  },
+  {
+    id: 'remit-3',
+    orderId: 'ord-10500',
+    orderNumber: 'ORD-10500',
+    agentId: 'agent-1',
+    agentName: 'Musa Garba Express',
+    agentZone: 'Lagos Mainland',
+    customerName: 'Hajiya Maryam Al-Hassan',
+    customerPhone: '+234 803 219 0044',
+    productSummary: '2x Clarifying Face Cream',
+    orderTotal: 48000,
+    deliveryFeeDeducted: 2500,
+    amountToRemit: 45500,
+    currency: 'NGN',
+    deliveredDate: '2026-09-27',
+    status: 'Pending',
+    notes: 'Customer transferred cash on doorstep.'
+  },
+  {
+    id: 'remit-4',
+    orderId: 'ord-10501',
+    orderNumber: 'ORD-10501',
+    agentId: 'agent-4',
+    agentName: 'Chinedu Eze Speed Deliveries',
+    agentZone: 'Rivers (Port Harcourt)',
+    customerName: 'Dr. Patrick Okon',
+    customerPhone: '+234 818 772 1199',
+    productSummary: '1x Titanium Smart Band Pro',
+    orderTotal: 36000,
+    deliveryFeeDeducted: 2500,
+    amountToRemit: 33500,
+    currency: 'NGN',
+    deliveredDate: '2026-09-27',
+    status: 'Pending',
+    notes: 'Delivered to GRA Phase 2.'
+  },
+  {
+    id: 'remit-5',
+    orderId: 'ord-10502',
+    orderNumber: 'ORD-10502',
+    agentId: 'agent-3',
+    agentName: 'Samuel Dike Dispatch',
+    agentZone: 'Abuja (FCT)',
+    customerName: 'Fatima Sanusi',
+    customerPhone: '+234 809 332 5588',
+    productSummary: '1x Herbal Rejuvenation Kit',
+    orderTotal: 32000,
+    deliveryFeeDeducted: 2500,
+    amountToRemit: 29500,
+    currency: 'NGN',
+    deliveredDate: '2026-09-27',
+    status: 'Pending',
+    notes: 'Gwarinpa Estate delivery.'
+  },
+  {
+    id: 'remit-6',
+    orderId: 'ord-10503',
+    orderNumber: 'ORD-10503',
+    agentId: 'agent-2',
+    agentName: 'Kunle Ajayi Express',
+    agentZone: 'Lagos Island',
+    customerName: 'Engr. Gbenga Ade',
+    customerPhone: '+234 802 884 1122',
+    productSummary: '1x Complete Glow Collection',
+    orderTotal: 42000,
+    deliveryFeeDeducted: 2500,
+    amountToRemit: 39500,
+    currency: 'NGN',
+    deliveredDate: '2026-09-27',
+    status: 'Remitted',
+    remittedAt: '2026-09-28 14:15',
+    paymentReference: 'ZEN-TRF-441098',
+    notes: 'Zenith Bank instant payment.'
   }
 ];
 
@@ -996,7 +1385,10 @@ export const INITIAL_TOKEN_LEDGER: TokenTransaction[] = [
     type: 'Purchase',
     tokensChanged: 500,
     tokenBalanceAfter: 524,
-    description: 'Purchased Pro Token Pack (₦75,000 via Paystack)'
+    description: 'Admin Quota Allocation: High-Volume Telephony Pool',
+    amountPaidNgn: 0,
+    paymentReference: 'ADM-ALLOC-908124',
+    paymentMethod: 'Admin Direct Allocation'
   },
   {
     id: 'tok-2',
@@ -1004,7 +1396,8 @@ export const INITIAL_TOKEN_LEDGER: TokenTransaction[] = [
     type: 'AI Call Used',
     tokensChanged: -2,
     tokenBalanceAfter: 522,
-    description: 'Vapi Voice Confirmation Call: ORD-10494 (1m 24s)'
+    description: 'Vapi Voice Confirmation Call: ORD-10494 (Hajiya Aisha Bello, 1m 24s)',
+    orderNumber: 'ORD-10494'
   },
   {
     id: 'tok-3',
@@ -1012,7 +1405,37 @@ export const INITIAL_TOKEN_LEDGER: TokenTransaction[] = [
     type: 'SMS Sent',
     tokensChanged: -1,
     tokenBalanceAfter: 521,
-    description: 'Automated Dispatch SMS to Customer (ORD-10494)'
+    description: 'Automated Dispatch SMS to Customer (ORD-10494)',
+    orderNumber: 'ORD-10494'
+  },
+  {
+    id: 'tok-4',
+    date: '2026-09-26 11:15',
+    type: 'AI Call Used',
+    tokensChanged: -2,
+    tokenBalanceAfter: 519,
+    description: 'Vapi Voice Confirmation Call: ORD-10497 (Chiamaka Onyekwelu, 58s)',
+    orderNumber: 'ORD-10497'
+  },
+  {
+    id: 'tok-5',
+    date: '2026-09-27 14:00',
+    type: 'Purchase',
+    tokensChanged: 150,
+    tokenBalanceAfter: 669,
+    description: 'Admin Quota Allocation: Production Telephony Provision',
+    amountPaidNgn: 0,
+    paymentReference: 'ADM-ALLOC-338192',
+    paymentMethod: 'Admin Direct Allocation'
+  },
+  {
+    id: 'tok-6',
+    date: '2026-09-27 16:30',
+    type: 'SMS Sent',
+    tokensChanged: -1,
+    tokenBalanceAfter: 668,
+    description: 'Doorstep Courier Arrival Alert (ORD-10500)',
+    orderNumber: 'ORD-10500'
   }
 ];
 
@@ -1125,6 +1548,23 @@ export const DEFAULT_FORM_CONFIG: EmbedFormConfig = {
   enableRedirect: true,
   redirectUrl: 'https://example.com/thank-you',
   redirectDelaySeconds: 3,
+  showAltPhoneField: true,
+  isAltPhoneRequired: false,
+  formHeadline: 'COMPLETE YOUR ORDER BELOW (PAYMENT ON DELIVERY NATIONWIDE)',
+  formSubheadline: 'Fill in your delivery address accurately. Our dispatch agent will deliver to your doorstep in 24 - 48 hours.',
+  showWarningNotice: true,
+  warningNotice: '⚠️ IMPORTANT NOTICE: Please do NOT place an order if you will be travelling in the next 48 hours or will not have the complete cash/transfer ready at delivery.',
+  showTrustBadges: true,
+  showUrgencyTimer: true,
+  urgencyMinutes: 15,
+  showStockScarcity: true,
+  stockScarcityUnits: 7,
+  metaPixelId: '109283746582910',
+  tiktokPixelId: 'C7M89K01LL2',
+  googleTagId: 'G-ORD98201',
+  packageDisplayStyle: 'cards',
+  buttonSubtext: '🔒 100% Risk Free • Pay On Delivery Nationwide',
+  webhookUrl: '',
   additionalQuestions: [
     {
       id: 'q-1',
@@ -1137,15 +1577,21 @@ export const DEFAULT_FORM_CONFIG: EmbedFormConfig = {
   orderBumps: [
     {
       id: 'bump-1',
-      name: 'Add Express VIP Priority Dispatch (Guaranteed Next Day Delivery)',
-      price: 2000,
-      description: 'Your package is bumped to the top of rider dispatch queue.'
+      productId: 'prod-4',
+      name: 'LuxeOud Arabesque Perfume Oil (Special Add-On)',
+      price: 6500,
+      originalPrice: 15000,
+      description: 'Long-lasting luxury fragrance oil. Save over 55% when added to your package today.',
+      badge: '55% OFF ADD-ON'
     },
     {
       id: 'bump-2',
-      name: 'Add 100ml Pure Organic Rose Water Hydrating Mist',
-      price: 3500,
-      description: 'Special 50% discount when added with your order today.'
+      productId: 'prod-5',
+      name: 'Ultra Sonic Pest Repeller 4-Pack (Companion Offer)',
+      price: 7000,
+      originalPrice: 14000,
+      description: 'Exclusive 50% discount when added with your order today.',
+      badge: '50% OFF UPSELL'
     }
   ]
 };
