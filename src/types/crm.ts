@@ -7,7 +7,9 @@ export type UserRole =
   | 'Team Lead' 
   | 'Sales Representative' 
   | 'Inventory Manager' 
-  | 'Accountant';
+  | 'Distributor'
+  | 'Accountant'
+  | 'Media Buyer';
 
 export type OrderStatus = 
   | 'NEW' 
@@ -178,10 +180,13 @@ export interface Order {
   utmSource?: string;
   utmCampaign?: string;
   utmCreative?: string;
+  utmMedium?: string;
   salesRepId?: string;
   salesRepName?: string;
   agentId?: string;
   agentName?: string;
+  distributorId?: string;
+  distributorName?: string;
   status: OrderStatus;
   responseTimeMinutes?: number;
   scheduledDate?: string;
@@ -193,6 +198,7 @@ export interface Order {
   mediaBuyerName?: string;
   commitmentFeePaid?: boolean;
   deliveryWindowPreference?: string;
+  preferredDeliveryTime?: string;
   notes?: string;
 }
 
@@ -244,12 +250,25 @@ export interface AgentStockItem {
   missingUnits: number;
 }
 
+export interface DistributorStockItem {
+  id: string;
+  distributorId: string;
+  distributorName: string;
+  productId: string;
+  productName: string;
+  unitsHeld: number;
+  allocatedDate: string;
+  lastRestockedDate?: string;
+  defectiveUnits?: number;
+  notes?: string;
+}
+
 export interface StockMovement {
   id: string;
   date: string;
   productId: string;
   productName: string;
-  type: 'Warehouse to Agent' | 'Agent to Customer' | 'Agent to Agent Transfer' | 'Restock' | 'Defective Return' | 'Agent Return to Warehouse';
+  type: 'Warehouse to Agent' | 'Agent to Customer' | 'Agent to Agent Transfer' | 'Restock' | 'Defective Return' | 'Agent Return to Warehouse' | 'Warehouse to Distributor' | 'Distributor to Customer' | 'Distributor Return to Warehouse';
   fromLocation: string;
   toLocation: string;
   quantity: number;
@@ -286,10 +305,21 @@ export interface RoundRobinState {
   assignCartsToMeAdmin: boolean;
 }
 
+export type ExpenseType = 
+  | 'Advertising / Media Buying'
+  | 'Logistics'
+  | 'Agent Delivery Fees'
+  | 'Product Manufacturing'
+  | 'Software & Tools'
+  | 'Office & Staff'
+  | 'Miscellaneous'
+  | 'Meta / TikTok Ads'
+  | 'Freight / Customs';
+
 export interface Expense {
   id: string;
   date: string;
-  type: 'Product Manufacturing' | 'Freight / Customs' | 'Meta / TikTok Ads' | 'Agent Delivery Fees' | 'Software & Tools' | 'Office & Staff';
+  type: ExpenseType;
   productId?: string;
   productName?: string;
   amount: number;
@@ -523,6 +553,7 @@ export interface EmbedFormConfig {
 
 export interface OrganizationSettings {
   name: string;
+  businessName?: string;
   currency: CurrencyCode;
   currentPlan: 'Starter' | 'Growth' | 'Business' | 'Enterprise';
   billedPeriod: 'Monthly' | 'Quarterly' | 'Biannual' | 'Yearly';
@@ -533,7 +564,11 @@ export interface OrganizationSettings {
   pwaInstalled: boolean;
   emailNotificationsOrgWide: boolean;
   notifyAdminsOnNewCarts: boolean;
+  sendReturningCustomersToPreviousRep?: boolean;
+  assignOrdersToMe?: boolean;
+  assignAbandonedCartsToMe?: boolean;
   salesRepV2Preview: boolean;
   adminV2Preview: boolean;
+  pushNotificationsEnabled?: boolean;
   themeMode?: 'dark' | 'light';
 }

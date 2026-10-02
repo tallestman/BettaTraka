@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCrm } from '../../context/CrmContext';
-import { CartStatus, AbandonedCart } from '../../types/crm';
+import { CartStatus, AbandonedCart, Order } from '../../types/crm';
+import { ScheduleDeliveryModal } from '../common/ScheduleDeliveryModal';
 import { formatCurrency, convertAmount, createWhatsAppLink } from '../../utils/formatters';
 import { 
   PhoneCall, 
@@ -12,7 +13,8 @@ import {
   RotateCw,
   CheckCircle2,
   XCircle,
-  Filter
+  Filter,
+  Calendar
 } from 'lucide-react';
 
 export const AbandonedCartsView: React.FC = () => {
@@ -22,11 +24,13 @@ export const AbandonedCartsView: React.FC = () => {
     reassignCartRep, 
     convertCartToOrder, 
     users, 
-    currency 
+    currency,
+    addNotification
   } = useCrm();
 
   const [timeFilter, setTimeFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [orderToSchedule, setOrderToSchedule] = useState<Order | null>(null);
 
   const openCount = abandonedCarts.filter(c => c.status === 'ABANDONED' || c.status === 'ASSIGNED').length;
   const contactedCount = abandonedCarts.filter(c => c.status === 'CONTACTED').length;
@@ -45,7 +49,14 @@ export const AbandonedCartsView: React.FC = () => {
   const handlePlaceOrder = (cartId: string) => {
     const newOrder = convertCartToOrder(cartId);
     if (newOrder) {
-      alert(`Success! Lead converted to confirmed order #${newOrder.orderNumber}!`);
+      if (addNotification) {
+        addNotification({
+          title: 'Cart Converted to Order',
+          message: `Order #${newOrder.orderNumber} created for ${newOrder.customerName}. Please set the delivery date.`,
+          type: 'success'
+        });
+      }
+      setOrderToSchedule(newOrder);
     }
   };
 
@@ -248,6 +259,13 @@ export const AbandonedCartsView: React.FC = () => {
           );
         })}
       </div>
+
+      {orderToSchedule && (
+        <ScheduleDeliveryModal
+          order={orderToSchedule}
+          onClose={() => setOrderToSchedule(null)}
+        />
+      )}
     </div>
   );
 };

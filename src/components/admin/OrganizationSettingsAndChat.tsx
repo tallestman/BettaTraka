@@ -95,7 +95,7 @@ export const ReferralsView: React.FC = () => {
       <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-3 text-xs">
         <p className="text-white font-semibold">Your Unique Partner Link & Code:</p>
         <div className="flex items-center gap-2 font-mono">
-          <input readOnly value={`https://ordello.ng/join?ref=${settings.referralCode}`} className="flex-1 bg-slate-950 border border-slate-800 rounded p-2 text-slate-200" />
+          <input readOnly value={`https://bettatraka.ng/join?ref=${settings.referralCode}`} className="flex-1 bg-slate-950 border border-slate-800 rounded p-2 text-slate-200" />
           <button onClick={() => alert("Copied partner link!")} className="px-3 py-2 rounded bg-emerald-600 font-semibold text-white">Copy Link</button>
         </div>
       </div>

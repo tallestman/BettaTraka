@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useCrm } from '../../context/CrmContext';
-import { Product, AgentStockItem, DeliveryAgent } from '../../types/crm';
+import { Product, AgentStockItem, DeliveryAgent, Order } from '../../types/crm';
 import { formatCurrency, convertAmount } from '../../utils/formatters';
+import { ScheduleDeliveryModal } from '../common/ScheduleDeliveryModal';
 import { 
   Package, 
   Truck, 
@@ -20,6 +21,7 @@ import {
   TrendingDown, 
   TrendingUp, 
   Calendar, 
+  CalendarClock,
   ShieldCheck, 
   Layers, 
   LogOut,
@@ -34,7 +36,10 @@ import {
   Info,
   DollarSign,
   Send,
-  CornerDownRight
+  CornerDownRight,
+  PanelLeftOpen,
+  PanelLeftClose,
+  Menu
 } from 'lucide-react';
 
 export const InventoryManagerView: React.FC = () => {
@@ -46,6 +51,10 @@ export const InventoryManagerView: React.FC = () => {
     deleteProduct,
     agents, 
     agentStock, 
+    distributors,
+    distributorStock,
+    assignStockToDistributor,
+    returnStockFromDistributor,
     stockMovements, 
     currency,
     assignStockToAgent,
@@ -55,13 +64,21 @@ export const InventoryManagerView: React.FC = () => {
     transferStockAgentToAgent,
     orders,
     setPersona,
-    addNotification
+    addNotification,
+    isSidebarCollapsed,
+    toggleSidebarCollapse,
+    isMobileSidebarOpen,
+    setIsMobileSidebarOpen,
+    toggleMobileSidebar
   } = useCrm();
 
   // Tab navigation
-  const [invTab, setInvTab] = useState<'inventory' | 'agent-stock' | 'reorder-triggers' | 'movements'>('inventory');
+  const [invTab, setInvTab] = useState<'inventory' | 'agent-stock' | 'distributor-stock' | 'scheduled-dispatch' | 'reorder-triggers' | 'movements'>('inventory');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [orderToSchedule, setOrderToSchedule] = useState<Order | null>(null);
+  const [dispatchFilter, setDispatchFilter] = useState<'all' | 'today' | 'tomorrow' | 'scheduled' | 'needs_schedule'>('all');
+  const [dispatchSearch, setDispatchSearch] = useState('');
 
   // Agent Hub Stock View Switcher
   const [agentViewMode, setAgentViewMode] = useState<'by_agent' | 'matrix' | 'by_product'>('by_agent');
@@ -73,6 +90,11 @@ export const InventoryManagerView: React.FC = () => {
   const [showReorderConfigModal, setShowReorderConfigModal] = useState<Product | null>(null);
   const [showGlobalTriggerModal, setShowGlobalTriggerModal] = useState(false);
   const [showSetAgentStockModal, setShowSetAgentStockModal] = useState<{ agent?: DeliveryAgent; product?: Product } | null>(null);
+  const [showAssignDistributorModal, setShowAssignDistributorModal] = useState(false);
+  const [distributorAssignTargetId, setDistributorAssignTargetId] = useState('');
+  const [distributorAssignTargetProductId, setDistributorAssignTargetProductId] = useState('');
+  const [distributorAssignUnits, setDistributorAssignUnits] = useState<number>(50);
+  const [distributorAssignNote, setDistributorAssignNote] = useState<string>('');
   const [showQuickAllocateModal, setShowQuickAllocateModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -414,128 +436,297 @@ export const InventoryManagerView: React.FC = () => {
     }
   };
 
-  return (
-    <div className="flex h-[calc(100vh-3.5rem)] bg-slate-950 text-slate-100">
-      {/* Inventory Left Sidebar */}
-      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between p-3 select-none shrink-0">
-        <div className="space-y-1">
-          {/* Header Card */}
-          <div className="pb-3 border-b border-slate-800 mb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold">
+  const totalDistributorUnits = useMemo(() => {
+    return distributorStock.reduce((sum, s) => sum + s.unitsHeld, 0);
+  }, [distributorStock]);
+
+  const invNavItems = [
+    { id: 'inventory', label: 'Central Warehouse Stock', icon: Warehouse, badge: products.length },
+    { id: 'agent-stock', label: 'Agent Hub Stock', icon: Truck, badge: agents.length },
+    { id: 'distributor-stock', label: 'Distributor Hub Stock', icon: Boxes, badge: `${distributors.length} Hubs` },
+    { 
+      id: 'scheduled-dispatch', 
+      label: 'Scheduled Deliveries & Dispatch', 
+      icon: CalendarClock, 
+      badge: orders.filter(o => o.status === 'SCHEDULED' || o.scheduledDate).length 
+    },
+    { id: 'reorder-triggers', label: 'Reorder Triggers & Advisory', icon: AlertTriangle, alertBadge: reorderAlerts.length },
+    { id: 'movements', label: 'Stock Movement Audit', icon: FileSpreadsheet, badge: stockMovements.length }
+  ];
+
+  // Render Expanded Inventory Sidebar
+  const renderExpandedContent = (isMobile = false) => (
+    <div className="w-full flex-shrink-0 bg-[#090d16] border-r border-slate-800/80 flex flex-col h-full select-none justify-between p-3">
+      <div className="space-y-1">
+        {/* Header Card & Collapse Button */}
+        <div className="pb-3 border-b border-slate-800 mb-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-lime-950 border border-lime-500/40 flex items-center justify-center text-lime-400 font-bold shrink-0">
                 <Warehouse className="w-4 h-4" />
               </div>
-              <div>
-                <p className="font-semibold text-white text-xs leading-none">{currentUser?.name || 'Inventory Manager'}</p>
-                <p className="text-[10px] text-emerald-400 font-mono flex items-center gap-1 mt-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span>Stock & Logistics Hub</span>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-white text-xs leading-none truncate">{currentUser?.name || 'Inventory Manager'}</p>
+                <p className="text-[10px] text-lime-400 font-mono flex items-center gap-1 mt-1 truncate">
+                  <span className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse"></span>
+                  <span>Stock &amp; Logistics Hub</span>
                 </p>
               </div>
             </div>
-          </div>
 
-          {/* Quick Action Buttons on Sidebar */}
-          <div className="space-y-1.5 pb-3 border-b border-slate-800">
-            <button
-              onClick={() => {
-                setRestockProductId(products[0]?.id || '');
-                setRestockUnits(100);
-                const first = products[0];
-                setRestockSupplier(first?.supplierName || 'Guangzhou Apex Logistics');
-                setRestockUnitCost(first?.unitCost || 0);
-                setIsGenericAddStockOpen(true);
-              }}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition shadow-sm cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>+ Add Warehouse Stock</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setTargetAgentId(agents[0]?.id || '');
-                setTargetProductId(products[0]?.id || '');
-                setAgentStockUnits(20);
-                setAgentStockMode('set_exact');
-                setShowSetAgentStockModal({});
-              }}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-semibold text-xs border border-slate-700/60 transition cursor-pointer"
-            >
-              <Truck className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Set Stock with Agent</span>
-            </button>
-          </div>
-
-          {/* Nav Links */}
-          <div className="pt-2 space-y-1">
-            {[
-              { id: 'inventory', label: 'Central Warehouse Stock', icon: Warehouse, badge: products.length },
-              { id: 'agent-stock', label: 'Agent Hub Stock', icon: Truck, badge: agents.length },
-              { id: 'reorder-triggers', label: 'Reorder Triggers & Advisory', icon: AlertTriangle, alertBadge: reorderAlerts.length },
-              { id: 'movements', label: 'Stock Movement Audit', icon: FileSpreadsheet, badge: stockMovements.length }
-            ].map((item) => {
-              const Icon = item.icon;
-              const isActive = invTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setInvTab(item.id as any)}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-                    isActive 
-                      ? 'bg-emerald-600 text-white font-semibold shadow-sm' 
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span>{item.label}</span>
-                  </div>
-                  {item.alertBadge && item.alertBadge > 0 ? (
-                    <span className="px-1.5 py-0.5 rounded-full bg-amber-500 text-black text-[10px] font-bold font-mono">
-                      {item.alertBadge}
-                    </span>
-                  ) : item.badge !== undefined ? (
-                    <span className="text-[10px] text-slate-500 font-mono">
-                      {item.badge}
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
+            {/* Collapse toggle button */}
+            {!isMobile ? (
+              <button
+                type="button"
+                onClick={toggleSidebarCollapse}
+                className="p-1 rounded-lg border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer ml-1"
+                title="Collapse Sidebar"
+                aria-label="Collapse Navigation"
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className="p-1 rounded-lg border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer ml-1"
+                title="Close Menu"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Bottom Inventory Metrics & Log Out */}
-        <div className="pt-3 border-t border-slate-800 space-y-2 mt-4">
-          <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5 text-[11px]">
-            <div className="flex justify-between text-slate-400">
-              <span>Warehouse Reserve:</span>
-              <span className="font-mono text-white font-bold">{totalWarehouseUnits.toLocaleString()} units</span>
-            </div>
-            <div className="flex justify-between text-slate-400">
-              <span>Agent Hub Custody:</span>
-              <span className="font-mono text-cyan-400 font-bold">{totalAgentUnits.toLocaleString()} units</span>
-            </div>
-            <div className="flex justify-between text-slate-400 pt-1 border-t border-slate-800/80">
-              <span>Total Inventory:</span>
-              <span className="font-mono text-emerald-400 font-bold">{totalInventoryUnits.toLocaleString()} units</span>
-            </div>
-          </div>
+        {/* Quick Action Buttons on Sidebar */}
+        <div className="space-y-1.5 pb-3 border-b border-slate-800">
+          <button
+            onClick={() => {
+              setRestockProductId(products[0]?.id || '');
+              setRestockUnits(100);
+              const first = products[0];
+              setRestockSupplier(first?.supplierName || 'Guangzhou Apex Logistics');
+              setRestockUnitCost(first?.unitCost || 0);
+              setIsGenericAddStockOpen(true);
+            }}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-lime-500 hover:bg-lime-400 text-black font-extrabold text-xs transition shadow-sm cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>+ Add Warehouse Stock</span>
+          </button>
 
           <button
-            type="button"
-            onClick={() => setShowLogoutConfirm(true)}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/30 text-xs font-semibold transition cursor-pointer"
+            onClick={() => {
+              setTargetAgentId(agents[0]?.id || '');
+              setTargetProductId(products[0]?.id || '');
+              setAgentStockUnits(20);
+              setAgentStockMode('set_exact');
+              setShowSetAgentStockModal({});
+            }}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-semibold text-xs border border-slate-700/60 transition cursor-pointer"
           >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Log Out</span>
+            <Truck className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Set Stock with Agent</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setDistributorAssignTargetId(distributors[0]?.id || '');
+              setDistributorAssignTargetProductId(products[0]?.id || '');
+              setDistributorAssignUnits(50);
+              setShowAssignDistributorModal(true);
+            }}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-lime-400 hover:text-lime-300 font-bold text-xs border border-lime-500/40 transition cursor-pointer"
+          >
+            <Boxes className="w-3.5 h-3.5 text-lime-400" />
+            <span>+ Assign to Distributor</span>
           </button>
         </div>
+
+        {/* Nav Links */}
+        <div className="pt-2 space-y-1">
+          {invNavItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = invTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setInvTab(item.id as any);
+                  if (isMobile) setIsMobileSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+                  isActive 
+                    ? 'bg-lime-500 text-black font-extrabold shadow-sm' 
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span>{item.label}</span>
+                </div>
+                {item.alertBadge && item.alertBadge > 0 ? (
+                  <span className="px-1.5 py-0.5 rounded-full bg-amber-500 text-black text-[10px] font-bold font-mono">
+                    {item.alertBadge}
+                  </span>
+                ) : item.badge !== undefined ? (
+                  <span className={`text-[10px] font-mono ${isActive ? 'text-black' : 'text-slate-500'}`}>
+                    {item.badge}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Bottom Inventory Metrics & Log Out */}
+      <div className="pt-3 border-t border-slate-800 space-y-2 mt-4">
+        <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5 text-[11px]">
+          <div className="flex justify-between text-slate-400">
+            <span>Warehouse Reserve:</span>
+            <span className="font-mono text-white font-bold">{totalWarehouseUnits.toLocaleString()} units</span>
+          </div>
+          <div className="flex justify-between text-slate-400">
+            <span>Agent Hub Custody:</span>
+            <span className="font-mono text-cyan-400 font-bold">{totalAgentUnits.toLocaleString()} units</span>
+          </div>
+          <div className="flex justify-between text-slate-400 pt-1 border-t border-slate-800/80">
+            <span>Total Inventory:</span>
+            <span className="font-mono text-lime-400 font-bold">{totalInventoryUnits.toLocaleString()} units</span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowLogoutConfirm(true)}
+          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/30 text-xs font-semibold transition cursor-pointer"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>Log Out</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render Collapsed Inventory Sidebar (Icon-Only Rail)
+  const renderCollapsedContent = () => (
+    <div className="w-full flex-shrink-0 bg-[#090d16] border-r border-slate-800/80 flex flex-col h-full select-none justify-between items-center py-3 px-1.5">
+      <div className="space-y-3 flex flex-col items-center w-full">
+        {/* Expand Toggle Button */}
+        <button
+          type="button"
+          onClick={toggleSidebarCollapse}
+          className="w-9 h-9 rounded-xl bg-slate-900 border border-lime-500/40 text-lime-400 hover:bg-lime-950/40 flex items-center justify-center transition cursor-pointer shadow-sm"
+          title="Expand Inventory Menu"
+          aria-label="Expand Sidebar"
+        >
+          <PanelLeftOpen className="w-4 h-4" />
+        </button>
+
+        {/* Centered Icons with Tooltips */}
+        <div className="space-y-1.5 w-full flex flex-col items-center">
+          {invNavItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = invTab === item.id;
+            return (
+              <div key={item.id} className="relative group flex items-center justify-center w-full">
+                <button
+                  type="button"
+                  onClick={() => setInvTab(item.id as any)}
+                  className={`relative w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-lime-500 text-black font-extrabold shadow-md shadow-lime-950/50'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                  }`}
+                  title={item.label}
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  {item.alertBadge && item.alertBadge > 0 ? (
+                    <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 rounded-full bg-amber-400 text-black text-[8px] font-black flex items-center justify-center font-mono">
+                      !
+                    </span>
+                  ) : item.badge !== undefined && (
+                    <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 rounded-full bg-lime-400 text-black text-[8px] font-black flex items-center justify-center font-mono">
+                      •
+                    </span>
+                  )}
+                </button>
+
+                {/* Flyout Tooltip on Hover */}
+                <div className="opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-semibold z-50 whitespace-nowrap shadow-2xl flex items-center gap-1.5">
+                  <span>{item.label}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Mini Logout at Bottom */}
+      <div className="pt-2 border-t border-slate-800/80 w-full flex flex-col items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setShowLogoutConfirm(true)}
+          className="p-2 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 transition cursor-pointer"
+          title="Log Out"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col md:flex-row h-[calc(100vh-3.5rem)] bg-slate-950 text-slate-100 overflow-hidden">
+      
+      {/* 1. Mobile Drawer (Overlay when opened on small devices) */}
+      {isMobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex animate-in fade-in">
+          <div 
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+          <div className="relative w-64 max-w-[80vw] h-full z-10 shadow-2xl flex flex-col">
+            {renderExpandedContent(true)}
+          </div>
+        </div>
+      )}
+
+      {/* 2. Desktop Persistent Sidebar (Collapsible to 68px) */}
+      <aside 
+        className={`hidden md:flex flex-shrink-0 bg-slate-900 border-r border-slate-800 flex-col h-full select-none transition-all duration-300 ease-in-out ${
+          isSidebarCollapsed ? 'w-[68px]' : 'w-64'
+        }`}
+      >
+        {isSidebarCollapsed ? renderCollapsedContent() : renderExpandedContent(false)}
       </aside>
 
+      {/* 3. Mobile Top Bar for Inventory (Visible only on mobile devices) */}
+      <div className="md:hidden flex items-center justify-between p-3 border-b border-slate-800 bg-[#090d16] shrink-0">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleMobileSidebar}
+            className="p-1.5 rounded-lg border border-slate-800 text-lime-400 hover:bg-slate-900 transition cursor-pointer"
+            aria-label="Open Inventory Navigation"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <span className="text-xs font-bold text-white">
+            Inventory: {invNavItems.find(i => i.id === invTab)?.label}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-lime-400 animate-pulse" />
+          <span className="text-[10px] text-lime-400 font-mono font-bold">
+            {totalInventoryUnits.toLocaleString()} units
+          </span>
+        </div>
+      </div>
+
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 max-w-7xl mx-auto">
+      <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
         
         {/* ==================================================================== */}
         {/* TAB 1: Central Warehouse Inventory */}
@@ -1109,6 +1300,114 @@ export const InventoryManagerView: React.FC = () => {
         )}
 
         {/* ==================================================================== */}
+        {/* TAB: Regional Distributor Hub Stock                                  */}
+        {/* ==================================================================== */}
+        {invTab === 'distributor-stock' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+              <div>
+                <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                  <span>Regional Distributor Hub Stock</span>
+                  <span className="text-xs bg-lime-950 text-lime-400 font-mono px-2.5 py-0.5 rounded-full border border-lime-800/60">
+                    {distributors.length} Regional Centers
+                  </span>
+                </h1>
+                <p className="text-xs text-slate-400 mt-1">
+                  Allocate Central Warehouse stock to regional distributors and manage consignment centers.
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setDistributorAssignTargetId(distributors[0]?.id || '');
+                  setDistributorAssignTargetProductId(products[0]?.id || '');
+                  setDistributorAssignUnits(50);
+                  setShowAssignDistributorModal(true);
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 bg-lime-500 hover:bg-lime-400 text-black font-extrabold rounded-xl text-xs transition shadow-lg shadow-lime-950/40 cursor-pointer"
+              >
+                <Boxes className="w-4 h-4" />
+                <span>+ Allocate Stock to Distributor</span>
+              </button>
+            </div>
+
+            {/* Distributor Stock Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {distributors.map(dist => {
+                const stocksForDist = distributorStock.filter(s => s.distributorId === dist.id);
+                const totalUnits = stocksForDist.reduce((sum, s) => sum + s.unitsHeld, 0);
+                const totalValueNgn = stocksForDist.reduce((sum, s) => {
+                  const prod = products.find(p => p.id === s.productId);
+                  return sum + (s.unitsHeld * (prod?.sellingPrice || 25000));
+                }, 0);
+
+                return (
+                  <div key={dist.id} className="rounded-2xl border border-slate-800 bg-[#090d16] p-5 space-y-4 shadow-lg">
+                    <div className="flex items-start justify-between pb-3 border-b border-slate-800">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-lime-950 border border-lime-500/40 flex items-center justify-center text-lime-400 font-bold text-xs">
+                            <Truck className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-white text-sm">{dist.name}</h3>
+                            <p className="text-[11px] text-slate-400">{dist.phone} • {dist.email}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-mono text-base font-black text-lime-400">
+                          {totalUnits} <span className="text-xs font-normal text-slate-400">units</span>
+                        </span>
+                        <p className="text-[10px] text-slate-500 font-mono">
+                          {formatCurrency(convertAmount(totalValueNgn, currency), currency)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Allocated SKUs table */}
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-slate-300">Allocated Product Batches</p>
+                      {stocksForDist.length === 0 ? (
+                        <p className="text-xs text-slate-500 py-3 text-center">No batches allocated to this distributor yet.</p>
+                      ) : (
+                        stocksForDist.map(s => {
+                          const prod = products.find(p => p.id === s.productId);
+                          return (
+                            <div key={s.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-xs">
+                              <span className="font-medium text-slate-200 truncate pr-2">{prod?.name || s.productName}</span>
+                              <div className="flex items-center gap-2 font-mono">
+                                <span className="px-2 py-0.5 rounded bg-lime-950 text-lime-400 font-bold text-[11px]">
+                                  {s.unitsHeld} units
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-800 flex justify-end gap-2">
+                      <button
+                        onClick={() => {
+                          setDistributorAssignTargetId(dist.id);
+                          setDistributorAssignTargetProductId(products[0]?.id || '');
+                          setDistributorAssignUnits(50);
+                          setShowAssignDistributorModal(true);
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-lime-600/20 text-lime-400 hover:bg-lime-600/30 text-xs font-bold border border-lime-500/40 cursor-pointer"
+                      >
+                        + Assign More Stock
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ==================================================================== */}
         {/* TAB 3: Reorder Recommendation Triggers & Advisory Settings */}
         {/* ==================================================================== */}
         {invTab === 'reorder-triggers' && (
@@ -1352,6 +1651,209 @@ export const InventoryManagerView: React.FC = () => {
                         </tr>
                       ))
                     )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* TAB 6: SCHEDULED DELIVERIES & DISPATCH COORDINATION         */}
+        {/* ============================================================ */}
+        {invTab === 'scheduled-dispatch' && (
+          <div className="space-y-6 animate-in fade-in">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+              <div>
+                <h1 className="text-xl font-bold text-white flex items-center gap-2">
+                  <CalendarClock className="w-5 h-5 text-lime-400" />
+                  <span>Delivery Scheduling &amp; Warehouse Dispatch</span>
+                </h1>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Coordinate customer delivery dates, allocate physical stock from warehouse to dispatch couriers, and track delivery deadlines.
+                </p>
+              </div>
+
+              {/* Search */}
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search customer, city, #"
+                    value={dispatchSearch}
+                    onChange={(e) => setDispatchSearch(e.target.value)}
+                    className="pl-8 pr-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-lime-500 w-44 sm:w-56"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 4 Summary Stat Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="p-4 rounded-xl border border-sky-800/60 bg-sky-950/20">
+                <span className="text-[11px] font-mono text-sky-400 uppercase tracking-wider block">Today (Oct 01)</span>
+                <p className="text-2xl font-bold font-mono text-white mt-1">
+                  {orders.filter(o => o.scheduledDate?.includes('2026-10-01') || (o.status === 'SCHEDULED' && (!o.scheduledDate || o.scheduledDate.includes('10-01')))).length}
+                </p>
+                <span className="text-[10px] text-slate-400">Scheduled for doorstep delivery today</span>
+              </div>
+
+              <div className="p-4 rounded-xl border border-indigo-800/60 bg-indigo-950/20">
+                <span className="text-[11px] font-mono text-indigo-400 uppercase tracking-wider block">Tomorrow (Oct 02)</span>
+                <p className="text-2xl font-bold font-mono text-white mt-1">
+                  {orders.filter(o => o.scheduledDate?.includes('2026-10-02') || o.scheduledDate?.includes('10-02')).length}
+                </p>
+                <span className="text-[10px] text-slate-400">Ready for courier packing &amp; routing</span>
+              </div>
+
+              <div className="p-4 rounded-xl border border-lime-800/60 bg-lime-950/20">
+                <span className="text-[11px] font-mono text-lime-400 uppercase tracking-wider block">Future Scheduled</span>
+                <p className="text-2xl font-bold font-mono text-white mt-1">
+                  {orders.filter(o => o.status === 'SCHEDULED' && o.scheduledDate && !o.scheduledDate.includes('10-01') && !o.scheduledDate.includes('10-02')).length}
+                </p>
+                <span className="text-[10px] text-slate-400">Committed calendar delivery dates</span>
+              </div>
+
+              <div className="p-4 rounded-xl border border-amber-800/60 bg-amber-950/20">
+                <span className="text-[11px] font-mono text-amber-400 uppercase tracking-wider block">Awaiting Scheduling</span>
+                <p className="text-2xl font-bold font-mono text-white mt-1">
+                  {orders.filter(o => (o.status === 'CONFIRMED' || o.status === 'NEW') && !o.scheduledDate).length}
+                </p>
+                <span className="text-[10px] text-slate-400">Pending delivery date agreement</span>
+              </div>
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { id: 'all', label: 'All Orders' },
+                { id: 'today', label: 'Today (Oct 01)' },
+                { id: 'tomorrow', label: 'Tomorrow (Oct 02)' },
+                { id: 'scheduled', label: 'All Scheduled' },
+                { id: 'needs_schedule', label: 'Needs Delivery Date' }
+              ].map(f => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setDispatchFilter(f.id as any)}
+                  className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer ${
+                    dispatchFilter === f.id
+                      ? 'bg-lime-500 border-lime-400 text-black font-extrabold shadow-sm'
+                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Orders Table */}
+            <div className="rounded-2xl border border-slate-800 bg-[#090d16] overflow-hidden shadow-lg">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-800 bg-slate-950/80 text-[11px] font-mono text-slate-400">
+                      <th className="py-3 px-4">Order #</th>
+                      <th className="py-3 px-4">Customer</th>
+                      <th className="py-3 px-4">Destination</th>
+                      <th className="py-3 px-4">Items Required</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4">Committed Delivery Date</th>
+                      <th className="py-3 px-4">Assigned Agent / Hub</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {orders
+                      .filter(o => {
+                        const sDate = (o.scheduledDate || '').toLowerCase();
+                        if (dispatchFilter === 'today') {
+                          return sDate.includes('2026-10-01') || (o.status === 'SCHEDULED' && (!o.scheduledDate || sDate.includes('10-01')));
+                        }
+                        if (dispatchFilter === 'tomorrow') {
+                          return sDate.includes('2026-10-02') || sDate.includes('10-02');
+                        }
+                        if (dispatchFilter === 'scheduled') {
+                          return o.status === 'SCHEDULED' || !!o.scheduledDate;
+                        }
+                        if (dispatchFilter === 'needs_schedule') {
+                          return (o.status === 'CONFIRMED' || o.status === 'NEW') && !o.scheduledDate;
+                        }
+                        return true;
+                      })
+                      .filter(o => {
+                        if (!dispatchSearch) return true;
+                        const q = dispatchSearch.toLowerCase();
+                        return o.orderNumber.toLowerCase().includes(q) ||
+                               o.customerName.toLowerCase().includes(q) ||
+                               o.customerPhone.includes(q) ||
+                               o.deliveryCity.toLowerCase().includes(q) ||
+                               o.deliveryState.toLowerCase().includes(q);
+                      })
+                      .map(o => (
+                        <tr key={o.id} className="hover:bg-slate-900/60 transition">
+                          <td className="py-3 px-4 font-mono font-medium text-white">{o.orderNumber}</td>
+                          <td className="py-3 px-4">
+                            <p className="font-semibold text-slate-200">{o.customerName}</p>
+                            <p className="text-[10px] text-slate-400 font-mono">{o.customerPhone}</p>
+                          </td>
+                          <td className="py-3 px-4 text-slate-300">
+                            <p>{o.deliveryCity}, <span className="text-lime-400">{o.deliveryState}</span></p>
+                          </td>
+                          <td className="py-3 px-4 font-mono text-slate-300 text-[11px]">
+                            {o.items.map(i => `${i.quantity}x ${i.productName}`).join(', ')}
+                          </td>
+                          <td className="py-3 px-4 font-mono text-[11px]">
+                            <span className={`px-2 py-0.5 rounded ${
+                              o.status === 'DELIVERED' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/60' :
+                              o.status === 'DISPATCHED' ? 'bg-blue-950 text-blue-400 border border-blue-800/60' :
+                              o.status === 'SCHEDULED' ? 'bg-sky-950 text-sky-400 border border-sky-800/60' :
+                              o.status === 'CONFIRMED' ? 'bg-cyan-950 text-cyan-400 border border-cyan-800/60' :
+                              'bg-slate-800 text-slate-300'
+                            }`}>
+                              {o.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            {o.scheduledDate ? (
+                              <div>
+                                <span className="font-mono font-bold text-sky-400 text-xs block">
+                                  🗓 {o.scheduledDate}
+                                </span>
+                                <span className="text-[10px] text-slate-400 block">
+                                  {o.preferredDeliveryTime || 'Morning'}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-amber-400/80 italic font-mono">
+                                Date Not Set
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-slate-300">
+                            {o.agentName ? (
+                              <span className="font-medium text-white">{o.agentName}</span>
+                            ) : o.distributorName ? (
+                              <span className="text-lime-400 font-mono text-[11px]">Hub: {o.distributorName}</span>
+                            ) : (
+                              <span className="text-slate-500 italic">Unassigned</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={() => setOrderToSchedule(o)}
+                              className="px-2.5 py-1 rounded-lg bg-sky-950/80 hover:bg-sky-900 border border-sky-700/80 text-sky-300 text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
+                              title="Set or reschedule customer delivery date"
+                            >
+                              <Calendar className="w-3.5 h-3.5" />
+                              <span>{o.scheduledDate ? 'Change Date' : 'Set Date'}</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
@@ -2215,6 +2717,120 @@ export const InventoryManagerView: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* MODAL: ASSIGN STOCK TO DISTRIBUTOR */}
+      {/* ==================================================================== */}
+      {showAssignDistributorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 space-y-4 shadow-2xl text-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Boxes className="w-5 h-5 text-lime-400" />
+                <span>Allocate Stock to Regional Distributor</span>
+              </h3>
+              <button 
+                onClick={() => setShowAssignDistributorModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!distributorAssignTargetId || !distributorAssignTargetProductId || distributorAssignUnits <= 0) return;
+                const prod = products.find(p => p.id === distributorAssignTargetProductId);
+                if (prod && prod.stockWarehouse < distributorAssignUnits) {
+                  alert(`Insufficient central warehouse stock! Only ${prod.stockWarehouse} units available in warehouse.`);
+                  return;
+                }
+                assignStockToDistributor(distributorAssignTargetId, distributorAssignTargetProductId, Number(distributorAssignUnits), distributorAssignNote);
+                setShowAssignDistributorModal(false);
+                setDistributorAssignNote('');
+              }}
+              className="space-y-4 text-xs"
+            >
+              <div>
+                <label className="text-slate-300 font-medium block mb-1">Target Regional Distributor</label>
+                <select
+                  value={distributorAssignTargetId}
+                  onChange={(e) => setDistributorAssignTargetId(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500"
+                >
+                  {distributors.map(d => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} ({d.phone})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-slate-300 font-medium block mb-1">Product SKU</label>
+                <select
+                  value={distributorAssignTargetProductId}
+                  onChange={(e) => setDistributorAssignTargetProductId(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500"
+                >
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.sku}) • {p.stockWarehouse} units in Central Warehouse
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-slate-300 font-medium block mb-1">Units to Allocate from Warehouse</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={distributorAssignUnits}
+                  onChange={(e) => setDistributorAssignUnits(Math.max(1, Number(e.target.value)))}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500 font-mono text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-300 font-medium block mb-1">Waybill Reference / Dispatch Notes</label>
+                <textarea
+                  rows={2}
+                  value={distributorAssignNote}
+                  onChange={(e) => setDistributorAssignNote(e.target.value)}
+                  placeholder="e.g. Sent via regional haulage carrier, Waybill #WH-DIST-209..."
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-white focus:outline-none focus:border-lime-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowAssignDistributorModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-lime-500 hover:bg-lime-400 text-black font-extrabold shadow"
+                >
+                  Dispatch to Distributor
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Delivery Date Modal */}
+      {orderToSchedule && (
+        <ScheduleDeliveryModal
+          order={orderToSchedule}
+          onClose={() => setOrderToSchedule(null)}
+        />
       )}
 
     </div>

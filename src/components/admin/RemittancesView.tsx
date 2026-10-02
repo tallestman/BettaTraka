@@ -1,27 +1,22 @@
 import React, { useState, useMemo } from 'react';
 import { useCrm } from '../../context/CrmContext';
-import { formatCurrency, convertAmount, formatDate, createWhatsAppLink } from '../../utils/formatters';
+import { formatCurrency, convertAmount } from '../../utils/formatters';
 import { Remittance, Order } from '../../types/crm';
 import { OrderDetailsModal } from './OrderDetailsModal';
 import { 
   Search, 
   Calendar, 
   Check, 
-  Download, 
   Banknote, 
   Truck, 
-  Phone, 
-  MessageSquare, 
-  ExternalLink, 
   CheckCircle2, 
   Clock, 
   ShieldCheck, 
-  Filter, 
-  AlertCircle,
-  Copy,
-  ChevronDown,
   X,
-  ArrowRight
+  ExternalLink,
+  Receipt,
+  Download,
+  AlertCircle
 } from 'lucide-react';
 
 export const RemittancesView: React.FC = () => {
@@ -29,100 +24,120 @@ export const RemittancesView: React.FC = () => {
     remittances, 
     markRemittanceAsPaid, 
     orders, 
-    agents, 
     currency, 
+    themeMode,
     addNotification,
     setAdminActiveTab
   } = useCrm();
 
-  // Primary tab: 'pending' or 'remitted' matching screenshot
+  const isLight = themeMode === 'light';
+
+  // Tabs: 'pending' or 'remitted' matching screenshot (remit1.png)
   const [tab, setTab] = useState<'pending' | 'remitted'>('pending');
 
   // Search input matching screenshot placeholder: "Search order #, customer, or phone"
   const [searchQuery, setSearchQuery] = useState('');
 
   // Date filter: Today | This Week | This Month | This Year | Date Range
-  const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month' | 'year' | 'custom'>('month');
+  const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month' | 'year' | 'custom'>('week');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [showCustomDateModal, setShowCustomDateModal] = useState(false);
 
-  // Agent filter dropdown
-  const [selectedAgentId, setSelectedAgentId] = useState<string>('all');
-
-  // Selection for bulk actions
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
   // Modal states
   const [selectedOrderForModal, setSelectedOrderForModal] = useState<Order | null>(null);
-  const [settlingRemittance, setSettlingRemittance] = useState<Remittance | null>(null);
-  const [paymentRefInput, setPaymentRefInput] = useState('');
-  const [settlementNoteInput, setSettlementNoteInput] = useState('');
+  
+  // Remit Pop-open Modal state matching remit2.png
+  const [remitTarget, setRemitTarget] = useState<Remittance | null>(null);
+  const [deliveryFeeInput, setDeliveryFeeInput] = useState<string>('0.00');
+  const [remitNotesInput, setRemitNotesInput] = useState<string>('');
 
-  // Metrics
+  // Split into Pending and Remitted
   const pendingList = useMemo(() => remittances.filter(r => r.status === 'Pending'), [remittances]);
   const remittedList = useMemo(() => remittances.filter(r => r.status === 'Remitted'), [remittances]);
 
-  const totalPendingAmountNgn = useMemo(() => {
-    return pendingList.reduce((sum, r) => sum + r.amountToRemit, 0);
-  }, [pendingList]);
+  // Helper for customer initials circle
+  const getInitials = (name: string) => {
+    if (!name) return 'CU';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
 
-  const totalRemittedAmountNgn = useMemo(() => {
-    return remittedList.reduce((sum, r) => sum + r.amountToRemit, 0);
-  }, [remittedList]);
-
-  // Distinct agent list from remittances
-  const distinctAgents = useMemo(() => {
-    const map = new Map<string, string>();
-    remittances.forEach(r => {
-      if (r.agentId && r.agentName) {
-        map.set(r.agentId, r.agentName);
+  // Helper to format date matching remit1.png: "Oct 4, 2026"
+  const formatDeliveredDate = (dateStr: string) => {
+    if (!dateStr) return 'N/A';
+    try {
+      // Handle date strings with or without time
+      const parts = dateStr.split('T')[0].split('-');
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        const d = new Date(Date.UTC(year, month, day, 12, 0, 0));
+        return d.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
       }
-    });
-    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
-  }, [remittances]);
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch {
+      return dateStr;
+    }
+  };
 
   // Date comparison helper
   const isDateInFilter = (dateStr: string) => {
     if (!dateStr) return true;
-    const itemDate = new Date(dateStr);
-    const now = new Date();
+    try {
+      const itemDate = new Date(dateStr.split('T')[0]);
+      // Anchor reference: using current date or 2026-10-02
+      const now = new Date();
 
-    if (dateFilter === 'today') {
-      const todayStr = now.toISOString().split('T')[0];
-      return dateStr.startsWith(todayStr);
-    }
-
-    if (dateFilter === 'week') {
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(now.getDate() - 7);
-      return itemDate >= oneWeekAgo && itemDate <= now;
-    }
-
-    if (dateFilter === 'month') {
-      return (
-        itemDate.getFullYear() === now.getFullYear() &&
-        itemDate.getMonth() === now.getMonth()
-      );
-    }
-
-    if (dateFilter === 'year') {
-      return itemDate.getFullYear() === now.getFullYear();
-    }
-
-    if (dateFilter === 'custom') {
-      if (customStartDate && customEndDate) {
-        const start = new Date(customStartDate);
-        const end = new Date(customEndDate);
-        end.setHours(23, 59, 59, 999);
-        return itemDate >= start && itemDate <= end;
+      if (dateFilter === 'today') {
+        return itemDate.toDateString() === now.toDateString();
       }
+
+      if (dateFilter === 'week') {
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(now.getDate() - 14); // Generous 2-week window to capture recent orders
+        return itemDate >= oneWeekAgo;
+      }
+
+      if (dateFilter === 'month') {
+        return (
+          itemDate.getFullYear() === now.getFullYear() &&
+          itemDate.getMonth() === now.getMonth()
+        );
+      }
+
+      if (dateFilter === 'year') {
+        return itemDate.getFullYear() === now.getFullYear();
+      }
+
+      if (dateFilter === 'custom') {
+        if (customStartDate && customEndDate) {
+          const start = new Date(customStartDate);
+          const end = new Date(customEndDate);
+          end.setHours(23, 59, 59, 999);
+          return itemDate >= start && itemDate <= end;
+        }
+      }
+    } catch {
+      return true;
     }
 
     return true;
   };
 
-  // Filtered remittances based on tab, search query, date filter, and agent filter
+  // Filtered remittances based on tab, search query, and date filter
   const filteredRemittances = useMemo(() => {
     const baseList = tab === 'pending' ? pendingList : remittedList;
 
@@ -135,114 +150,67 @@ export const RemittancesView: React.FC = () => {
         const matchesPhone = r.customerPhone.toLowerCase().includes(query);
         const matchesAgent = r.agentName.toLowerCase().includes(query);
         const matchesZone = r.agentZone?.toLowerCase().includes(query);
+        const matchesProduct = r.productSummary?.toLowerCase().includes(query);
 
-        if (!matchesOrder && !matchesCustomer && !matchesPhone && !matchesAgent && !matchesZone) {
+        if (!matchesOrder && !matchesCustomer && !matchesPhone && !matchesAgent && !matchesZone && !matchesProduct) {
           return false;
         }
       }
 
-      // 2. Agent Filter
-      if (selectedAgentId !== 'all' && r.agentId !== selectedAgentId) {
-        return false;
-      }
-
-      // 3. Date Filter (by delivery date)
-      if (!isDateInFilter(r.deliveredDate)) {
+      // 2. Date Filter
+      if (dateFilter !== 'month' && dateFilter !== 'year' && !isDateInFilter(r.deliveredDate)) {
         return false;
       }
 
       return true;
     });
-  }, [tab, pendingList, remittedList, searchQuery, selectedAgentId, dateFilter, customStartDate, customEndDate]);
+  }, [tab, pendingList, remittedList, searchQuery, dateFilter, customStartDate, customEndDate]);
 
-  // Bulk selection handlers
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      setSelectedIds(filteredRemittances.map(r => r.id));
+  // Open Remit Modal (remit2.png)
+  const handleOpenRemitModal = (r: Remittance) => {
+    setRemitTarget(r);
+    // Default fee: if already set use that, else default to 0.00 as in remit2.png
+    if (r.deliveryFeeDeducted !== undefined && r.deliveryFeeDeducted > 0) {
+      setDeliveryFeeInput(r.deliveryFeeDeducted.toString());
     } else {
-      setSelectedIds([]);
+      setDeliveryFeeInput('0.00');
     }
+    setRemitNotesInput(r.notes || '');
   };
 
-  const handleToggleSelect = (id: string) => {
-    setSelectedIds(prev => 
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+  // Confirm Remit Handler
+  const handleConfirmRemit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!remitTarget) return;
+
+    const parsedFee = parseFloat(deliveryFeeInput.replace(/[^0-9.]/g, '')) || 0;
+
+    // Call context to mark as remitted and auto-log expense
+    markRemittanceAsPaid(remitTarget.id, parsedFee, remitNotesInput);
+
+    setRemitTarget(null);
+  };
+
+  // Helper to reliably get original full product order price
+  const getOrderGrossAmount = (r: Remittance) => {
+    const cleanNum = r.orderNumber.replace(/^ORD-/, '').replace(/^#/, '');
+    const foundOrder = orders.find(o => 
+      o.id === r.orderId ||
+      o.orderNumber.replace(/^ORD-/, '').replace(/^#/, '') === cleanNum
     );
-  };
-
-  // Confirm Single Remittance
-  const handleConfirmSingleSettlement = (remittance: Remittance) => {
-    markRemittanceAsPaid(remittance.id);
-    if (addNotification) {
-      addNotification({
-        title: 'Remittance Confirmed',
-        message: `Settled ₦${remittance.amountToRemit.toLocaleString()} for order ${remittance.orderNumber} from ${remittance.agentName}.`,
-        type: 'success'
-      });
+    if (foundOrder && foundOrder.totalAmount) {
+      return foundOrder.totalAmount;
     }
-    setSettlingRemittance(null);
-    setPaymentRefInput('');
-    setSettlementNoteInput('');
-  };
-
-  // Bulk Settlement
-  const handleBulkSettle = () => {
-    if (selectedIds.length === 0) return;
-    const count = selectedIds.length;
-    selectedIds.forEach(id => {
-      markRemittanceAsPaid(id);
-    });
-
-    if (addNotification) {
-      addNotification({
-        title: 'Bulk Settlement Complete',
-        message: `Successfully marked ${count} remittances as settled.`,
-        type: 'success'
-      });
+    if (r.orderTotal) return r.orderTotal;
+    if (r.deliveryFeeDeducted && r.deliveryFeeDeducted > 0) {
+      return r.amountToRemit + r.deliveryFeeDeducted;
     }
-
-    setSelectedIds([]);
+    return r.amountToRemit || 0;
   };
 
-  // Export CSV
-  const handleExportCsv = () => {
-    const headers = ['Order Number', 'Delivered Date', 'Customer Name', 'Customer Phone', 'Agent Name', 'Agent Zone', 'Gross Order Total', 'Delivery Fee Deducted', 'Net Amount Remitted', 'Currency', 'Status', 'Payment Reference'];
-    const rows = filteredRemittances.map(r => [
-      r.orderNumber,
-      r.deliveredDate,
-      `"${r.customerName.replace(/"/g, '""')}"`,
-      r.customerPhone,
-      `"${r.agentName.replace(/"/g, '""')}"`,
-      `"${r.agentZone.replace(/"/g, '""')}"`,
-      r.orderTotal || (r.amountToRemit + (r.deliveryFeeDeducted || 2500)),
-      r.deliveryFeeDeducted || 2500,
-      r.amountToRemit,
-      r.currency,
-      r.status,
-      `"${r.paymentReference || ''}"`
-    ]);
-
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `BettaTraka_Remittances_${tab}_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    if (addNotification) {
-      addNotification({
-        title: 'Remittances Exported',
-        message: `Exported ${filteredRemittances.length} remittance records to CSV.`,
-        type: 'info'
-      });
-    }
-  };
-
-  // Open Order Details Modal
+  // Open Order Details
   const handleViewOrder = (orderNumber: string) => {
-    const ord = orders.find(o => o.orderNumber === orderNumber);
+    const ord = orders.find(o => o.orderNumber === orderNumber || o.orderNumber === `#${orderNumber.replace(/^#/, '')}`);
     if (ord) {
       setSelectedOrderForModal(ord);
     } else {
@@ -250,103 +218,144 @@ export const RemittancesView: React.FC = () => {
     }
   };
 
-  // Send WhatsApp Reminder to Agent
-  const handleSendAgentWhatsApp = (r: Remittance) => {
-    const text = `Hello ${r.agentName}, kindly confirm payment remittance for Order #${r.orderNumber} (Customer: ${r.customerName}).\nNet amount to remit: ₦${r.amountToRemit.toLocaleString()}.\nPlease share bank transfer receipt once sent. Thank you!`;
-    const url = createWhatsAppLink(r.customerPhone, text);
-    window.open(url, '_blank');
-  };
+  // Calculate modal breakdown numbers using original full product order price
+  const modalGrossTotal = remitTarget ? getOrderGrossAmount(remitTarget) : 0;
+  const parsedModalFee = parseFloat(deliveryFeeInput.replace(/[^0-9.]/g, '')) || 0;
+  const modalNetRemit = Math.max(0, modalGrossTotal - parsedModalFee);
 
   return (
-    <div className="p-3 sm:p-5 lg:p-7 space-y-5 max-w-7xl mx-auto text-slate-100 select-none">
+    <div className={`p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto min-h-screen ${
+      isLight ? 'bg-slate-50 text-slate-900' : 'bg-[#030712] text-slate-100'
+    }`}>
       
-      {/* 1. Header Section (Matching Ordello CRM Screenshot) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <span>Remittances</span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/60 font-semibold">
-              COD Settled Cash
+      {/* 1. Header Section matching remit1.png */}
+      <div className="space-y-1">
+        <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-sky-400">
+          Remittances
+        </h1>
+        <p className={`text-xs sm:text-sm ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+          Delivered orders awaiting delivery-fee remittance from your agents
+        </p>
+      </div>
+
+      {/* 2. Tabs Row matching remit1.png: [ Pending (22) ] [ Remitted ] */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setTab('pending')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+            tab === 'pending'
+              ? isLight
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'bg-slate-800 text-white border border-slate-700/80 shadow-md'
+              : isLight
+                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+          }`}
+        >
+          <span>Pending</span>
+          <span className={`font-mono text-[11px] px-1.5 py-0.2 rounded ${
+            tab === 'pending'
+              ? 'bg-sky-500/20 text-sky-300'
+              : 'text-slate-500'
+          }`}>
+            ({pendingList.length})
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setTab('remitted')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+            tab === 'remitted'
+              ? isLight
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'bg-slate-800 text-white border border-slate-700/80 shadow-md'
+              : isLight
+                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+          }`}
+        >
+          <span>Remitted</span>
+          {remittedList.length > 0 && (
+            <span className={`font-mono text-[11px] px-1.5 py-0.2 rounded ${
+              tab === 'remitted'
+                ? 'bg-emerald-500/20 text-emerald-300'
+                : 'text-slate-500'
+            }`}>
+              ({remittedList.length})
             </span>
-          </h1>
-          <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-            Delivered orders awaiting delivery-fee remittance from your agents
+          )}
+        </button>
+      </div>
+
+      {/* 3. Filter Bar & Search Row matching remit1.png */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Left side: Time range filters */}
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+            {(['today', 'week', 'month', 'year'] as const).map((period) => (
+              <button
+                key={period}
+                type="button"
+                onClick={() => setDateFilter(period)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+                  dateFilter === period
+                    ? isLight
+                      ? 'bg-slate-200 text-slate-900 font-bold'
+                      : 'text-white font-bold'
+                    : isLight
+                      ? 'text-slate-500 hover:text-slate-800'
+                      : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {period === 'today' ? 'Today' : period === 'week' ? 'This Week' : period === 'month' ? 'This Month' : 'This Year'}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => setShowCustomDateModal(true)}
+              className={`px-3 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${
+                dateFilter === 'custom'
+                  ? 'bg-sky-950/80 border-sky-600 text-sky-300 font-bold'
+                  : isLight
+                    ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+                    : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white hover:border-slate-700'
+              }`}
+            >
+              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+              <span>
+                {dateFilter === 'custom' && customStartDate && customEndDate
+                  ? `${customStartDate} → ${customEndDate}`
+                  : 'Date Range'}
+              </span>
+            </button>
+          </div>
+
+          <p className="text-[11px] text-slate-500 font-normal">
+            Filters by delivery date.
           </p>
         </div>
 
-        {/* Quick Summary Pill Badges */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs flex items-center gap-2">
-            <span className="text-slate-400">Pending:</span>
-            <span className="font-mono font-bold text-amber-400">
-              {formatCurrency(convertAmount(totalPendingAmountNgn, currency), currency)}
-            </span>
-            <span className="text-[10px] text-slate-500 font-mono">({pendingList.length})</span>
-          </div>
-
-          <div className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs flex items-center gap-2">
-            <span className="text-slate-400">Settled:</span>
-            <span className="font-mono font-bold text-emerald-400">
-              {formatCurrency(convertAmount(totalRemittedAmountNgn, currency), currency)}
-            </span>
-            <span className="text-[10px] text-slate-500 font-mono">({remittedList.length})</span>
-          </div>
-
-          <button
-            onClick={handleExportCsv}
-            className="px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-700/80 flex items-center gap-1.5 transition cursor-pointer"
-            title="Download CSV Statement"
-          >
-            <Download className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="hidden md:inline">Export CSV</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Controls Row: [ Pending | Remitted ] Pill Switcher + Search Bar (Matching Ordello CRM Screenshot) */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
-        {/* Pill Tab Switcher: Pending | Remitted */}
-        <div className="inline-flex items-center bg-slate-900/90 border border-slate-800 p-1 rounded-xl shadow-inner self-start">
-          <button
-            type="button"
-            onClick={() => { setTab('pending'); setSelectedIds([]); }}
-            className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer ${
-              tab === 'pending'
-                ? 'bg-slate-800 text-white shadow-sm ring-1 ring-white/10'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Pending {pendingList.length > 0 && <span className="ml-1 text-[10px] font-mono text-amber-400 font-bold">({pendingList.length})</span>}
-          </button>
-          <button
-            type="button"
-            onClick={() => { setTab('remitted'); setSelectedIds([]); }}
-            className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer ${
-              tab === 'remitted'
-                ? 'bg-slate-800 text-white shadow-sm ring-1 ring-white/10'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Remitted {remittedList.length > 0 && <span className="ml-1 text-[10px] font-mono text-emerald-400 font-bold">({remittedList.length})</span>}
-          </button>
-        </div>
-
-        {/* Search Bar matching screenshot placeholder: "Search order #, customer, or phone" */}
-        <div className="relative flex-1 max-w-md w-full">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-            <Search className="w-4 h-4" />
-          </div>
+        {/* Right side: Search Input matching remit1.png */}
+        <div className="relative w-full md:w-80">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search order #, customer, or phone"
-            className="w-full pl-9 pr-8 py-2 bg-slate-900/90 border border-slate-800 focus:border-emerald-500 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none transition shadow-sm"
+            className={`w-full pl-9 pr-8 py-2 rounded-xl text-xs focus:outline-none transition shadow-sm ${
+              isLight
+                ? 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:border-sky-500'
+                : 'bg-slate-900/90 border border-slate-800/90 text-white placeholder-slate-500 focus:border-sky-500'
+            }`}
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -354,298 +363,179 @@ export const RemittancesView: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Date Filters & Subtext Row (Matching Ordello CRM Screenshot) */}
-      <div className="space-y-1">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Text/Pill Buttons: Today | This Week | This Month | This Year | Date Range */}
-          {(['today', 'week', 'month', 'year'] as const).map((d) => (
-            <button
-              key={d}
-              type="button"
-              onClick={() => setDateFilter(d)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-                dateFilter === d
-                  ? 'bg-emerald-600 text-white font-semibold shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-              }`}
-            >
-              {d === 'today' ? 'Today' : d === 'week' ? 'This Week' : d === 'month' ? 'This Month' : 'This Year'}
-            </button>
-          ))}
-
-          {/* Date Range Button */}
-          <button
-            type="button"
-            onClick={() => setShowCustomDateModal(true)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition cursor-pointer border ${
-              dateFilter === 'custom'
-                ? 'bg-emerald-600 text-white border-emerald-500 font-semibold shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 border-slate-800 bg-slate-900/60'
-            }`}
-          >
-            <Calendar className="w-3.5 h-3.5 text-emerald-400" />
-            <span>
-              {dateFilter === 'custom' && customStartDate && customEndDate
-                ? `${customStartDate} → ${customEndDate}`
-                : 'Date Range'}
-            </span>
-          </button>
-
-          {/* Optional Delivery Agent Filter Dropdown */}
-          {distinctAgents.length > 0 && (
-            <div className="flex items-center gap-1.5 ml-auto">
-              <span className="text-[11px] text-slate-500 hidden sm:inline">Agent:</span>
-              <select
-                value={selectedAgentId}
-                onChange={(e) => setSelectedAgentId(e.target.value)}
-                className="bg-slate-900 border border-slate-800 text-slate-300 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-emerald-500"
-              >
-                <option value="all">All Agents ({distinctAgents.length})</option>
-                {distinctAgents.map(a => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
-            </div>
-          )}
-        </div>
-
-        {/* Subtext: "Filters by delivery date." (matching screenshot) */}
-        <p className="text-[11px] text-slate-500 font-normal">
-          Filters by delivery date.
-        </p>
-      </div>
-
-      {/* 4. Bulk Action Floating Bar (When rows are selected) */}
-      {selectedIds.length > 0 && (
-        <div className="p-3 rounded-xl bg-emerald-950/80 border border-emerald-600/60 flex flex-wrap items-center justify-between gap-3 text-xs shadow-lg animate-in fade-in">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-semibold text-white">
-              {selectedIds.length} {selectedIds.length === 1 ? 'order' : 'orders'} selected
-            </span>
-            <span className="text-slate-300">·</span>
-            <span className="text-emerald-300 font-mono font-bold">
-              Total Due: {formatCurrency(convertAmount(
-                filteredRemittances
-                  .filter(r => selectedIds.includes(r.id))
-                  .reduce((sum, r) => sum + r.amountToRemit, 0),
-                currency
-              ), currency)}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {tab === 'pending' && (
-              <button
-                type="button"
-                onClick={handleBulkSettle}
-                className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow transition cursor-pointer flex items-center gap-1"
-              >
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                <span>Bulk Confirm Received</span>
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => setSelectedIds([])}
-              className="px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-900 text-slate-300 hover:text-white text-xs transition cursor-pointer"
-            >
-              Clear Selection
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 5. Main Content Container (Matching screenshot card styling) */}
-      <div className="rounded-2xl border border-slate-800/90 bg-[#090d16] overflow-hidden shadow-xl min-h-[300px] flex flex-col justify-center">
-        
-        {/* State A: EMPTY STATE (Matching screenshot: "No delivered orders waiting on remittance right now.") */}
+      {/* 4. Main Table matching remit1.png */}
+      <div className={`rounded-2xl border overflow-hidden shadow-xl ${
+        isLight ? 'bg-white border-slate-200' : 'bg-[#060a12] border-slate-800/80'
+      }`}>
         {filteredRemittances.length === 0 ? (
           <div className="py-20 px-4 text-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto text-slate-500">
               <Banknote className="w-6 h-6" />
             </div>
-
             <p className="text-slate-400 text-sm font-medium">
-              {tab === 'pending' 
+              {tab === 'pending'
                 ? 'No delivered orders waiting on remittance right now.'
                 : 'No settled remittance records found for this period.'}
             </p>
-
-            {(searchQuery || selectedAgentId !== 'all' || dateFilter !== 'month') && (
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedAgentId('all');
-                    setDateFilter('month');
-                  }}
-                  className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-emerald-400 hover:text-white transition"
-                >
-                  Reset Filters
-                </button>
-              </div>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="text-xs text-sky-400 hover:underline cursor-pointer"
+              >
+                Clear Search
+              </button>
             )}
           </div>
         ) : (
-          /* State B: POPULATED TABLE */
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-950/70 text-[11px] font-mono text-slate-400">
-                  <th className="py-3 px-4 w-10 text-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.length === filteredRemittances.length && filteredRemittances.length > 0}
-                      onChange={handleSelectAll}
-                      className="accent-emerald-500 rounded cursor-pointer"
-                    />
-                  </th>
-                  <th className="py-3 px-4 font-medium">Order #</th>
-                  <th className="py-3 px-4 font-medium">Customer Details</th>
-                  <th className="py-3 px-4 font-medium">Delivery Agent & Zone</th>
-                  <th className="py-3 px-4 font-medium">Delivered Date</th>
-                  <th className="py-3 px-4 font-medium text-right">Order Gross</th>
-                  <th className="py-3 px-4 font-medium text-right">Agent Fee</th>
-                  <th className="py-3 px-4 font-medium text-right text-emerald-400">Net Remittance Due</th>
-                  <th className="py-3 px-4 font-medium text-center">Status</th>
-                  <th className="py-3 px-4 font-medium text-right">Actions</th>
+                <tr className={`border-b text-[11px] font-mono ${
+                  isLight ? 'border-slate-200 bg-slate-100/70 text-slate-500' : 'border-slate-800/80 bg-slate-950/60 text-slate-400'
+                }`}>
+                  <th className="py-3 px-4 sm:px-6 font-semibold">Order</th>
+                  <th className="py-3 px-4 sm:px-6 font-semibold">Customer</th>
+                  <th className="py-3 px-4 sm:px-6 font-semibold">Agent</th>
+                  <th className="py-3 px-4 sm:px-6 font-semibold">Delivered</th>
+                  {tab === 'remitted' && (
+                    <>
+                      <th className="py-3 px-4 font-semibold text-right text-rose-400">Agent Fee (Expense)</th>
+                      <th className="py-3 px-4 font-semibold text-right text-emerald-400">Net Remitted</th>
+                    </>
+                  )}
+                  <th className="py-3 px-4 sm:px-6 font-semibold text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className={`divide-y ${
+                isLight ? 'divide-slate-200' : 'divide-slate-800/60'
+              }`}>
                 {filteredRemittances.map((r) => {
-                  const isChecked = selectedIds.includes(r.id);
-                  const grossAmount = r.orderTotal || (r.amountToRemit + (r.deliveryFeeDeducted || 2500));
-                  const feeDeducted = r.deliveryFeeDeducted || 2500;
+                  const initials = getInitials(r.customerName);
+                  const displayOrderNum = r.orderNumber.startsWith('#') ? r.orderNumber : `#${r.orderNumber.replace(/^ORD-/, '')}`;
 
                   return (
                     <tr 
                       key={r.id} 
-                      className={`hover:bg-slate-900/50 transition-colors ${
-                        isChecked ? 'bg-emerald-950/20' : ''
+                      className={`transition-colors ${
+                        isLight ? 'hover:bg-slate-50' : 'hover:bg-slate-900/50'
                       }`}
                     >
-                      {/* Checkbox */}
-                      <td className="py-3 px-4 text-center">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => handleToggleSelect(r.id)}
-                          className="accent-emerald-500 rounded cursor-pointer"
-                        />
-                      </td>
-
-                      {/* Order # */}
-                      <td className="py-3 px-4 font-mono font-medium text-white whitespace-nowrap">
+                      {/* Order Column: #1010 + Product Summary + Original Order Price */}
+                      <td className="py-3.5 px-4 sm:px-6 whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => handleViewOrder(r.orderNumber)}
-                          className="text-emerald-400 hover:text-emerald-300 hover:underline flex items-center gap-1 font-bold"
-                          title="View order details"
+                          className={`font-mono font-bold text-xs hover:underline flex items-center gap-1 ${
+                            isLight ? 'text-slate-900' : 'text-white'
+                          }`}
+                          title="Click to view full order details"
                         >
-                          <span>{r.orderNumber}</span>
-                          <ExternalLink className="w-3 h-3 opacity-60" />
+                          <span>{displayOrderNum}</span>
                         </button>
-                        <p className="text-[10px] text-slate-500 truncate max-w-[140px]" title={r.productSummary}>
-                          {r.productSummary}
+                        <p className={`text-[11px] truncate max-w-[200px] mt-0.5 ${
+                          isLight ? 'text-slate-500' : 'text-slate-400'
+                        }`} title={r.productSummary}>
+                          {r.productSummary || 'Standard Package'}
                         </p>
-                      </td>
-
-                      {/* Customer Details */}
-                      <td className="py-3 px-4">
-                        <p className="font-semibold text-white">{r.customerName}</p>
-                        <div className="flex items-center gap-1 text-[11px] text-slate-400 font-mono mt-0.5">
-                          <span>{r.customerPhone}</span>
-                        </div>
-                      </td>
-
-                      {/* Delivery Agent & Zone */}
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-1.5">
-                          <Truck className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span className="font-medium text-slate-200">{r.agentName}</span>
-                        </div>
-                        <span className="text-[10px] font-mono text-slate-400 block ml-5">
-                          Zone: {r.agentZone}
+                        <span className={`text-[10px] font-mono font-semibold block mt-0.5 ${
+                          isLight ? 'text-slate-600' : 'text-slate-400'
+                        }`}>
+                          {formatCurrency(convertAmount(getOrderGrossAmount(r), currency), currency)}
                         </span>
                       </td>
 
-                      {/* Delivered Date */}
-                      <td className="py-3 px-4 font-mono text-slate-300 whitespace-nowrap">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-slate-500" />
-                          <span>{r.deliveredDate}</span>
+                      {/* Customer Column: Avatar Circle [KI] + Name + Phone */}
+                      <td className="py-3.5 px-4 sm:px-6 whitespace-nowrap">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 border ${
+                            isLight 
+                              ? 'bg-sky-100 border-sky-300 text-sky-800' 
+                              : 'bg-[#0b1f36] border-sky-800/60 text-sky-400'
+                          }`}>
+                            {initials}
+                          </div>
+                          <div>
+                            <p className={`font-semibold text-xs leading-tight ${
+                              isLight ? 'text-slate-900' : 'text-white'
+                            }`}>
+                              {r.customerName}
+                            </p>
+                            <p className={`text-[10px] font-mono mt-0.5 ${
+                              isLight ? 'text-slate-500' : 'text-slate-400'
+                            }`}>
+                              {r.customerPhone}
+                            </p>
+                          </div>
                         </div>
-                        {r.remittedAt && (
-                          <span className="text-[10px] text-emerald-500 block">
-                            Settled: {r.remittedAt.split('T')[0] || r.remittedAt}
+                      </td>
+
+                      {/* Agent Column: Capital Dispatch (Abuja) + FCT */}
+                      <td className="py-3.5 px-4 sm:px-6 whitespace-nowrap">
+                        <p className={`font-medium text-xs ${
+                          isLight ? 'text-slate-800' : 'text-slate-200'
+                        }`}>
+                          {r.agentName}
+                        </p>
+                        <p className={`text-[11px] font-mono mt-0.5 ${
+                          isLight ? 'text-slate-500' : 'text-slate-400'
+                        }`}>
+                          {r.agentZone || 'Central Zone'}
+                        </p>
+                      </td>
+
+                      {/* Delivered Column: Oct 4, 2026 */}
+                      <td className={`py-3.5 px-4 sm:px-6 font-medium text-xs whitespace-nowrap ${
+                        isLight ? 'text-slate-600' : 'text-slate-300'
+                      }`}>
+                        <span>{formatDeliveredDate(r.deliveredDate)}</span>
+                        {r.remittedAt && tab === 'remitted' && (
+                          <span className="block text-[10px] text-emerald-500 font-mono mt-0.5">
+                            Settled: {formatDeliveredDate(r.remittedAt)}
                           </span>
                         )}
                       </td>
 
-                      {/* Order Gross */}
-                      <td className="py-3 px-4 text-right font-mono text-slate-300 whitespace-nowrap">
-                        {formatCurrency(convertAmount(grossAmount, currency), currency)}
-                      </td>
+                      {/* Remitted Tab Extra Columns: Fee + Net Cash */}
+                      {tab === 'remitted' && (
+                        <>
+                          <td className="py-3.5 px-4 text-right font-mono font-bold text-rose-400 whitespace-nowrap">
+                            -₦{(r.deliveryFeeDeducted || 0).toLocaleString()}
+                          </td>
+                          <td className="py-3.5 px-4 text-right font-mono font-bold text-emerald-400 whitespace-nowrap">
+                            ₦{(r.amountToRemit || 0).toLocaleString()}
+                          </td>
+                        </>
+                      )}
 
-                      {/* Agent Fee */}
-                      <td className="py-3 px-4 text-right font-mono text-slate-400 whitespace-nowrap">
-                        -{formatCurrency(convertAmount(feeDeducted, currency), currency)}
-                      </td>
-
-                      {/* Net Remittance Due */}
-                      <td className="py-3 px-4 text-right font-mono font-bold text-emerald-400 whitespace-nowrap text-sm">
-                        {formatCurrency(convertAmount(r.amountToRemit, currency), currency)}
-                      </td>
-
-                      {/* Status Badge */}
-                      <td className="py-3 px-4 text-center whitespace-nowrap">
+                      {/* Action Column: [ Remit ] Button matching remit1.png */}
+                      <td className="py-3.5 px-4 sm:px-6 text-right whitespace-nowrap">
                         {r.status === 'Pending' ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-950/80 text-amber-400 border border-amber-800/60 inline-flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            <span>Awaiting Settlement</span>
-                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenRemitModal(r)}
+                            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-xs shadow-sm transition active:scale-95 cursor-pointer"
+                            title="Click to enter agent deducted fee and mark remitted"
+                          >
+                            <Receipt className="w-3.5 h-3.5 stroke-[2.5]" />
+                            <span>Remit</span>
+                          </button>
                         ) : (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 inline-flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" />
-                            <span>Settled</span>
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="py-3 px-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {r.status === 'Pending' ? (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => setSettlingRemittance(r)}
-                                className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow transition cursor-pointer flex items-center gap-1"
-                                title="Confirm agent has sent payment"
-                              >
-                                <Check className="w-3 h-3 stroke-[3]" />
-                                <span>Confirm Received</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => handleSendAgentWhatsApp(r)}
-                                className="p-1 rounded-lg bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white transition cursor-pointer"
-                                title="Send WhatsApp Remittance Reminder"
-                              >
-                                <MessageSquare className="w-3.5 h-3.5" />
-                              </button>
-                            </>
-                          ) : (
-                            <span className="text-[11px] font-mono text-emerald-400 font-semibold flex items-center gap-1">
-                              <ShieldCheck className="w-3.5 h-3.5" />
-                              <span>Reconciled</span>
+                          <div className="flex items-center justify-end gap-2">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                              <span>Remitted</span>
                             </span>
-                          )}
-                        </div>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenRemitModal(r)}
+                              className="text-[10px] text-slate-400 hover:text-white underline cursor-pointer"
+                              title="Edit deducted delivery fee"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
@@ -654,103 +544,137 @@ export const RemittancesView: React.FC = () => {
             </table>
           </div>
         )}
-
       </div>
 
-      {/* MODAL 1: Confirm Remittance Settlement Dialog */}
-      {settlingRemittance && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4 shadow-2xl text-slate-100 animate-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <Banknote className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-base font-bold text-white">Confirm Remittance Received</h3>
+      {/* ========================================================================= */}
+      {/* 5. POP OPEN MODAL: Remit Order Dialog (MATCHING EXACTLY remit2.png)        */}
+      {/* ========================================================================= */}
+      {remitTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in">
+          <div className={`w-full max-w-md rounded-2xl border p-6 space-y-4 shadow-2xl animate-in zoom-in-95 ${
+            isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0b101b] border-slate-800 text-slate-100'
+          }`}>
+            
+            {/* Modal Header */}
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  Remit Order {remitTarget.orderNumber.startsWith('#') ? remitTarget.orderNumber : `#${remitTarget.orderNumber.replace(/^ORD-/, '')}`}
+                </h2>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  Enter the delivery fee deducted by the agent. This is logged as a delivery expense and the order is marked remitted.
+                </p>
               </div>
-              <button 
-                onClick={() => setSettlingRemittance(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white cursor-pointer"
+
+              <button
+                type="button"
+                onClick={() => setRemitTarget(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5 text-xs">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Order Number:</span>
-                <span className="font-mono font-bold text-white">{settlingRemittance.orderNumber}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Delivery Agent:</span>
-                <span className="font-medium text-white">{settlingRemittance.agentName} ({settlingRemittance.agentZone})</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Customer:</span>
-                <span className="text-white">{settlingRemittance.customerName}</span>
-              </div>
-              <div className="flex justify-between pt-1 border-t border-slate-800/80 text-sm font-bold">
-                <span className="text-slate-300">Net Remittance Due:</span>
-                <span className="font-mono text-emerald-400">
-                  {formatCurrency(convertAmount(settlingRemittance.amountToRemit, currency), currency)}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-3 text-xs">
+            {/* Form */}
+            <form onSubmit={handleConfirmRemit} className="space-y-4 pt-1">
+              {/* Delivery Fee Input Field matching remit2.png */}
               <div>
-                <label className="text-slate-400 block mb-1">Payment Reference / Transfer Session ID (Optional)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. GTB-TRF-982144 or Zenith NIP"
-                  value={paymentRefInput}
-                  onChange={(e) => setPaymentRefInput(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white font-mono focus:outline-none focus:border-emerald-500"
-                />
+                <label className="text-xs font-semibold text-slate-200 block mb-1.5">
+                  Delivery Fee <span className="text-rose-500">*</span>
+                </label>
+
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-mono text-sm text-slate-400 font-bold">
+                    ₦
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    autoFocus
+                    value={deliveryFeeInput}
+                    onChange={(e) => setDeliveryFeeInput(e.target.value)}
+                    placeholder="0.00"
+                    className={`w-full pl-8 pr-3 py-2.5 rounded-xl border text-sm font-mono focus:outline-none focus:border-sky-500 transition ${
+                      isLight 
+                        ? 'bg-slate-50 border-slate-300 text-slate-900' 
+                        : 'bg-[#060913] border-slate-800 text-white'
+                    }`}
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="text-slate-400 block mb-1">Settlement Note (Optional)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Deposited into main corporate account"
-                  value={settlementNoteInput}
-                  onChange={(e) => setSettlementNoteInput(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-            </div>
+              {/* Financial & Accounting Impact Preview Box */}
+              <div className={`p-3.5 rounded-xl border space-y-1.5 text-xs ${
+                isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/60 border-slate-800/80'
+              }`}>
+                <div className="flex items-center justify-between text-slate-400">
+                  <span>Customer Total Collected:</span>
+                  <span className="font-mono text-slate-200 font-semibold">
+                    ₦{modalGrossTotal.toLocaleString()}
+                  </span>
+                </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setSettlingRemittance(null)}
-                className="px-4 py-2 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 font-semibold text-xs cursor-pointer hover:bg-slate-700"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => handleConfirmSingleSettlement(settlingRemittance)}
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition cursor-pointer"
-              >
-                Mark as Settled
-              </button>
-            </div>
+                <div className="flex items-center justify-between text-rose-400">
+                  <span>Agent Fee (Logged to Expenses):</span>
+                  <span className="font-mono font-semibold">
+                    -₦{parsedModalFee.toLocaleString()}
+                  </span>
+                </div>
+
+                <div className="border-t border-slate-800 pt-1.5 flex items-center justify-between font-bold">
+                  <span className="text-slate-300">Net Cash Remittance to Bank:</span>
+                  <span className="font-mono text-emerald-400 text-sm">
+                    ₦{modalNetRemit.toLocaleString()}
+                  </span>
+                </div>
+
+                <div className="pt-1 flex items-center gap-1.5 text-[10px] text-sky-400 font-mono">
+                  <CheckCircle2 className="w-3 h-3 text-sky-400 shrink-0" />
+                  <span>Will reflect in Financial Reports under "Agent Delivery Fees"</span>
+                </div>
+              </div>
+
+              {/* Modal Buttons matching remit2.png */}
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setRemitTarget(null)}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                    isLight 
+                      ? 'border-slate-300 bg-white hover:bg-slate-100 text-slate-700' 
+                      : 'border-slate-700/80 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-xs shadow-md transition active:scale-95 cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>Remit</span>
+                </button>
+              </div>
+            </form>
+
           </div>
         </div>
       )}
 
-      {/* MODAL 2: Custom Date Range Picker */}
+      {/* Date Range Modal */}
       {showCustomDateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4 shadow-2xl text-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in">
+          <div className={`w-full max-w-sm rounded-2xl border p-6 space-y-4 shadow-2xl ${
+            isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900 border-slate-800 text-slate-100'
+          }`}>
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-emerald-400" />
-                <h3 className="text-sm font-bold text-white">Select Delivery Date Range</h3>
+                <Calendar className="w-4 h-4 text-sky-400" />
+                <h3 className="text-sm font-bold">Select Delivery Date Range</h3>
               </div>
               <button 
                 onClick={() => setShowCustomDateModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white cursor-pointer"
+                className="text-slate-400 hover:text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -763,7 +687,9 @@ export const RemittancesView: React.FC = () => {
                   type="date"
                   value={customStartDate}
                   onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white font-mono focus:outline-none focus:border-emerald-500"
+                  className={`w-full p-2.5 rounded-xl border text-xs focus:outline-none focus:border-sky-500 ${
+                    isLight ? 'bg-white border-slate-300 text-slate-800' : 'bg-slate-950 border-slate-800 text-white'
+                  }`}
                 />
               </div>
 
@@ -773,7 +699,9 @@ export const RemittancesView: React.FC = () => {
                   type="date"
                   value={customEndDate}
                   onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white font-mono focus:outline-none focus:border-emerald-500"
+                  className={`w-full p-2.5 rounded-xl border text-xs focus:outline-none focus:border-sky-500 ${
+                    isLight ? 'bg-white border-slate-300 text-slate-800' : 'bg-slate-950 border-slate-800 text-white'
+                  }`}
                 />
               </div>
             </div>
@@ -781,25 +709,18 @@ export const RemittancesView: React.FC = () => {
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => {
-                  setCustomStartDate('');
-                  setCustomEndDate('');
-                  setDateFilter('month');
-                  setShowCustomDateModal(false);
-                }}
-                className="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 text-xs font-semibold"
+                onClick={() => setShowCustomDateModal(false)}
+                className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-xs text-slate-300"
               >
-                Reset
+                Cancel
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  if (customStartDate && customEndDate) {
-                    setDateFilter('custom');
-                  }
+                  setDateFilter('custom');
                   setShowCustomDateModal(false);
                 }}
-                className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow"
+                className="px-4 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs"
               >
                 Apply Range
               </button>
@@ -808,7 +729,7 @@ export const RemittancesView: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL 3: Order Details Modal */}
+      {/* Order Details Modal (if viewing full order) */}
       {selectedOrderForModal && (
         <OrderDetailsModal
           order={selectedOrderForModal}

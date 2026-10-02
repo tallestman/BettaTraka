@@ -178,9 +178,9 @@ export const NotificationsView: React.FC = () => {
         ) : (
           /* Populated Notifications List */
           <div className="space-y-3 w-full">
-            {filteredNotifications.map((n) => (
+            {filteredNotifications.map((n, idx) => (
               <div
-                key={n.id}
+                key={`${n.id || 'notif'}-${idx}`}
                 className={`p-4 rounded-xl border transition flex flex-col sm:flex-row sm:items-start justify-between gap-3 text-xs ${
                   n.isRead
                     ? 'border-slate-800/60 bg-slate-950/40 opacity-75 hover:opacity-100 hover:border-slate-700'

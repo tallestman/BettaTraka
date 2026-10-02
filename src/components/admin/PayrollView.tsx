@@ -54,7 +54,7 @@ export const PayrollView: React.FC = () => {
   // Navigation & Sub-Tabs
   const [activeTab, setActiveTab] = useState<'rates' | 'history' | 'rules'>('rates');
 
-  // Period & Date Filters (Ordello Style)
+  // Period & Date Filters (BettaTraka Style)
   const [datePeriod, setDatePeriod] = useState<DatePeriod>('month');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [customStartDate, setCustomStartDate] = useState('');
@@ -75,7 +75,7 @@ export const PayrollView: React.FC = () => {
   const [runCurrency, setRunCurrency] = useState<CurrencyCode>('NGN');
   const [previewRunGenerated, setPreviewRunGenerated] = useState(false);
 
-  // Currency options matching Ordello format
+  // Currency options matching BettaTraka format
   const currencyOptions: { code: CurrencyCode; label: string; symbol: string }[] = [
     { code: 'NGN', label: 'Nigerian Naira', symbol: '₦' },
     { code: 'USD', label: 'US Dollar', symbol: '$' },
@@ -293,7 +293,7 @@ export const PayrollView: React.FC = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `ordello-payroll-${datePeriod}-${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `bettatraka-payroll-${datePeriod}-${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -301,7 +301,7 @@ export const PayrollView: React.FC = () => {
 
   return (
     <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto min-h-screen">
-      {/* 1. Header & Top Filter Controls (Matching Ordello screenshot ord1.png & pay1.png) */}
+      {/* 1. Header & Top Filter Controls (Matching BettaTraka screenshot ord1.png & pay1.png) */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2 border-b border-slate-800/80">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-sky-400">Payroll</h1>
@@ -465,7 +465,7 @@ export const PayrollView: React.FC = () => {
         <span>All payroll values, commissions, and bonuses converted dynamically to <strong>{currentCurrencyInfo.label} ({currentCurrencyInfo.symbol})</strong>.</span>
       </div>
 
-      {/* 2. Top Metric Cards (4 Cards matching Ordello CRM standard) */}
+      {/* 2. Top Metric Cards (4 Cards matching BettaTraka CRM standard) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Total Payroll */}
         <div className="rounded-2xl border border-slate-800/80 bg-[#0d121f]/90 p-5 space-y-2 hover:border-slate-700 transition">
@@ -670,7 +670,7 @@ export const PayrollView: React.FC = () => {
             </div>
           </div>
 
-          {/* Table matching Ordello CRM layout */}
+          {/* Table matching BettaTraka CRM layout */}
           <div className="rounded-2xl border border-slate-800 bg-[#0d121f] overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
@@ -989,7 +989,7 @@ export const PayrollView: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              Ordello automatically audits all completed deliveries for the calendar month across all active sales reps. The rep with the highest number of delivered orders automatically receives a bonus added to their payout.
+              BettaTraka automatically audits all completed deliveries for the calendar month across all active sales reps. The rep with the highest number of delivered orders automatically receives a bonus added to their payout.
             </p>
 
             <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800 space-y-2">
@@ -1197,7 +1197,7 @@ const SetRateModal: React.FC<SetRateModalProps> = ({ user, onClose, onSave, curr
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold font-mono uppercase tracking-wider text-sky-400">
-                Ordello Compensation Configuration
+                BettaTraka Compensation Configuration
               </span>
             </div>
             <h2 className="text-lg font-bold text-white mt-0.5">

@@ -3,7 +3,7 @@ import { useCrm } from '../../context/CrmContext';
 import { NIGERIAN_STATES } from '../../data/initialData';
 import { ProductPackage } from '../../types/crm';
 import { formatCurrency, convertAmount } from '../../utils/formatters';
-import { X, Plus, ShoppingBag } from 'lucide-react';
+import { X, Plus, ShoppingBag, Calendar, Clock } from 'lucide-react';
 
 interface CreateOrderModalProps {
   onClose: () => void;
@@ -24,6 +24,12 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose }) =
   const [selectedPackageId, setSelectedPackageId] = useState<string>('');
   const [assignedRepId, setAssignedRepId] = useState<string>(currentUser.id);
   const [source, setSource] = useState<'Order Form' | 'Manual Rep' | 'WhatsApp'>('Manual Rep');
+
+  // Delivery Scheduling state
+  const [isScheduled, setIsScheduled] = useState<boolean>(false);
+  const [scheduledDate, setScheduledDate] = useState<string>('2026-10-02');
+  const [preferredDeliveryTime, setPreferredDeliveryTime] = useState<string>('Morning (8:00 AM - 12:00 PM)');
+  const [deliveryNotes, setDeliveryNotes] = useState<string>('');
 
   const selectedProduct = products.find(p => p.id === selectedProductId) || products[0];
   const activePackages = selectedProduct?.packages || [];
@@ -48,7 +54,10 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose }) =
       deliveryState,
       source,
       salesRepId: assignedRepId === 'me' ? undefined : assignedRepId,
-      status: 'CONFIRMED',
+      status: isScheduled ? 'SCHEDULED' : 'CONFIRMED',
+      scheduledDate: isScheduled ? scheduledDate : undefined,
+      preferredDeliveryTime: isScheduled ? preferredDeliveryTime : undefined,
+      notes: deliveryNotes || undefined,
       totalAmount: currentPriceNgn,
       items: [
         {
@@ -265,19 +274,100 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose }) =
             </div>
           </div>
 
+          {/* Delivery Scheduling Toggle & Date Selector */}
+          <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-emerald-400" />
+                <span className="font-semibold text-white text-xs">Schedule Delivery Date</span>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer text-xs">
+                <input
+                  type="checkbox"
+                  checked={isScheduled}
+                  onChange={(e) => setIsScheduled(e.target.checked)}
+                  className="rounded text-emerald-500 focus:ring-emerald-500"
+                />
+                <span className="text-slate-300">Set Future Date</span>
+              </label>
+            </div>
+
+            {isScheduled && (
+              <div className="space-y-2.5 pt-2 border-t border-slate-800 animate-in fade-in">
+                {/* Presets */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {[
+                    { label: 'Today', date: '2026-10-01' },
+                    { label: 'Tomorrow', date: '2026-10-02' },
+                    { label: 'Saturday', date: '2026-10-03' },
+                    { label: 'Next Mon', date: '2026-10-05' }
+                  ].map(p => (
+                    <button
+                      key={p.date}
+                      type="button"
+                      onClick={() => setScheduledDate(p.date)}
+                      className={`px-2 py-1 rounded text-center text-xs font-mono border transition ${
+                        scheduledDate === p.date
+                          ? 'bg-emerald-600 border-emerald-500 text-white font-bold'
+                          : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="text-[11px] text-slate-400 block mb-1">Committed Date:</label>
+                    <input
+                      type="date"
+                      value={scheduledDate}
+                      onChange={(e) => setScheduledDate(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white text-xs font-mono focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-slate-400 block mb-1">Time Slot:</label>
+                    <select
+                      value={preferredDeliveryTime}
+                      onChange={(e) => setPreferredDeliveryTime(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white text-xs focus:outline-none focus:border-emerald-500"
+                    >
+                      <option value="Morning (8:00 AM - 12:00 PM)">Morning (8:00 AM - 12:00 PM)</option>
+                      <option value="Afternoon (12:00 PM - 4:00 PM)">Afternoon (12:00 PM - 4:00 PM)</option>
+                      <option value="Evening (4:00 PM - 7:30 PM)">Evening (4:00 PM - 7:30 PM)</option>
+                      <option value="Anytime / Flexible">Anytime / Flexible</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Delivery instructions (e.g. Call before coming)"
+                    value={deliveryNotes}
+                    onChange={(e) => setDeliveryNotes(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-emerald-500 placeholder-slate-500"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 font-medium text-slate-300"
+              className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 font-medium text-slate-300 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-semibold text-white transition shadow-sm"
+              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-semibold text-white transition shadow-sm cursor-pointer"
             >
-              Save & Confirm Order
+              {isScheduled ? 'Schedule & Create Order' : 'Save & Confirm Order'}
             </button>
           </div>
         </form>

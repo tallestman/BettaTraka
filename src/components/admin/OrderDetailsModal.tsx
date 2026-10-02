@@ -23,33 +23,61 @@ interface OrderDetailsModalProps {
 
 export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose }) => {
   const { 
+    orders,
     updateOrderStatus, 
+    scheduleOrderDelivery,
+    updateOrder,
     assignOrderRep, 
     assignOrderAgent, 
+    assignOrderDistributor,
+    distributors,
     users, 
     agents, 
     currency,
-    triggerAICall
+    triggerAICall,
+    addNotification
   } = useCrm();
 
+  const liveOrder = orders.find(o => o.id === order.id || o.orderNumber === order.orderNumber) || order;
+
   const [copied, setCopied] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<OrderStatus>(order.status);
-  const [selectedRep, setSelectedRep] = useState<string>(order.salesRepId || '');
-  const [selectedAgent, setSelectedAgent] = useState<string>(order.agentId || '');
+  const [showScheduleForm, setShowScheduleForm] = useState(liveOrder.status === 'SCHEDULED' || !!liveOrder.scheduledDate);
+  const [inputDate, setInputDate] = useState<string>(liveOrder.scheduledDate || '2026-10-02');
+  const [inputTimeWindow, setInputTimeWindow] = useState<string>(liveOrder.preferredDeliveryTime || 'Morning (8:00 AM - 12:00 PM)');
+  const [scheduleSavedToast, setScheduleSavedToast] = useState(false);
+
+  const selectedStatus = liveOrder.status;
+  const selectedRep = liveOrder.salesRepId || '';
+  const selectedAgent = liveOrder.agentId || '';
+  const selectedDistributor = liveOrder.distributorId || '';
 
   const handleStatusChange = (newStatus: OrderStatus) => {
-    setSelectedStatus(newStatus);
-    updateOrderStatus(order.id, newStatus);
+    if (newStatus === 'SCHEDULED') {
+      setShowScheduleForm(true);
+      scheduleOrderDelivery(liveOrder.id, inputDate, inputTimeWindow);
+    } else {
+      updateOrderStatus(liveOrder.id, newStatus);
+    }
+  };
+
+  const handleSaveSchedule = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!inputDate) return;
+    scheduleOrderDelivery(liveOrder.id, inputDate, inputTimeWindow);
+    setScheduleSavedToast(true);
+    setTimeout(() => setScheduleSavedToast(false), 2500);
   };
 
   const handleRepChange = (repId: string) => {
-    setSelectedRep(repId);
-    assignOrderRep(order.id, repId);
+    assignOrderRep(liveOrder.id, repId);
   };
 
   const handleAgentChange = (agentId: string) => {
-    setSelectedAgent(agentId);
-    assignOrderAgent(order.id, agentId);
+    assignOrderAgent(liveOrder.id, agentId);
+  };
+
+  const handleDistributorChange = (distributorId: string) => {
+    assignOrderDistributor(liveOrder.id, distributorId);
   };
 
   const copyOrderSummary = () => {
@@ -69,17 +97,17 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/40">
           <div className="flex items-center gap-3">
-            <span className="font-mono text-base font-bold text-white">{order.orderNumber}</span>
+            <span className="font-mono text-base font-bold text-white">{liveOrder.orderNumber}</span>
             <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-medium ${
-              order.status === 'DELIVERED' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/60' :
-              order.status === 'DISPATCHED' ? 'bg-blue-950 text-blue-400 border border-blue-800/60' :
-              order.status === 'CONFIRMED' ? 'bg-cyan-950 text-cyan-400 border border-cyan-800/60' :
-              order.status === 'NEW' ? 'bg-amber-950 text-amber-400 border border-amber-800/60' :
+              liveOrder.status === 'DELIVERED' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/60' :
+              liveOrder.status === 'DISPATCHED' ? 'bg-blue-950 text-blue-400 border border-blue-800/60' :
+              liveOrder.status === 'CONFIRMED' ? 'bg-cyan-950 text-cyan-400 border border-cyan-800/60' :
+              liveOrder.status === 'NEW' ? 'bg-amber-950 text-amber-400 border border-amber-800/60' :
               'bg-red-950 text-red-400 border border-red-800/60'
             }`}>
-              {order.status}
+              {liveOrder.status}
             </span>
-            {order.isSandbox && (
+            {liveOrder.isSandbox && (
               <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-purple-950 text-purple-400 border border-purple-800">
                 SANDBOX TEST
               </span>
@@ -123,7 +151,39 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copied ? 'Copied Details' : 'Copy Order'}</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => setShowScheduleForm(!showScheduleForm)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-950 border border-sky-600/50 hover:bg-sky-900/60 font-medium text-sky-300 transition"
+              title="Set or reschedule delivery date"
+            >
+              <Calendar className="w-3.5 h-3.5 text-sky-400" />
+              <span>{showScheduleForm ? 'Hide Schedule' : 'Schedule Delivery'}</span>
+            </button>
           </div>
+
+          {/* Current Scheduled Delivery Highlight if active */}
+          {(liveOrder.scheduledDate || liveOrder.status === 'SCHEDULED') && (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-sky-950/40 border border-sky-800/60 text-sky-200">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-sky-400 shrink-0" />
+                <div>
+                  <span className="text-[11px] text-sky-400 font-mono block">COMMITTED DELIVERY DATE:</span>
+                  <span className="font-bold text-xs">
+                    {liveOrder.scheduledDate || 'Not set'} ({liveOrder.preferredDeliveryTime || 'Morning'})
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowScheduleForm(true)}
+                className="px-2.5 py-1 rounded-lg bg-sky-900/80 hover:bg-sky-800 text-sky-100 text-[11px] font-semibold transition"
+              >
+                Change Date
+              </button>
+            </div>
+          )}
 
           {/* Customer Information */}
           <div className="space-y-3">
@@ -191,7 +251,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
           </div>
 
           {/* Workflow & Assignment Controls */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label className="text-[11px] text-slate-400 font-medium block mb-1">
                 Order Status
@@ -243,7 +303,110 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
                 ))}
               </select>
             </div>
+
+            <div>
+              <label className="text-[11px] text-lime-400 font-bold block mb-1">
+                Assigned Distributor
+              </label>
+              <select
+                value={selectedDistributor}
+                onChange={(e) => handleDistributorChange(e.target.value)}
+                className="w-full bg-slate-950 border border-lime-500/50 rounded-lg p-2 text-xs text-lime-300 focus:outline-none focus:border-lime-400 font-semibold"
+              >
+                <option value="">No Distributor</option>
+                {distributors.map(dist => (
+                  <option key={dist.id} value={dist.id}>
+                    {dist.name} (Hub)
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
+
+          {/* Delivery Scheduling Card */}
+          {showScheduleForm && (
+            <div className="p-4 rounded-xl bg-slate-950/80 border border-sky-800/60 space-y-3 animate-in fade-in">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-sky-400" />
+                  <span className="font-bold text-white text-xs">Set Committed Delivery Date &amp; Time</span>
+                </div>
+                {scheduleSavedToast && (
+                  <span className="text-[11px] text-emerald-400 font-bold flex items-center gap-1 animate-pulse">
+                    <Check className="w-3.5 h-3.5" /> Date Saved Successfully
+                  </span>
+                )}
+              </div>
+
+              {/* Quick Presets */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] text-slate-400 block font-medium">Quick Date Jump:</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {[
+                    { label: 'Today', date: '2026-10-01' },
+                    { label: 'Tomorrow', date: '2026-10-02' },
+                    { label: 'Saturday', date: '2026-10-03' },
+                    { label: 'Next Monday', date: '2026-10-05' },
+                  ].map(p => (
+                    <button
+                      key={p.date}
+                      type="button"
+                      onClick={() => setInputDate(p.date)}
+                      className={`px-2 py-1.5 rounded-lg border text-center text-xs font-mono transition cursor-pointer ${
+                        inputDate === p.date 
+                          ? 'bg-sky-600 border-sky-500 text-white font-bold' 
+                          : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-300'
+                      }`}
+                    >
+                      {p.label} ({p.date.slice(5)})
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom Date & Time Slot Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="text-[11px] text-slate-400 block mb-1 font-medium">
+                    Delivery Date (YYYY-MM-DD):
+                  </label>
+                  <input
+                    type="date"
+                    value={inputDate}
+                    onChange={(e) => setInputDate(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs font-mono text-white focus:outline-none focus:border-sky-500 cursor-pointer"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] text-slate-400 block mb-1 font-medium">
+                    Preferred Time Window:
+                  </label>
+                  <select
+                    value={inputTimeWindow}
+                    onChange={(e) => setInputTimeWindow(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-sky-500 cursor-pointer"
+                  >
+                    <option value="Morning (8:00 AM - 12:00 PM)">Morning (8:00 AM - 12:00 PM)</option>
+                    <option value="Afternoon (12:00 PM - 4:00 PM)">Afternoon (12:00 PM - 4:00 PM)</option>
+                    <option value="Evening (4:00 PM - 7:30 PM)">Evening (4:00 PM - 7:30 PM)</option>
+                    <option value="Anytime / Flexible">Anytime / Flexible</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800/60">
+                <button
+                  type="button"
+                  onClick={handleSaveSchedule}
+                  className="px-3.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs cursor-pointer flex items-center gap-1.5 shadow transition"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Update Scheduled Date</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Form Attribution & UTM Details */}
           <div className="space-y-2 p-3.5 rounded-lg bg-slate-950/40 border border-slate-800 text-[11px]">

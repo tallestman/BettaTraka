@@ -24,9 +24,6 @@ import {
   MessageSquare,
   ShieldCheck,
   Blocks,
-  CreditCard,
-  Mail,
-  Gift,
   Settings,
   Headphones,
   GraduationCap,
@@ -55,6 +52,7 @@ export const AdminSidebar: React.FC = () => {
     orders, 
     abandonedCarts, 
     remittances,
+    distributors,
     isMobileSidebarOpen,
     setIsMobileSidebarOpen,
     isSidebarCollapsed,
@@ -97,8 +95,9 @@ export const AdminSidebar: React.FC = () => {
   const openCartsCount = abandonedCarts.filter(c => c.status === 'ABANDONED' || c.status === 'ASSIGNED').length;
   const pendingRemitCount = remittances.filter(r => r.status === 'Pending').length;
   const unreadNotifsCount = notifications ? notifications.filter(n => !n.isRead).length : 0;
+  const distributorsCount = distributors ? distributors.length : 0;
 
-  // Exact navigation menu list matching Ordello CRM sidebar screenshot (side menu bar.png)
+  // Exact navigation menu list matching BettaTraka CRM sidebar screenshot (side menu bar.png)
   const navItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
     { id: 'orders', label: 'Orders', icon: ShoppingBag, badge: newOrdersCount > 0 ? newOrdersCount : undefined },
@@ -109,6 +108,7 @@ export const AdminSidebar: React.FC = () => {
     { id: 'sales-reps', label: 'Sales Reps', icon: Users },
     { id: 'sales-teams', label: 'Sales Teams', icon: Users2 },
     { id: 'team-performance', label: 'Team Performance', icon: Trophy },
+    { id: 'distributors', label: 'Distributors', icon: Truck, badge: distributorsCount > 0 ? distributorsCount : undefined },
     { id: 'agents', label: 'Agents', icon: UserCheck },
     { id: 'payroll', label: 'Payroll', icon: Banknote },
     { id: 'customers', label: 'Customers', icon: Users },
@@ -127,9 +127,6 @@ export const AdminSidebar: React.FC = () => {
     { id: 'notifications', label: 'Notifications', icon: Bell, badge: unreadNotifsCount > 0 ? unreadNotifsCount : undefined },
     { id: 'users', label: 'User Management', icon: ShieldCheck },
     { id: 'integrations', label: 'Integrations', icon: Blocks },
-    { id: 'subscription', label: 'Subscription', icon: CreditCard },
-    { id: 'email-usage', label: 'Email Usage', icon: Mail },
-    { id: 'referrals', label: 'Referrals & Earnings', icon: Gift },
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'support', label: 'Customer Support', icon: Headphones },
     { id: 'academy', label: 'BettaTraka Academy', icon: GraduationCap },

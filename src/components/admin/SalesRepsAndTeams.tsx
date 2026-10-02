@@ -262,7 +262,7 @@ export const SalesTeamsView: React.FC = () => {
   const [newRepSalary, setNewRepSalary] = useState<number>(75000);
 
   // Create Team form state
-  const eligibleReps = users.filter(u => u.role === 'Sales Representative' || u.role === 'Team Lead');
+  const eligibleReps = users.filter(u => u.role === 'Sales Representative');
   const [teamName, setTeamName] = useState('');
   const [leadId, setLeadId] = useState(eligibleReps[0]?.id || users[0]?.id || '');
   const [selectedRepIds, setSelectedRepIds] = useState<string[]>([eligibleReps[0]?.id || '']);
@@ -625,7 +625,7 @@ export const SalesTeamsView: React.FC = () => {
                     </div>
 
                     {/* Quick Inline Add Rep Selector right on the card */}
-                    {users.some(u => !team.repIds.includes(u.id) && (u.role === 'Sales Representative' || u.role === 'Team Lead' || u.role === 'Manager')) && (
+                    {users.some(u => !team.repIds.includes(u.id) && (u.role === 'Sales Representative' || u.role === 'Manager')) && (
                       <div className="flex items-center gap-1.5 pt-1">
                         <select
                           value={quickRepToAdd[team.id] || ''}
@@ -634,7 +634,7 @@ export const SalesTeamsView: React.FC = () => {
                         >
                           <option value="">Quick assign existing rep...</option>
                           {users
-                            .filter(u => !team.repIds.includes(u.id) && (u.role === 'Sales Representative' || u.role === 'Team Lead' || u.role === 'Manager'))
+                            .filter(u => !team.repIds.includes(u.id) && (u.role === 'Sales Representative' || u.role === 'Manager'))
                             .map(u => (
                               <option key={u.id} value={u.id}>
                                 {u.name} ({u.role})
@@ -832,7 +832,7 @@ export const SalesTeamsView: React.FC = () => {
                   {/* List of Available Reps to Add */}
                   {(() => {
                     const pool = repScopeFilter === 'reps_only'
-                      ? users.filter(u => u.role === 'Sales Representative' || u.role === 'Team Lead')
+                      ? users.filter(u => u.role === 'Sales Representative')
                       : users;
 
                     const availableReps = pool.filter(u => 

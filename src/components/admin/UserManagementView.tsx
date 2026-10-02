@@ -93,19 +93,21 @@ export const UserManagementView: React.FC = () => {
     const counts = {
       salesReps: 0,
       admins: 0,
-      teamLeads: 0,
       accountants: 0,
       managers: 0,
-      inventoryManagers: 0
+      inventoryManagers: 0,
+      distributors: 0,
+      mediaBuyers: 0
     };
 
     users.forEach(u => {
-      if (u.role === 'Sales Representative') counts.salesReps++;
+      if (u.role === 'Sales Representative' || (u.role as string) === 'Team Lead') counts.salesReps++;
       else if (u.role === 'Admin' || u.role === 'Owner') counts.admins++;
-      else if (u.role === 'Team Lead') counts.teamLeads++;
       else if (u.role === 'Accountant') counts.accountants++;
       else if (u.role === 'Manager') counts.managers++;
       else if (u.role === 'Inventory Manager') counts.inventoryManagers++;
+      else if (u.role === 'Distributor') counts.distributors++;
+      else if (u.role === 'Media Buyer') counts.mediaBuyers++;
     });
 
     return counts;
@@ -116,10 +118,11 @@ export const UserManagementView: React.FC = () => {
     return {
       salesReps: Math.round((roleCounts.salesReps / total) * 100),
       admins: Math.round((roleCounts.admins / total) * 100),
-      teamLeads: Math.round((roleCounts.teamLeads / total) * 100),
       accountants: Math.round((roleCounts.accountants / total) * 100),
       managers: Math.round((roleCounts.managers / total) * 100),
-      inventoryManagers: Math.round((roleCounts.inventoryManagers / total) * 100)
+      inventoryManagers: Math.round((roleCounts.inventoryManagers / total) * 100),
+      distributors: Math.round((roleCounts.distributors / total) * 100),
+      mediaBuyers: Math.round((roleCounts.mediaBuyers / total) * 100)
     };
   }, [roleCounts, totalUsers]);
 
@@ -194,7 +197,7 @@ export const UserManagementView: React.FC = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `ordello-users-${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `bettatraka-users-${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -467,10 +470,6 @@ export const UserManagementView: React.FC = () => {
                 <span className="text-slate-300">Admins ({rolePercentages.admins}%)</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
-                <span className="text-slate-300">Team Leads ({rolePercentages.teamLeads}%)</span>
-              </div>
-              <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
                 <span className="text-slate-300">Accountants ({rolePercentages.accountants}%)</span>
               </div>
@@ -481,6 +480,14 @@ export const UserManagementView: React.FC = () => {
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
                 <span className="text-slate-300">Inv. Mgr ({rolePercentages.inventoryManagers}%)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-lime-500"></span>
+                <span className="text-slate-300">Distributor ({rolePercentages.distributors}%)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+                <span className="text-slate-300">Media Buyer ({rolePercentages.mediaBuyers}%)</span>
               </div>
             </div>
           </div>
@@ -511,11 +518,12 @@ export const UserManagementView: React.FC = () => {
             <option value="All Roles">All Roles</option>
             <option value="Owner">Owner</option>
             <option value="Admin">Admin</option>
+            <option value="Distributor">Distributor</option>
             <option value="Sales Representative">Sales Representative</option>
             <option value="Manager">Manager</option>
-            <option value="Team Lead">Team Lead</option>
             <option value="Inventory Manager">Inventory Manager</option>
             <option value="Accountant">Accountant</option>
+            <option value="Media Buyer">Media Buyer</option>
           </select>
         </div>
 
@@ -603,14 +611,16 @@ export const UserManagementView: React.FC = () => {
                             ? 'bg-purple-950/80 text-purple-400 border-purple-800/60'
                             : u.role === 'Admin'
                             ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800/60'
+                            : u.role === 'Distributor'
+                            ? 'bg-lime-950/80 text-lime-400 border-lime-800/60'
                             : u.role === 'Sales Representative'
                             ? 'bg-cyan-950/80 text-cyan-400 border-cyan-800/60'
                             : u.role === 'Manager'
                             ? 'bg-amber-950/80 text-amber-400 border-amber-800/60'
-                            : u.role === 'Team Lead'
-                            ? 'bg-indigo-950/80 text-indigo-400 border-indigo-800/60'
                             : u.role === 'Accountant'
                             ? 'bg-yellow-950/80 text-yellow-400 border-yellow-800/60'
+                            : u.role === 'Media Buyer'
+                            ? 'bg-sky-950/80 text-sky-400 border-sky-800/60'
                             : 'bg-slate-800 text-slate-300 border-slate-700'
                         }`}>
                           {u.role}
@@ -920,12 +930,16 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onAdd, salesTeams 
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none"
               >
                 <option value="Sales Representative">Sales Representative</option>
+                <option value="Distributor">Distributor</option>
                 <option value="Manager">Manager</option>
-                <option value="Team Lead">Team Lead</option>
                 <option value="Inventory Manager">Inventory Manager</option>
                 <option value="Accountant">Accountant</option>
+                <option value="Media Buyer">Media Buyer</option>
                 <option value="Admin">Admin</option>
               </select>
+              <p className="text-[10px] text-slate-400 mt-1">
+                Note: Team Leads are Sales Representatives designated in the Sales Teams section.
+              </p>
             </div>
 
             <div>
@@ -1080,12 +1094,16 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSave, sa
               >
                 <option value="Owner">Owner</option>
                 <option value="Admin">Admin</option>
+                <option value="Distributor">Distributor</option>
                 <option value="Sales Representative">Sales Representative</option>
                 <option value="Manager">Manager</option>
-                <option value="Team Lead">Team Lead</option>
                 <option value="Inventory Manager">Inventory Manager</option>
                 <option value="Accountant">Accountant</option>
+                <option value="Media Buyer">Media Buyer</option>
               </select>
+              <p className="text-[10px] text-slate-400 mt-1">
+                Note: Team Leads are Sales Representatives designated in the Sales Teams section.
+              </p>
             </div>
 
             <div>

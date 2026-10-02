@@ -59,7 +59,7 @@ export const EmbedFormGeneratorView: React.FC = () => {
     addNotification
   } = useCrm();
 
-  // Top navigation tabs: matching Ordello (Create Order Form, Generate, Media Buyer Forms)
+  // Top navigation tabs: matching BettaTraka (Create Order Form, Generate, Media Buyer Forms)
   const [activeTab, setActiveTab] = useState<'create' | 'generate' | 'media-buyers'>('create');
 
   // Currently selected product for live preview & settings
@@ -333,7 +333,7 @@ export const EmbedFormGeneratorView: React.FC = () => {
 
   return (
     <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto text-slate-100 animate-in fade-in">
-      {/* 1. BREADCRUMBS & MAIN TITLE (Ordello CRM Design) */}
+      {/* 1. BREADCRUMBS & MAIN TITLE (BettaTraka CRM Design) */}
       <div className="space-y-1.5">
         <p className="text-xs text-slate-400 font-medium">
           Dashboard <span className="text-slate-600">&gt;</span> <span className="text-white">Embed Form Generator</span>
@@ -1655,7 +1655,7 @@ export const EmbedFormGeneratorView: React.FC = () => {
               const currentFormat = embedFormatTab[prod.id] || 'direct';
               const directLink = `${window.location.origin}/order-form/embed?product=${prod.id}&currency=NGN`;
               const iframeSnippet = `<iframe src="${directLink}" width="100%" height="900" frameborder="0" style="border:none; max-width:650px; margin:0 auto; display:block;"></iframe>`;
-              const elementorSnippet = `<div class="ordello-form-container" style="max-width:650px; margin:0 auto;">\n  <iframe src="${directLink}" width="100%" height="900" frameborder="0" style="border:none; width:100%;"></iframe>\n</div>`;
+              const elementorSnippet = `<div class="bettatraka-form-container" style="max-width:650px; margin:0 auto;">\n  <iframe src="${directLink}" width="100%" height="900" frameborder="0" style="border:none; width:100%;"></iframe>\n</div>`;
 
               return (
                 <div key={prod.id} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-4 text-xs shadow-sm">

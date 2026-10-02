@@ -47,7 +47,9 @@ export const MediaBuyersView: React.FC = () => {
     salesTeams,
     users,
     currency,
-    addNotification
+    addNotification,
+    setPersona,
+    setCurrentUser
   } = useCrm();
 
   // Active view tab: 'roster' | 'campaigns' | 'spend_tracker' | 'commissions'
@@ -403,8 +405,22 @@ export const MediaBuyersView: React.FC = () => {
           </p>
         </div>
 
-        {/* Top Actions: Add Media Buyer & Log Daily Spend */}
+        {/* Top Actions: Add Media Buyer, Log Daily Spend & Open Dashboard */}
         <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+          <button
+            type="button"
+            onClick={() => {
+              const mb = users.find(u => u.role === 'Media Buyer') || users.find(u => u.id === 'user-media-buyer-1');
+              if (mb) setCurrentUser(mb);
+              setPersona('media_buyer');
+            }}
+            className="px-3.5 py-2 rounded-xl bg-sky-950/80 hover:bg-sky-900 border border-sky-800 text-sky-300 text-xs font-semibold transition flex items-center gap-2 shadow-sm cursor-pointer"
+            title="Open Media Buyer Persona Dashboard"
+          >
+            <Megaphone className="w-4 h-4 text-sky-400" />
+            <span>Open Media Buyer Dashboard</span>
+          </button>
+
           <button
             type="button"
             onClick={() => handleOpenLogSpendModal()}
@@ -425,7 +441,7 @@ export const MediaBuyersView: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. TOP KPI SUMMARY METRICS (Matching Ordello CRM Performance Dashboard) */}
+      {/* 2. TOP KPI SUMMARY METRICS (Matching BettaTraka CRM Performance Dashboard) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
         {/* KPI 1: Active Buyers */}
         <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 space-y-1.5 shadow-sm">

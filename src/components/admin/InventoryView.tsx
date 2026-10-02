@@ -48,6 +48,9 @@ export const InventoryView: React.FC = () => {
     assignStockToAgent,
     addWarehouseStock,
     setAgentStockLevel,
+    distributors,
+    distributorStock,
+    assignStockToDistributor,
     currency,
     setCurrency,
     orders,
@@ -62,6 +65,11 @@ export const InventoryView: React.FC = () => {
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showStockHistoryModal, setShowStockHistoryModal] = useState(false);
   const [showUpdateStockModal, setShowUpdateStockModal] = useState(false);
+  const [showAssignDistributorModal, setShowAssignDistributorModal] = useState(false);
+  const [distributorAssignId, setDistributorAssignId] = useState('');
+  const [distributorProductId, setDistributorProductId] = useState('');
+  const [distributorUnits, setDistributorUnits] = useState<number>(50);
+  const [distributorNote, setDistributorNote] = useState<string>('');
   const [selectedProductForPricing, setSelectedProductForPricing] = useState<Product | null>(null);
   const [selectedProductForPackages, setSelectedProductForPackages] = useState<Product | null>(null);
   const [selectedProductForDetails, setSelectedProductForDetails] = useState<Product | null>(null);
@@ -121,7 +129,7 @@ export const InventoryView: React.FC = () => {
   const [newPkgGiftValue, setNewPkgGiftValue] = useState(3500);
   const [packageSuccessMsg, setPackageSuccessMsg] = useState<string | null>(null);
 
-  // Currency options matching Ordello format
+  // Currency options matching BettaTraka format
   const currencyOptions: { code: CurrencyCode; label: string; symbol: string }[] = [
     { code: 'NGN', label: 'Nigerian Naira', symbol: '₦' },
     { code: 'USD', label: 'US Dollar', symbol: '$' },
@@ -378,7 +386,7 @@ export const InventoryView: React.FC = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `ordello_inventory_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `bettatraka_inventory_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -386,7 +394,7 @@ export const InventoryView: React.FC = () => {
 
   return (
     <div className="p-3 sm:p-5 lg:p-8 space-y-6 max-w-[1440px] mx-auto text-slate-100 animate-in fade-in">
-      {/* 1. HEADER (Ordello Style: Sky Blue Title + Description) */}
+      {/* 1. HEADER (BettaTraka Style: Sky Blue Title + Description) */}
       <div className="space-y-1 pb-1">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#38bdf8]">
           Inventory Dashboard
@@ -452,6 +460,21 @@ export const InventoryView: React.FC = () => {
             <span>Add Stock</span>
           </button>
 
+          {/* + Assign to Distributor (Lime Green) */}
+          <button
+            onClick={() => {
+              setDistributorAssignId(distributors[0]?.id || '');
+              setDistributorProductId(products[0]?.id || '');
+              setDistributorUnits(50);
+              setShowAssignDistributorModal(true);
+            }}
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-lime-600 hover:bg-lime-500 text-black font-extrabold text-xs shadow transition active:scale-95 cursor-pointer whitespace-nowrap flex-1 sm:flex-initial"
+            title="Allocate Central Warehouse stock to Regional Distributor Hub"
+          >
+            <Warehouse className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Assign to Distributor</span>
+          </button>
+
           {/* + Add Product (Bright Sky Blue) */}
           <button
             onClick={handleOpenAddModal}
@@ -499,7 +522,7 @@ export const InventoryView: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. FOUR STATS CARDS (Ordello KPI Cards - Zero Overlap & Responsive) */}
+      {/* 3. FOUR STATS CARDS (BettaTraka KPI Cards - Zero Overlap & Responsive) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 sm:gap-4">
         {/* Card 1: Total Inventory Value */}
         <div className="rounded-2xl border border-neutral-800/90 bg-[#090d14]/90 p-4 sm:p-5 space-y-2 transition hover:border-neutral-700 min-w-0 overflow-hidden shadow-sm">
@@ -1906,6 +1929,110 @@ export const InventoryView: React.FC = () => {
                   className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow"
                 >
                   Save Trigger Settings
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Stock to Distributor Modal */}
+      {showAssignDistributorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl bg-neutral-900 border border-neutral-700 p-6 space-y-4 shadow-2xl text-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Warehouse className="w-4 h-4 text-lime-400" />
+                <span>Assign Stock to Distributor</span>
+              </h3>
+              <button 
+                onClick={() => setShowAssignDistributorModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!distributorAssignId || !distributorProductId || distributorUnits <= 0) return;
+                const prod = products.find(p => p.id === distributorProductId);
+                if (prod && prod.stockWarehouse < distributorUnits) {
+                  alert(`Insufficient central warehouse stock! Only ${prod.stockWarehouse} units available.`);
+                  return;
+                }
+                assignStockToDistributor(distributorAssignId, distributorProductId, Number(distributorUnits), distributorNote);
+                setShowAssignDistributorModal(false);
+                setDistributorNote('');
+              }} 
+              className="space-y-4 text-xs"
+            >
+              <div>
+                <label className="text-slate-300 font-medium block mb-1">Target Regional Distributor</label>
+                <select
+                  value={distributorAssignId}
+                  onChange={(e) => setDistributorAssignId(e.target.value)}
+                  className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500"
+                >
+                  {distributors.map(d => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} ({d.phone})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-slate-300 font-medium block mb-1">Select Product</label>
+                <select
+                  value={distributorProductId}
+                  onChange={(e) => setDistributorProductId(e.target.value)}
+                  className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500"
+                >
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.sku}) • {p.stockWarehouse} units in Central Warehouse
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-slate-300 font-medium block mb-1">Units to Allocate from Warehouse</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={distributorUnits}
+                  onChange={(e) => setDistributorUnits(Math.max(1, Number(e.target.value)))}
+                  className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500 font-mono text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-300 font-medium block mb-1">Waybill Reference / Dispatch Notes</label>
+                <textarea
+                  rows={2}
+                  value={distributorNote}
+                  onChange={(e) => setDistributorNote(e.target.value)}
+                  placeholder="e.g. Dispatched via interstate logistics transit batch #WB-9901..."
+                  className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2 text-white focus:outline-none focus:border-lime-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-neutral-800">
+                <button
+                  type="button"
+                  onClick={() => setShowAssignDistributorModal(false)}
+                  className="px-4 py-2 rounded-xl bg-neutral-800 text-slate-300 hover:bg-neutral-700 font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-lime-500 hover:bg-lime-400 text-black font-extrabold shadow"
+                >
+                  Allocate to Distributor
                 </button>
               </div>
             </form>

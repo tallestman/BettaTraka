@@ -44,7 +44,7 @@ export const ExpensesView: React.FC = () => {
     addNotification 
   } = useCrm();
 
-  // Filter & Search states (Matching Ordello Screenshot exp1.png, exp2.png, exp3.png)
+  // Filter & Search states (Matching BettaTraka Screenshot exp1.png, exp2.png, exp3.png)
   const [datePeriod, setDatePeriod] = useState<DatePeriod>('today');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [customStartDate, setCustomStartDate] = useState('');
@@ -68,13 +68,13 @@ export const ExpensesView: React.FC = () => {
 
   // Form states for Add / Edit
   const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0]);
-  const [formType, setFormType] = useState<Expense['type']>('Meta / TikTok Ads');
+  const [formType, setFormType] = useState<Expense['type']>('Advertising / Media Buying');
   const [formProductId, setFormProductId] = useState<string>('');
   const [formAmount, setFormAmount] = useState<number>(35000);
   const [formDesc, setFormDesc] = useState('');
   const [formRef, setFormRef] = useState('');
 
-  // Currency options matching Ordello format
+  // Currency options matching BettaTraka format
   const currencyOptions: { code: CurrencyCode; label: string; symbol: string }[] = [
     { code: 'NGN', label: 'Nigerian Naira', symbol: '₦' },
     { code: 'USD', label: 'US Dollar', symbol: '$' },
@@ -89,12 +89,13 @@ export const ExpensesView: React.FC = () => {
 
   // Distinct expense types
   const expenseTypes: Expense['type'][] = [
-    'Meta / TikTok Ads',
+    'Advertising / Media Buying',
+    'Logistics',
     'Agent Delivery Fees',
-    'Freight / Customs',
     'Product Manufacturing',
     'Software & Tools',
-    'Office & Staff'
+    'Office & Staff',
+    'Miscellaneous'
   ];
 
   // Helper to filter expenses by time period
@@ -207,7 +208,7 @@ export const ExpensesView: React.FC = () => {
 
   const productLinkedExpensesNgn = useMemo(() => {
     return expensesInPeriod
-      .filter(e => Boolean(e.productId) || e.type === 'Product Manufacturing' || e.type === 'Freight / Customs')
+      .filter(e => Boolean(e.productId) || e.type === 'Product Manufacturing' || e.type === 'Logistics' || e.type === 'Freight / Customs')
       .reduce((sum, e) => sum + (e.amount || 0), 0);
   }, [expensesInPeriod]);
 
@@ -291,11 +292,11 @@ export const ExpensesView: React.FC = () => {
       });
 
       const operating = monthExpenses
-        .filter(e => e.type !== 'Meta / TikTok Ads')
+        .filter(e => e.type !== 'Advertising / Media Buying' && e.type !== 'Meta / TikTok Ads')
         .reduce((sum, e) => sum + e.amount, 0);
 
       const marketing = monthExpenses
-        .filter(e => e.type === 'Meta / TikTok Ads')
+        .filter(e => e.type === 'Advertising / Media Buying' || e.type === 'Meta / TikTok Ads')
         .reduce((sum, e) => sum + e.amount, 0);
 
       return {
@@ -369,7 +370,7 @@ export const ExpensesView: React.FC = () => {
 
   // Export Data CSV Handler
   const handleExportCsv = () => {
-    const filename = `ordello_expenses_export_${datePeriod}_${new Date().toISOString().slice(0, 10)}.csv`;
+    const filename = `bettatraka_expenses_export_${datePeriod}_${new Date().toISOString().slice(0, 10)}.csv`;
     let csv = "Date,Type,Product / Ref,Amount (NGN),Description,Reference Invoice\n";
 
     filteredExpenses.forEach(e => {
@@ -396,7 +397,7 @@ export const ExpensesView: React.FC = () => {
   // Open Add Modal
   const handleOpenAdd = () => {
     setFormDate(new Date().toISOString().split('T')[0]);
-    setFormType('Meta / TikTok Ads');
+    setFormType('Advertising / Media Buying');
     setFormProductId('');
     setFormAmount(35000);
     setFormDesc('');
@@ -542,7 +543,7 @@ export const ExpensesView: React.FC = () => {
 
       {/* Date Filter Pills, Date Range & Currency Selector Row */}
       <div className="flex flex-wrap items-center gap-2">
-        {/* Date Filter Pills (Ordello Solid White Active Pill) */}
+        {/* Date Filter Pills (BettaTraka Solid White Active Pill) */}
         <div className="flex items-center bg-black/80 p-0.5 rounded-xl border border-neutral-800">
           {(
             [
@@ -1220,14 +1221,20 @@ export const ExpensesView: React.FC = () => {
                       {/* Type Badge */}
                       <td className="py-3.5 px-4">
                         <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                          exp.type === 'Meta / TikTok Ads' 
+                          exp.type === 'Advertising / Media Buying' || exp.type === 'Meta / TikTok Ads'
                             ? 'bg-purple-950/80 text-purple-400 border border-purple-800/60'
+                            : exp.type === 'Logistics' || exp.type === 'Freight / Customs'
+                            ? 'bg-amber-950/80 text-amber-400 border border-amber-800/60'
                             : exp.type === 'Agent Delivery Fees'
                             ? 'bg-sky-950/80 text-sky-400 border border-sky-800/60'
-                            : exp.type === 'Freight / Customs'
-                            ? 'bg-amber-950/80 text-amber-400 border border-amber-800/60'
                             : exp.type === 'Product Manufacturing'
                             ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60'
+                            : exp.type === 'Software & Tools'
+                            ? 'bg-indigo-950/80 text-indigo-400 border border-indigo-800/60'
+                            : exp.type === 'Office & Staff'
+                            ? 'bg-teal-950/80 text-teal-400 border border-teal-800/60'
+                            : exp.type === 'Miscellaneous'
+                            ? 'bg-pink-950/80 text-pink-400 border border-pink-800/60'
                             : 'bg-neutral-900 text-slate-300 border border-neutral-800'
                         }`}>
                           {exp.type}

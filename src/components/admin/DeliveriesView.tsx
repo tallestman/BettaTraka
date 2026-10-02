@@ -73,7 +73,7 @@ export const DeliveriesView: React.FC = () => {
     return Array.from(sources).sort();
   }, [allDeliveredOrders]);
 
-  // Currency options matching Ordello format
+  // Currency options matching BettaTraka format
   const currencyOptions: { code: CurrencyCode; label: string; symbol: string }[] = [
     { code: 'NGN', label: 'Nigerian Naira', symbol: '₦' },
     { code: 'USD', label: 'US Dollar', symbol: '$' },
@@ -238,7 +238,7 @@ export const DeliveriesView: React.FC = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `ordello_deliveries_${datePeriod}_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `bettatraka_deliveries_${datePeriod}_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -265,7 +265,7 @@ export const DeliveriesView: React.FC = () => {
 
   return (
     <div className="p-3 sm:p-5 lg:p-8 space-y-5 max-w-[1400px] mx-auto text-slate-100 animate-in fade-in">
-      {/* 1. TOP HEADER & FILTER BAR (Exactly as in Ordello) */}
+      {/* 1. TOP HEADER & FILTER BAR (Exactly as in BettaTraka) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-1">
         {/* Left Side: Date pills, Date Range button & Currency selector */}
         <div className="flex items-center flex-wrap gap-2">
@@ -411,7 +411,7 @@ export const DeliveriesView: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. FOUR KPI CARDS IN A ROW (Ordello Style) */}
+      {/* 2. FOUR KPI CARDS IN A ROW (BettaTraka Style) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
         {/* Card 1: Total Delivered */}
         <div className="rounded-2xl border border-neutral-800/90 bg-[#090d14]/90 p-4 sm:p-5 space-y-3 transition hover:border-neutral-700 min-w-0 overflow-hidden">
@@ -473,7 +473,7 @@ export const DeliveriesView: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. SEARCH & 6-DROPDOWN FILTER BAR (Ordello Filter Box) */}
+      {/* 3. SEARCH & 6-DROPDOWN FILTER BAR (BettaTraka Filter Box) */}
       <div className="rounded-2xl border border-neutral-800/90 bg-[#090d14]/90 p-3 sm:p-4 space-y-3 shadow-md">
         {/* Search Row */}
         <div className="flex items-center gap-2">
@@ -621,7 +621,7 @@ export const DeliveriesView: React.FC = () => {
         )}
       </div>
 
-      {/* 4. DELIVERIES TABLE (Matches Ordello Screenshot Columns) */}
+      {/* 4. DELIVERIES TABLE (Matches BettaTraka Screenshot Columns) */}
       <div className="rounded-2xl border border-neutral-800/90 bg-[#090d14]/90 overflow-hidden shadow-lg">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">

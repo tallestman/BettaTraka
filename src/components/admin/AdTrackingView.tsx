@@ -295,11 +295,11 @@ export const AdTrackingView: React.FC = () => {
 
           <div className="relative rounded-xl border border-neutral-800 bg-neutral-950 p-4 font-mono text-xs overflow-x-auto text-slate-300">
             <div className="pr-12">
-              https://ordellocrm.vercel.app/order-form/cmuih7e3d000agm0a7ba28e5k<span className="text-sky-400">?utm_source=tiktok&utm_medium=paid&utm_campaign=ramadan_2026&utm_content=ugc_hook_a</span>
+              https://bettatrakacrm.vercel.app/order-form/cmuih7e3d000agm0a7ba28e5k<span className="text-sky-400">?utm_source=tiktok&utm_medium=paid&utm_campaign=ramadan_2026&utm_content=ugc_hook_a</span>
             </div>
             <button
               type="button"
-              onClick={() => handleCopy('https://ordellocrm.vercel.app/order-form/cmuih7e3d000agm0a7ba28e5k?utm_source=tiktok&utm_medium=paid&utm_campaign=ramadan_2026&utm_content=ugc_hook_a', 'tiktok')}
+              onClick={() => handleCopy('https://bettatrakacrm.vercel.app/order-form/cmuih7e3d000agm0a7ba28e5k?utm_source=tiktok&utm_medium=paid&utm_campaign=ramadan_2026&utm_content=ugc_hook_a', 'tiktok')}
               className="absolute right-3 top-3 p-2 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-700/80 text-slate-300 hover:text-white transition cursor-pointer"
               title="Copy TikTok Link"
             >

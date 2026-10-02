@@ -38,7 +38,7 @@ export const CustomersView: React.FC = () => {
     addNotification 
   } = useCrm();
 
-  // Filter & Search states (Matching Ordello Screenshot)
+  // Filter & Search states (Matching BettaTraka Screenshot)
   const [datePeriod, setDatePeriod] = useState<DatePeriod>('today');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [customStartDate, setCustomStartDate] = useState('');
@@ -56,7 +56,7 @@ export const CustomersView: React.FC = () => {
   // Selected Customer for Profile Modal
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerRecord | null>(null);
 
-  // Currency options matching Ordello format
+  // Currency options matching BettaTraka format
   const currencyOptions: { code: CurrencyCode; label: string; symbol: string }[] = [
     { code: 'NGN', label: 'Nigerian Naira', symbol: '₦' },
     { code: 'USD', label: 'US Dollar', symbol: '$' },
@@ -185,9 +185,9 @@ export const CustomersView: React.FC = () => {
     setShowDatePicker(false);
   };
 
-  // Export Data CSV Handler matching Ordello format
+  // Export Data CSV Handler matching BettaTraka format
   const handleExportData = () => {
-    const filename = `ordello_customers_export_${datePeriod}_${new Date().toISOString().slice(0, 10)}.csv`;
+    const filename = `bettatraka_customers_export_${datePeriod}_${new Date().toISOString().slice(0, 10)}.csv`;
     let csv = "Customer Name,Phone,Email,City,State,Total Orders,Successful Orders,Cancelled Orders,Total Spend (NGN),Reliability Score,Acquisition Source,Blocked Status,Last Order Date\n";
     
     filteredCustomers.forEach(c => {
@@ -231,7 +231,7 @@ export const CustomersView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
         {/* Left Side: Date pills, Date Range button & Currency selector */}
         <div className="flex items-center flex-wrap gap-2">
-          {/* Date Filter Pills (Ordello Signature: solid white when active) */}
+          {/* Date Filter Pills (BettaTraka Signature: solid white when active) */}
           <div className="flex items-center bg-black/80 p-0.5 rounded-xl border border-neutral-800">
             {(
               [
@@ -330,7 +330,7 @@ export const CustomersView: React.FC = () => {
             )}
           </div>
 
-          {/* Currency Selector Dropdown (Ordello Signature: ₦ Nigerian Naira) */}
+          {/* Currency Selector Dropdown (BettaTraka Signature: ₦ Nigerian Naira) */}
           <div className="relative">
             <button
               type="button"

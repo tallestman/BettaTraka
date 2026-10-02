@@ -44,7 +44,7 @@ export const FinancialReportsView: React.FC = () => {
     addNotification 
   } = useCrm();
 
-  // Navigation and Filter States (Matching Ordello Screenshot financial.png)
+  // Navigation and Filter States (Matching BettaTraka Screenshot financial.png)
   const [activeTab, setActiveTab] = useState<FinancialTab>('overview');
   const [datePeriod, setDatePeriod] = useState<DatePeriod>('today');
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -52,7 +52,7 @@ export const FinancialReportsView: React.FC = () => {
   const [customEndDate, setCustomEndDate] = useState('');
   const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
 
-  // Currency options matching Ordello format
+  // Currency options matching BettaTraka format
   const currencyOptions: { code: CurrencyCode; label: string; symbol: string }[] = [
     { code: 'NGN', label: 'Nigerian Naira', symbol: '₦' },
     { code: 'USD', label: 'US Dollar', symbol: '$' },
@@ -253,8 +253,14 @@ export const FinancialReportsView: React.FC = () => {
     return agents.map(ag => {
       const agOrders = periodOrders.filter(o => o.agentId === ag.id || o.agentName === ag.name);
       const deliveredCount = agOrders.filter(o => o.status === 'DELIVERED').length;
+      
+      // Calculate actual delivery fees deducted during remittance
+      const agentRemitFees = remittances
+        .filter(r => (r.agentId === ag.id || r.agentName === ag.name) && (r.deliveryFeeDeducted || 0) > 0)
+        .reduce((sum, r) => sum + (r.deliveryFeeDeducted || 0), 0);
+
       const ratePerDelivery = 2500;
-      const totalFeesEarned = deliveredCount * ratePerDelivery;
+      const totalFeesEarned = agentRemitFees > 0 ? agentRemitFees : (deliveredCount * ratePerDelivery);
 
       const stocks = agentStock.filter(s => s.agentId === ag.id);
       const defectiveVal = stocks.reduce((sum, s) => {
@@ -331,7 +337,7 @@ export const FinancialReportsView: React.FC = () => {
   // EXPORT REPORT CSV HANDLER (Matching Screenshot Button)
   // =========================================================
   const handleExportReport = () => {
-    const filename = `ordello_financial_report_${activeTab}_${datePeriod}_${new Date().toISOString().slice(0, 10)}.csv`;
+    const filename = `bettatraka_financial_report_${activeTab}_${datePeriod}_${new Date().toISOString().slice(0, 10)}.csv`;
     let csv = "";
 
     if (activeTab === 'overview' || activeTab === 'pnl') {
@@ -431,7 +437,7 @@ export const FinancialReportsView: React.FC = () => {
           )}
         </div>
 
-        {/* Date Period Pills (Ordello Solid White Active Pill) */}
+        {/* Date Period Pills (BettaTraka Solid White Active Pill) */}
         <div className="flex items-center bg-black/80 p-0.5 rounded-xl border border-neutral-800">
           {(
             [

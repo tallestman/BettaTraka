@@ -4,6 +4,7 @@ import { formatCurrency, convertAmount, formatDate } from '../../utils/formatter
 import { Order, OrderStatus } from '../../types/crm';
 import { CreateOrderModal } from './CreateOrderModal';
 import { OrderDetailsModal } from './OrderDetailsModal';
+import { ScheduleDeliveryModal } from '../common/ScheduleDeliveryModal';
 import { 
   TrendingUp, 
   ShoppingBag, 
@@ -34,7 +35,9 @@ import {
   Layers,
   Calendar,
   X,
-  Coins
+  Coins,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 export const DashboardHome: React.FC = () => {
@@ -53,22 +56,35 @@ export const DashboardHome: React.FC = () => {
     users,
     agents,
     settings,
-    addNotification
+    addNotification,
+    themeMode
   } = useCrm();
+
+  const isLight = themeMode === 'light';
 
   const [dateFilter, setDateFilter] = useState<'today' | 'yesterday' | 'week' | 'month' | 'year'>('month');
   const [targetBoost, setTargetBoost] = useState<number>(20); // +20pp simulator
   
+  // Collapsible dropdown states for the 7 stat sections ("One column per line, with a drop down")
+  const [showSalesReps, setShowSalesReps] = useState(true);
+  const [showMediaBuyers, setShowMediaBuyers] = useState(true);
+  const [showCourierRates, setShowCourierRates] = useState(true);
+  const [showAbandonedCarts, setShowAbandonedCarts] = useState(true);
+  const [showRevenueSimulator, setShowRevenueSimulator] = useState(true);
+  const [showInventoryStock, setShowInventoryStock] = useState(true);
+  const [showLiveTransactions, setShowLiveTransactions] = useState(true);
+
   // Modals state
   const [showCreateOrderModal, setShowCreateOrderModal] = useState(false);
   const [selectedOrderForModal, setSelectedOrderForModal] = useState<Order | null>(null);
+  const [orderToSchedule, setOrderToSchedule] = useState<Order | null>(null);
   const [showQuickExpenseModal, setShowQuickExpenseModal] = useState(false);
   const [showQuickSpendModal, setShowQuickSpendModal] = useState(false);
 
   // Quick Expense Form State
   const [expenseTitle, setExpenseTitle] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
-  const [expenseCategory, setExpenseCategory] = useState<'Agent Delivery Fees' | 'Meta / TikTok Ads' | 'Product Manufacturing' | 'Freight / Customs' | 'Software & Tools' | 'Office & Staff'>('Agent Delivery Fees');
+  const [expenseCategory, setExpenseCategory] = useState<'Advertising / Media Buying' | 'Logistics' | 'Agent Delivery Fees' | 'Product Manufacturing' | 'Software & Tools' | 'Office & Staff' | 'Miscellaneous'>('Advertising / Media Buying');
 
   // Quick Ad Spend Form State
   const [spendBuyerId, setSpendBuyerId] = useState(mediaBuyers[0]?.id || '');
@@ -309,7 +325,7 @@ export const DashboardHome: React.FC = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Ordello_BettaTraka_Executive_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `BettaTraka_BettaTraka_Executive_Report_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -415,7 +431,7 @@ export const DashboardHome: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Today's Flash Operations Pulse (Ordello CRM Essential Real-Time Bar) */}
+      {/* 2. Today's Flash Operations Pulse (BettaTraka CRM Essential Real-Time Bar) */}
       <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800/90 shadow-sm">
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/60 text-xs">
           <div className="flex items-center gap-2">
@@ -581,7 +597,7 @@ export const DashboardHome: React.FC = () => {
 
       </div>
 
-      {/* 4. Ordello CRM Order Lifecycle Stage Funnel (Interactive Pipeline) */}
+      {/* 4. BettaTraka CRM Order Lifecycle Stage Funnel (Interactive Pipeline) */}
       <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 sm:p-5 space-y-3.5 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800">
           <div>
@@ -751,300 +767,558 @@ export const DashboardHome: React.FC = () => {
         </div>
       </div>
 
-      {/* 5. Row 3: Sales Reps Confirmation Performance & Media Buyers Traffic Acquisition Hub */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* 5. Stat Sections (One column per row - spacious, uncluttered full-width layout) */}
+      <div className="space-y-6">
         
-        {/* Sales Reps Confirmation Leaderboard (Ordello Style) */}
-        <div className="lg:col-span-6 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-sm font-bold text-white">Sales Reps Confirmation Velocity</h2>
-            </div>
-            <button
-              onClick={() => setAdminActiveTab('sales-reps')}
-              className="text-xs text-emerald-400 hover:underline font-medium"
-            >
-              All Reps ➔
-            </button>
-          </div>
-
-          <p className="text-xs text-slate-400">
-            Monitor which sales agents confirm incoming order forms the fastest to prevent cancellation.
-          </p>
-
-          <div className="space-y-2.5">
-            {repPerformance.map((rep, idx) => (
-              <div 
-                key={rep.id} 
-                className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-3 text-xs"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-slate-800 text-emerald-400 font-bold flex items-center justify-center shrink-0 border border-slate-700">
-                    {rep.name.charAt(0)}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-white truncate">{rep.name}</p>
-                    <p className="text-[10px] text-slate-400 font-mono">
-                      {rep.totalAssigned} assigned · <span className="text-emerald-400 font-bold">{rep.confirmRate}% confirmed</span>
-                    </p>
-                  </div>
+        {/* SECTION 1: Sales Reps Confirmation Velocity (One Column Per Row) */}
+        <div className={`w-full rounded-2xl border p-5 sm:p-6 space-y-4 ${
+          isLight ? 'bg-white border-slate-200 shadow-sm text-slate-900' : 'bg-slate-900/50 border-slate-800 text-slate-100'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className={`p-2 rounded-xl ${isLight ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-950 text-emerald-400 border border-emerald-800/60'}`}>
+                <Users className="w-5 h-5" />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className={`text-base font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    Sales Reps Confirmation Velocity
+                  </h2>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                    isLight ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
+                  }`}>
+                    {repPerformance.length} Reps
+                  </span>
                 </div>
-
-                <div className="text-right shrink-0">
-                  <p className="font-mono font-bold text-white">
-                    {rep.deliveredCount} delivered
-                  </p>
-                  <p className="text-[10px] font-mono text-emerald-400 font-medium">
-                    {formatCurrency(convertAmount(rep.revenueNgn, currency), currency)}
-                  </p>
-                </div>
+                <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Monitor which sales agents confirm incoming order forms the fastest to prevent cancellation.
+                </p>
               </div>
-            ))}
-          </div>
-
-          <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-800/40 text-[11px] text-emerald-300 flex items-center justify-between">
-            <span>⚡ Automated Round-Robin lead rotation active across sales staff.</span>
-            <button
-              onClick={() => setAdminActiveTab('round-robin')}
-              className="font-bold underline text-white hover:text-emerald-400 whitespace-nowrap ml-2"
-            >
-              Config Pool
-            </button>
-          </div>
-        </div>
-
-        {/* Media Buyers & Traffic Acquisition Hub (Ordello Style) */}
-        <div className="lg:col-span-6 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Megaphone className="w-4 h-4 text-sky-400" />
-              <h2 className="text-sm font-bold text-white">Media Buyers & Traffic Acquisition</h2>
             </div>
-            <button
-              onClick={() => setAdminActiveTab('media-buyers')}
-              className="text-xs text-sky-400 hover:underline font-medium"
-            >
-              Media Buyers Hub ➔
-            </button>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setAdminActiveTab('sales-reps')}
+                className={`text-xs font-semibold hover:underline flex items-center gap-1 ${
+                  isLight ? 'text-emerald-700' : 'text-emerald-400'
+                }`}
+              >
+                <span>View All Reps</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowSalesReps(!showSalesReps)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer shadow-sm active:scale-95 ${
+                  isLight 
+                    ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700' 
+                    : 'bg-slate-800/90 hover:bg-slate-700/90 border-slate-700/80 text-slate-200'
+                }`}
+              >
+                <span>{showSalesReps ? 'Hide Details' : 'View Details'}</span>
+                {showSalesReps ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            </div>
           </div>
 
-          <p className="text-xs text-slate-400">
-            Cross-check ad spend on Meta/TikTok with verified delivered revenue to avoid bleeding cash.
-          </p>
-
-          <div className="space-y-2.5">
-            {mediaBuyers.slice(0, 4).map((buyer) => {
-              // Calculate attributed orders & spend for this buyer
-              const buyerOrders = orders.filter(o => o.utmCampaign && buyer.activeCampaigns.includes(o.utmCampaign));
-              const buyerDelivered = buyerOrders.filter(o => o.status === 'DELIVERED');
-              const buyerRevenue = buyerDelivered.reduce((s, o) => s + o.totalAmount, 0);
-              const buyerSpendLogs = mediaBuyerSpendLogs.filter(l => l.mediaBuyerId === buyer.id);
-              const totalLogged = buyerSpendLogs.reduce((s, l) => s + l.amount, 0) || (buyer.budgetMonthly * 0.35);
-              const roas = totalLogged > 0 ? (buyerRevenue / totalLogged).toFixed(2) : '3.80';
-
-              return (
-                <div 
-                  key={buyer.id}
-                  className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-3 text-xs"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-sky-950/80 text-sky-400 border border-sky-800/60 font-bold flex items-center justify-center shrink-0">
-                      {buyer.name.charAt(0)}
+          {showSalesReps && (
+            <div className="space-y-3 pt-1 animate-in fade-in duration-200">
+              <div className="space-y-2.5">
+                {repPerformance.map((rep) => (
+                  <div 
+                    key={rep.id} 
+                    className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition ${
+                      isLight 
+                        ? 'bg-slate-50/80 border-slate-200 hover:bg-slate-100/80 text-slate-800' 
+                        : 'bg-slate-950/70 border-slate-800/80 hover:bg-slate-800/40 text-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className={`w-9 h-9 rounded-full font-bold flex items-center justify-center shrink-0 border ${
+                        isLight 
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-200' 
+                          : 'bg-slate-800 text-emerald-400 border-slate-700'
+                      }`}>
+                        {rep.name.charAt(0)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`font-bold text-sm truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>{rep.name}</p>
+                        <p className={`text-[11px] font-mono mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                          {rep.totalAssigned} assigned · <span className={`font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>{rep.confirmRate}% confirmed</span>
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-white truncate">{buyer.name}</p>
-                      <p className="text-[10px] text-slate-400 font-mono">
-                        {buyer.trafficPlatform || 'Meta / FB Ads'} · Target CPA: ₦{(buyer.targetCpa || 3000).toLocaleString()}
+
+                    {/* Visual confirmation rate bar */}
+                    <div className="hidden md:flex items-center w-48 shrink-0 h-2 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800">
+                      <div 
+                        className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                        style={{ width: `${rep.confirmRate}%` }}
+                      />
+                    </div>
+
+                    <div className="text-left sm:text-right shrink-0">
+                      <p className={`font-mono font-bold text-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                        {rep.deliveredCount} delivered
+                      </p>
+                      <p className={`text-[11px] font-mono font-semibold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                        {formatCurrency(convertAmount(rep.revenueNgn, currency), currency)}
                       </p>
                     </div>
                   </div>
+                ))}
+              </div>
 
-                  <div className="text-right shrink-0">
-                    <p className="font-mono font-bold text-sky-400">
-                      ₦{Math.round(totalLogged).toLocaleString()} spend
-                    </p>
-                    <p className="text-[10px] font-mono text-emerald-400 font-semibold">
-                      {roas}x ROAS · {buyerDelivered.length} sales
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="flex items-center justify-between pt-1">
-            <button
-              onClick={() => setShowQuickSpendModal(true)}
-              className="px-3 py-1.5 rounded-xl bg-sky-950/80 border border-sky-800/60 text-sky-300 hover:text-white font-medium text-xs flex items-center gap-1.5 transition"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Log Daily Ad Spend</span>
-            </button>
-            <button
-              onClick={() => setAdminActiveTab('ad-tracking')}
-              className="text-xs text-slate-400 hover:text-white underline font-mono"
-            >
-              UTM Tracking Table ➔
-            </button>
-          </div>
+              <div className={`p-3 rounded-xl border text-xs flex items-center justify-between ${
+                isLight 
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+                  : 'bg-emerald-950/30 border-emerald-800/40 text-emerald-300'
+              }`}>
+                <span>⚡ Automated Round-Robin lead rotation active across sales staff.</span>
+                <button
+                  type="button"
+                  onClick={() => setAdminActiveTab('round-robin')}
+                  className={`font-bold underline whitespace-nowrap ml-2 cursor-pointer ${
+                    isLight ? 'text-emerald-900 hover:text-emerald-700' : 'text-white hover:text-emerald-400'
+                  }`}
+                >
+                  Config Pool
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-      </div>
-
-      {/* 6. Row 4: Regional Courier Delivery Hotspots (Nigeria) & Abandoned Carts Recovery */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Regional Courier Delivery Hotspots */}
-        <div className="lg:col-span-6 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-sm font-bold text-white">Courier Delivery Rate by State (Nigeria)</h2>
-            </div>
-            <button
-              onClick={() => setAdminActiveTab('deliveries')}
-              className="text-xs text-emerald-400 hover:underline font-medium"
-            >
-              Deliveries Hub ➔
-            </button>
-          </div>
-
-          <p className="text-xs text-slate-400">
-            Track which state delivery couriers (Lagos, Abuja, Port Harcourt) deliver fast vs where orders get returned.
-          </p>
-
-          <div className="space-y-2.5">
-            {regionalStats.map((item) => (
-              <div 
-                key={item.state}
-                className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between text-xs"
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-white">{item.state}</span>
-                    <span className={`px-1.5 py-0.2 rounded text-[9px] font-mono font-bold ${
-                      item.reliabilityRating === 'High' 
-                        ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/60'
-                        : item.reliabilityRating === 'Moderate'
-                        ? 'bg-amber-950 text-amber-400 border border-amber-800/60'
-                        : 'bg-rose-950 text-rose-400 border border-rose-800/60'
-                    }`}>
-                      {item.reliabilityRating} Courier Reliability
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                    {item.total} shipments · {item.delivered} delivered successfully
-                  </p>
-                </div>
-
-                <div className="text-right shrink-0">
-                  <span className={`font-mono font-bold text-sm ${
-                    item.successRate >= 80 ? 'text-emerald-400' : item.successRate >= 65 ? 'text-amber-400' : 'text-rose-400'
-                  }`}>
-                    {item.successRate}%
-                  </span>
-                  <p className="text-[10px] font-mono text-slate-400">
-                    {formatCurrency(convertAmount(item.revenue, currency), currency)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Abandoned Carts Follow-up Pipeline & Revenue Opportunity Simulator */}
-        <div className="lg:col-span-6 space-y-6">
-          
-          {/* Abandoned Carts */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-amber-400" />
-                <h2 className="text-sm font-bold text-white">Abandoned Cart Recovery Pipeline</h2>
-              </div>
-              <button
-                onClick={() => setAdminActiveTab('abandoned-carts')}
-                className="text-xs text-amber-400 hover:text-amber-300 font-medium flex items-center gap-1"
-              >
-                View Leads <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-400">
-              Recover dropped checkouts on public embed order forms with instant WhatsApp templates.
-            </p>
-
-            <div className="grid grid-cols-4 gap-2 pt-1 text-center">
-              <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-2.5">
-                <p className="text-[10px] uppercase font-mono text-slate-400">Open Carts</p>
-                <p className="text-base font-bold font-mono text-white mt-1">{openCarts}</p>
-              </div>
-              <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-2.5">
-                <p className="text-[10px] uppercase font-mono text-slate-400">Contacted</p>
-                <p className="text-base font-bold font-mono text-amber-400 mt-1">{contactedCarts}</p>
-              </div>
-              <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-2.5">
-                <p className="text-[10px] uppercase font-mono text-slate-400">Recovered</p>
-                <p className="text-base font-bold font-mono text-emerald-400 mt-1">{convertedCarts}</p>
-              </div>
-              <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-2.5">
-                <p className="text-[10px] uppercase font-mono text-slate-400">Total Leads</p>
-                <p className="text-base font-bold font-mono text-slate-300 mt-1">{totalCarts}</p>
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-emerald-950/30 border border-emerald-800/40 p-3 flex items-center justify-between text-xs">
-              <span className="text-slate-300">
-                Recovering 2 more carts today adds <strong className="text-emerald-400 font-mono">₦64,000</strong> to gross cashflow.
+        {/* SECTION 2: Media Buyers & Traffic Acquisition (One Column Per Row) */}
+        <div className={`w-full rounded-2xl border p-5 sm:p-6 space-y-4 ${
+          isLight ? 'bg-white border-slate-200 shadow-sm text-slate-900' : 'bg-slate-900/50 border-slate-800 text-slate-100'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className={`p-2 rounded-xl ${isLight ? 'bg-sky-100 text-sky-700' : 'bg-sky-950 text-sky-400 border border-sky-800/60'}`}>
+                <Megaphone className="w-5 h-5" />
               </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className={`text-base font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    Media Buyers & Traffic Acquisition
+                  </h2>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                    isLight ? 'bg-sky-100 text-sky-800' : 'bg-sky-950 text-sky-300 border border-sky-800/50'
+                  }`}>
+                    {mediaBuyers.length} Buyers
+                  </span>
+                </div>
+                <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Cross-check ad spend on Meta/TikTok with verified delivered revenue to avoid bleeding cash.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
               <button
-                onClick={() => setAdminActiveTab('abandoned-carts')}
-                className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs whitespace-nowrap ml-2 cursor-pointer"
+                type="button"
+                onClick={() => setAdminActiveTab('media-buyers')}
+                className={`text-xs font-semibold hover:underline flex items-center gap-1 ${
+                  isLight ? 'text-sky-700' : 'text-sky-400'
+                }`}
               >
-                Recover Now
+                <span>Media Buyers Hub</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowMediaBuyers(!showMediaBuyers)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer shadow-sm active:scale-95 ${
+                  isLight 
+                    ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700' 
+                    : 'bg-slate-800/90 hover:bg-slate-700/90 border-slate-700/80 text-slate-200'
+                }`}
+              >
+                <span>{showMediaBuyers ? 'Hide Details' : 'View Details'}</span>
+                {showMediaBuyers ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </button>
             </div>
           </div>
 
-          {/* Revenue Opportunity Simulator */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-emerald-400" />
-                <h2 className="text-sm font-bold text-white">Delivery Rate Revenue Simulator</h2>
+          {showMediaBuyers && (
+            <div className="space-y-4 pt-1 animate-in fade-in duration-200">
+              <div className="space-y-2.5">
+                {mediaBuyers.slice(0, 4).map((buyer) => {
+                  const buyerOrders = orders.filter(o => o.utmCampaign && buyer.activeCampaigns.includes(o.utmCampaign));
+                  const buyerDelivered = buyerOrders.filter(o => o.status === 'DELIVERED');
+                  const buyerRevenue = buyerDelivered.reduce((s, o) => s + o.totalAmount, 0);
+                  const buyerSpendLogs = mediaBuyerSpendLogs.filter(l => l.mediaBuyerId === buyer.id);
+                  const totalLogged = buyerSpendLogs.reduce((s, l) => s + l.amount, 0) || (buyer.budgetMonthly * 0.35);
+                  const roas = totalLogged > 0 ? (buyerRevenue / totalLogged).toFixed(2) : '3.80';
+
+                  return (
+                    <div 
+                      key={buyer.id} 
+                      className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition ${
+                        isLight 
+                          ? 'bg-slate-50/80 border-slate-200 hover:bg-slate-100/80 text-slate-800' 
+                          : 'bg-slate-950/70 border-slate-800/80 hover:bg-slate-800/40 text-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className={`w-9 h-9 rounded-full font-bold flex items-center justify-center shrink-0 border ${
+                          isLight 
+                            ? 'bg-sky-100 text-sky-800 border-sky-200' 
+                            : 'bg-sky-950/80 text-sky-400 border-sky-800/60'
+                        }`}>
+                          {buyer.name.charAt(0)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className={`font-bold text-sm truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>{buyer.name}</p>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                              isLight ? 'bg-sky-100 text-sky-800' : 'bg-sky-950 text-sky-300 border border-sky-800/50'
+                            }`}>
+                              {buyer.trafficPlatform || 'Meta / FB Ads'}
+                            </span>
+                          </div>
+                          <p className={`text-[11px] font-mono mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                            Target CPA: ₦{(buyer.targetCpa || 3000).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-6 self-end sm:self-auto shrink-0 text-right">
+                        <div>
+                          <p className={`font-mono font-bold text-xs ${isLight ? 'text-sky-700' : 'text-sky-400'}`}>
+                            ₦{Math.round(totalLogged).toLocaleString()} spend
+                          </p>
+                          <p className={`text-[11px] font-mono font-semibold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                            {roas}x ROAS
+                          </p>
+                        </div>
+
+                        <div className="border-l pl-4 border-slate-300 dark:border-slate-800">
+                          <p className={`font-mono font-bold text-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                            {buyerDelivered.length} sales
+                          </p>
+                          <p className={`text-[10px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                            {formatCurrency(convertAmount(buyerRevenue, currency), currency)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800/60 font-semibold">
+
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowQuickSpendModal(true)}
+                  className={`px-3 py-1.5 rounded-xl border font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer ${
+                    isLight 
+                      ? 'bg-sky-50 hover:bg-sky-100 text-sky-800 border-sky-300' 
+                      : 'bg-sky-950/80 hover:bg-sky-900 border-sky-800/60 text-sky-300'
+                  }`}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Log Daily Ad Spend</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAdminActiveTab('ad-tracking')}
+                  className={`text-xs hover:underline font-mono ${isLight ? 'text-slate-600' : 'text-slate-400'}`}
+                >
+                  UTM Tracking Table ➔
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* SECTION 3: Courier Delivery Rate by State (Nigeria) (One Column Per Row) */}
+        <div className={`w-full rounded-2xl border p-5 sm:p-6 space-y-4 ${
+          isLight ? 'bg-white border-slate-200 shadow-sm text-slate-900' : 'bg-slate-900/50 border-slate-800 text-slate-100'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className={`p-2 rounded-xl ${isLight ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-950 text-emerald-400 border border-emerald-800/60'}`}>
+                <MapPin className="w-5 h-5" />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className={`text-base font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    Courier Delivery Rate by State (Nigeria)
+                  </h2>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                    isLight ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
+                  }`}>
+                    {regionalStats.length} States Tracked
+                  </span>
+                </div>
+                <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Track which state delivery couriers (Lagos, Abuja, Port Harcourt) deliver fast vs where orders get returned.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setAdminActiveTab('deliveries')}
+                className={`text-xs font-semibold hover:underline flex items-center gap-1 ${
+                  isLight ? 'text-emerald-700' : 'text-emerald-400'
+                }`}
+              >
+                <span>Deliveries Hub</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowCourierRates(!showCourierRates)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer shadow-sm active:scale-95 ${
+                  isLight 
+                    ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700' 
+                    : 'bg-slate-800/90 hover:bg-slate-700/90 border-slate-700/80 text-slate-200'
+                }`}
+              >
+                <span>{showCourierRates ? 'Hide Details' : 'View Details'}</span>
+                {showCourierRates ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          </div>
+
+          {showCourierRates && (
+            <div className="space-y-2.5 pt-1 animate-in fade-in duration-200">
+              {regionalStats.map((item) => (
+                <div 
+                  key={item.state}
+                  className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition ${
+                    isLight 
+                      ? 'bg-slate-50/80 border-slate-200 hover:bg-slate-100/80 text-slate-800' 
+                      : 'bg-slate-950/70 border-slate-800/80 hover:bg-slate-800/40 text-slate-200'
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`font-bold text-sm ${isLight ? 'text-slate-900' : 'text-white'}`}>{item.state}</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                        item.reliabilityRating === 'High' 
+                          ? (isLight ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800/60')
+                          : item.reliabilityRating === 'Moderate'
+                          ? (isLight ? 'bg-amber-100 text-amber-800' : 'bg-amber-950 text-amber-400 border border-amber-800/60')
+                          : (isLight ? 'bg-rose-100 text-rose-800' : 'bg-rose-950 text-rose-400 border border-rose-800/60')
+                      }`}>
+                        {item.reliabilityRating} Courier Reliability
+                      </span>
+                    </div>
+                    <p className={`text-[11px] font-mono mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {item.total} shipments · {item.delivered} delivered successfully
+                    </p>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="hidden md:flex items-center w-48 shrink-0 h-2 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        item.successRate >= 80 ? 'bg-emerald-500' : item.successRate >= 65 ? 'bg-amber-500' : 'bg-rose-500'
+                      }`}
+                      style={{ width: `${item.successRate}%` }}
+                    />
+                  </div>
+
+                  <div className="text-left sm:text-right shrink-0">
+                    <span className={`font-mono font-bold text-base ${
+                      item.successRate >= 80 ? 'text-emerald-500' : item.successRate >= 65 ? 'text-amber-500' : 'text-rose-500'
+                    }`}>
+                      {item.successRate}%
+                    </span>
+                    <p className={`text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {formatCurrency(convertAmount(item.revenue, currency), currency)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* SECTION 4: Abandoned Cart Recovery Pipeline (One Column Per Row) */}
+        <div className={`w-full rounded-2xl border p-5 sm:p-6 space-y-4 ${
+          isLight ? 'bg-white border-slate-200 shadow-sm text-slate-900' : 'bg-slate-900/50 border-slate-800 text-slate-100'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className={`p-2 rounded-xl ${isLight ? 'bg-amber-100 text-amber-700' : 'bg-amber-950 text-amber-400 border border-amber-800/60'}`}>
+                <Phone className="w-5 h-5" />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className={`text-base font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    Abandoned Cart Recovery Pipeline
+                  </h2>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                    isLight ? 'bg-amber-100 text-amber-800' : 'bg-amber-950 text-amber-300 border border-amber-800/50'
+                  }`}>
+                    {openCarts} Open Carts · {convertedCarts} Recovered
+                  </span>
+                </div>
+                <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Recover dropped checkouts on public embed order forms with instant WhatsApp templates.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setAdminActiveTab('abandoned-carts')}
+                className={`text-xs font-semibold hover:underline flex items-center gap-1 ${
+                  isLight ? 'text-amber-700' : 'text-amber-400 hover:text-amber-300'
+                }`}
+              >
+                <span>View All Leads</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowAbandonedCarts(!showAbandonedCarts)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer shadow-sm active:scale-95 ${
+                  isLight 
+                    ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700' 
+                    : 'bg-slate-800/90 hover:bg-slate-700/90 border-slate-700/80 text-slate-200'
+                }`}
+              >
+                <span>{showAbandonedCarts ? 'Hide Details' : 'View Details'}</span>
+                {showAbandonedCarts ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          </div>
+
+          {showAbandonedCarts && (
+            <div className="space-y-4 pt-1 animate-in fade-in duration-200">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className={`rounded-xl border p-3.5 text-center ${
+                  isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/60 border-slate-800'
+                }`}>
+                  <p className={`text-[11px] uppercase font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Open Carts</p>
+                  <p className={`text-2xl font-bold font-mono mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>{openCarts}</p>
+                </div>
+                <div className={`rounded-xl border p-3.5 text-center ${
+                  isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/60 border-slate-800'
+                }`}>
+                  <p className={`text-[11px] uppercase font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Contacted</p>
+                  <p className="text-2xl font-bold font-mono text-amber-500 mt-1">{contactedCarts}</p>
+                </div>
+                <div className={`rounded-xl border p-3.5 text-center ${
+                  isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/60 border-slate-800'
+                }`}>
+                  <p className={`text-[11px] uppercase font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Recovered</p>
+                  <p className="text-2xl font-bold font-mono text-emerald-500 mt-1">{convertedCarts}</p>
+                </div>
+                <div className={`rounded-xl border p-3.5 text-center ${
+                  isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/60 border-slate-800'
+                }`}>
+                  <p className={`text-[11px] uppercase font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Total Leads</p>
+                  <p className={`text-2xl font-bold font-mono mt-1 ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>{totalCarts}</p>
+                </div>
+              </div>
+
+              <div className={`rounded-xl border p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
+                isLight ? 'bg-emerald-50 border-emerald-200' : 'bg-emerald-950/30 border-emerald-800/40'
+              }`}>
+                <span className={isLight ? 'text-emerald-900' : 'text-slate-300'}>
+                  Recovering 2 more carts today adds <strong className={`font-mono ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>₦64,000</strong> to gross cashflow.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAdminActiveTab('abandoned-carts')}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs whitespace-nowrap cursor-pointer transition shadow-sm"
+                >
+                  Recover Now
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* SECTION 5: Delivery Rate Revenue Simulator (One Column Per Row) */}
+        <div className={`w-full rounded-2xl border p-5 sm:p-6 space-y-4 ${
+          isLight ? 'bg-white border-slate-200 shadow-sm text-slate-900' : 'bg-slate-900/50 border-slate-800 text-slate-100'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className={`p-2 rounded-xl ${isLight ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-950 text-emerald-400 border border-emerald-800/60'}`}>
+                <Sliders className="w-5 h-5" />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className={`text-base font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    Delivery Rate Revenue Simulator
+                  </h2>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                    isLight ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800/60'
+                  }`}>
+                    +{targetBoost}% Simulation
+                  </span>
+                </div>
+                <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Simulate financial return when improving courier delivery rate by 10 to 40 percentage points.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold hidden sm:inline-block ${
+                isLight ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800/60'
+              }`}>
                 Interactive Model
               </span>
-            </div>
 
-            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => setShowRevenueSimulator(!showRevenueSimulator)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer shadow-sm active:scale-95 ${
+                  isLight 
+                    ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700' 
+                    : 'bg-slate-800/90 hover:bg-slate-700/90 border-slate-700/80 text-slate-200'
+                }`}
+              >
+                <span>{showRevenueSimulator ? 'Hide Details' : 'View Details'}</span>
+                {showRevenueSimulator ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          </div>
+
+          {showRevenueSimulator && (
+            <div className="space-y-4 pt-1 animate-in fade-in duration-200">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-300">Target Delivery Rate Increase:</span>
-                <span className="font-mono font-bold text-emerald-400">+{targetBoost}% improvement</span>
+                <span className={isLight ? 'text-slate-600' : 'text-slate-300'}>Target Delivery Rate Increase:</span>
+                <span className={`font-mono font-bold text-sm ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                  +{targetBoost}% improvement
+                </span>
               </div>
 
               {/* Slider & Quick Buttons */}
-              <div className="flex items-center gap-2.5">
-                <button 
-                  onClick={() => setTargetBoost(10)}
-                  className={`px-2.5 py-1 text-xs font-mono rounded-lg border transition cursor-pointer ${targetBoost === 10 ? 'bg-emerald-600 text-white border-emerald-500 font-bold' : 'bg-slate-950 text-slate-400 border-slate-800'}`}
-                >
-                  +10pp
-                </button>
-                <button 
-                  onClick={() => setTargetBoost(20)}
-                  className={`px-2.5 py-1 text-xs font-mono rounded-lg border transition cursor-pointer ${targetBoost === 20 ? 'bg-emerald-600 text-white border-emerald-500 font-bold' : 'bg-slate-950 text-slate-400 border-slate-800'}`}
-                >
-                  +20pp
-                </button>
-                <button 
-                  onClick={() => setTargetBoost(30)}
-                  className={`px-2.5 py-1 text-xs font-mono rounded-lg border transition cursor-pointer ${targetBoost === 30 ? 'bg-emerald-600 text-white border-emerald-500 font-bold' : 'bg-slate-950 text-slate-400 border-slate-800'}`}
-                >
-                  +30pp
-                </button>
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  {[10, 20, 30, 40].map((pp) => (
+                    <button 
+                      key={pp}
+                      type="button"
+                      onClick={() => setTargetBoost(pp)}
+                      className={`flex-1 sm:flex-none px-3 py-1.5 text-xs font-mono font-semibold rounded-lg border transition cursor-pointer ${
+                        targetBoost === pp 
+                          ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' 
+                          : (isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-slate-950 text-slate-400 border-slate-800')
+                      }`}
+                    >
+                      +{pp}pp
+                    </button>
+                  ))}
+                </div>
                 <input
                   type="range"
                   min="5"
@@ -1052,155 +1326,283 @@ export const DashboardHome: React.FC = () => {
                   step="5"
                   value={targetBoost}
                   onChange={(e) => setTargetBoost(Number(e.target.value))}
-                  className="w-full accent-emerald-500 cursor-pointer"
+                  className="w-full accent-emerald-500 cursor-pointer h-2 bg-slate-200 dark:bg-slate-800 rounded-lg"
                 />
               </div>
 
-              {/* Simulator Output */}
-              <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-3 flex items-center justify-between">
+              {/* Simulator Output Cards */}
+              <div className={`rounded-xl border p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/80 border-slate-800'
+              }`}>
                 <div>
-                  <p className="text-[11px] text-slate-400">Projected Extra Net Cash</p>
-                  <p className="text-lg font-bold font-mono text-emerald-400 tabular-nums">
+                  <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Projected Extra Net Cash Collected</p>
+                  <p className={`text-2xl font-bold font-mono tabular-nums ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
                     +{formatCurrency(convertAmount(projectedExtraRevenueNgn, currency), currency)}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-[11px] text-slate-400">Target Delivery Rate</p>
-                  <p className="text-base font-bold font-mono text-white tabular-nums">
+                <div className="text-left sm:text-right">
+                  <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Simulated Target Delivery Rate</p>
+                  <p className={`text-2xl font-bold font-mono tabular-nums ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     {simulatedRate}%
                   </p>
                 </div>
               </div>
             </div>
-          </div>
-
+          )}
         </div>
 
-      </div>
+        {/* SECTION 6: Top Inventory & Warehouse Stock (One Column Per Row) */}
+        <div className={`w-full rounded-2xl border p-5 sm:p-6 space-y-4 ${
+          isLight ? 'bg-white border-slate-200 shadow-sm text-slate-900' : 'bg-slate-900/50 border-slate-800 text-slate-100'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className={`p-2 rounded-xl ${isLight ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-950 text-emerald-400 border border-emerald-800/60'}`}>
+                <Package className="w-5 h-5" />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className={`text-base font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    Top Inventory & Warehouse Stock
+                  </h2>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                    isLight ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
+                  }`}>
+                    {products.length} Products Catalog
+                  </span>
+                </div>
+                <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Track physical units held in central warehouses vs dispatched to regional couriers.
+                </p>
+              </div>
+            </div>
 
-      {/* 7. Row 5: Top Products Inventory & Live Order Transactions Feed */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Top Selling Products */}
-        <div className="lg:col-span-5 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              <Package className="w-4 h-4 text-emerald-400" />
-              <span>Top Inventory & Warehouse Stock</span>
-            </h2>
-            <button
-              onClick={() => setAdminActiveTab('inventory')}
-              className="text-xs text-emerald-400 hover:underline font-medium"
-            >
-              Inventory Hub ➔
-            </button>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setAdminActiveTab('inventory')}
+                className={`text-xs font-semibold hover:underline flex items-center gap-1 ${
+                  isLight ? 'text-emerald-700' : 'text-emerald-400'
+                }`}
+              >
+                <span>Inventory Hub</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowInventoryStock(!showInventoryStock)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer shadow-sm active:scale-95 ${
+                  isLight 
+                    ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700' 
+                    : 'bg-slate-800/90 hover:bg-slate-700/90 border-slate-700/80 text-slate-200'
+                }`}
+              >
+                <span>{showInventoryStock ? 'Hide Details' : 'View Details'}</span>
+                {showInventoryStock ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-3">
-            {products.map((p) => {
-              const unitsSold = deliveredOrders.reduce((acc, o) => {
-                const item = o.items.find(i => i.productId === p.id);
-                return acc + (item ? item.quantity : 0);
-              }, 0);
-              const revenueNgn = unitsSold * p.sellingPrice;
-              const isLowStock = p.stockWarehouse <= 15;
+          {showInventoryStock && (
+            <div className="space-y-3 pt-1 animate-in fade-in duration-200">
+              {products.map((p) => {
+                const unitsSold = deliveredOrders.reduce((acc, o) => {
+                  const item = o.items.find(i => i.productId === p.id);
+                  return acc + (item ? item.quantity : 0);
+                }, 0);
+                const revenueNgn = unitsSold * p.sellingPrice;
+                const isLowStock = p.stockWarehouse <= 15;
 
-              return (
-                <div key={p.id} className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between">
-                  <div className="min-w-0 pr-3">
-                    <p className="text-xs font-semibold text-white truncate">{p.name}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[11px] text-slate-400 font-mono">
-                        {p.stockWarehouse} in warehouse
-                      </span>
-                      {isLowStock && (
-                        <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-rose-950 text-rose-300 border border-rose-800/60">
-                          Low Stock
+                return (
+                  <div 
+                    key={p.id} 
+                    className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition ${
+                      isLight 
+                        ? 'bg-slate-50/80 border-slate-200 hover:bg-slate-100/80 text-slate-800' 
+                        : 'bg-slate-950/60 border-slate-800/80 hover:bg-slate-800/40 text-slate-200'
+                    }`}
+                  >
+                    <div className="min-w-0 pr-3 flex-1">
+                      <p className={`font-bold text-sm truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>{p.name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-xs font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                          {p.stockWarehouse} units in warehouse
                         </span>
-                      )}
+                        {isLowStock && (
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                            isLight ? 'bg-rose-100 text-rose-800' : 'bg-rose-950 text-rose-300 border border-rose-800/60'
+                          }`}>
+                            Low Stock
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="text-left sm:text-right shrink-0">
+                      <p className={`text-sm font-bold font-mono tabular-nums ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                        {formatCurrency(convertAmount(revenueNgn, currency), currency)}
+                      </p>
+                      <p className={`text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                        {unitsSold} units delivered
+                      </p>
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs font-bold font-mono text-emerald-400 tabular-nums">
-                      {formatCurrency(convertAmount(revenueNgn, currency), currency)}
-                    </p>
-                    <p className="text-[10px] text-slate-400 font-mono">
-                      {unitsSold} units delivered
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Live Order Transactions Feed (Clickable to open Order Details Modal) */}
-        <div className="lg:col-span-7 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              <ShoppingBag className="w-4 h-4 text-emerald-400" />
-              <span>Live Order Transactions</span>
-            </h2>
-            <button
-              onClick={() => setAdminActiveTab('orders')}
-              className="text-xs text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1"
-            >
-              All Orders <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+        {/* SECTION 7: Live Order Transactions (One Column Per Row) */}
+        <div className={`w-full rounded-2xl border p-5 sm:p-6 space-y-4 ${
+          isLight ? 'bg-white border-slate-200 shadow-sm text-slate-900' : 'bg-slate-900/50 border-slate-800 text-slate-100'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className={`p-2 rounded-xl ${isLight ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-950 text-emerald-400 border border-emerald-800/60'}`}>
+                <ShoppingBag className="w-5 h-5" />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className={`text-base font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    Live Order Transactions
+                  </h2>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                    isLight ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
+                  }`}>
+                    {orders.length} Total Orders
+                  </span>
+                </div>
+                <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Real-time incoming customer orders and door-step payment statuses.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setAdminActiveTab('orders')}
+                className={`text-xs font-semibold hover:underline flex items-center gap-1 ${
+                  isLight ? 'text-emerald-700' : 'text-emerald-400 hover:text-emerald-300'
+                }`}
+              >
+                <span>View All Orders</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowLiveTransactions(!showLiveTransactions)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer shadow-sm active:scale-95 ${
+                  isLight 
+                    ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700' 
+                    : 'bg-slate-800/90 hover:bg-slate-700/90 border-slate-700/80 text-slate-200'
+                }`}
+              >
+                <span>{showLiveTransactions ? 'Hide Details' : 'View Details'}</span>
+                {showLiveTransactions ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-800 text-[11px] font-mono text-slate-400">
-                  <th className="pb-2 font-medium">Order #</th>
-                  <th className="pb-2 font-medium">Customer</th>
-                  <th className="pb-2 font-medium">State</th>
-                  <th className="pb-2 font-medium">Amount</th>
-                  <th className="pb-2 font-medium">Status</th>
-                  <th className="pb-2 font-medium text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {orders.slice(0, 7).map((o) => (
-                  <tr 
-                    key={o.id} 
-                    className="hover:bg-slate-800/40 transition-colors group cursor-pointer"
-                    onClick={() => setSelectedOrderForModal(o)}
-                  >
-                    <td className="py-2.5 font-mono text-slate-300 font-medium">
-                      <span className="text-emerald-400 group-hover:underline">{o.orderNumber}</span>
-                    </td>
-                    <td className="py-2.5">
-                      <p className="font-medium text-white truncate max-w-[140px]">{o.customerName}</p>
-                      <p className="text-[10px] text-slate-500 font-mono">{o.customerPhone}</p>
-                    </td>
-                    <td className="py-2.5 text-slate-300 font-medium">{o.deliveryState}</td>
-                    <td className="py-2.5 font-mono text-white font-semibold">
-                      {formatCurrency(convertAmount(o.totalAmount, currency), currency)}
-                    </td>
-                    <td className="py-2.5">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
-                        o.status === 'DELIVERED' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/60' :
-                        o.status === 'DISPATCHED' ? 'bg-sky-950 text-sky-400 border border-sky-800/60' :
-                        o.status === 'CONFIRMED' ? 'bg-cyan-950 text-cyan-400 border border-cyan-800/60' :
-                        o.status === 'NEW' ? 'bg-amber-950 text-amber-400 border border-amber-800/60' :
-                        o.status === 'SCHEDULED' ? 'bg-purple-950 text-purple-400 border border-purple-800/60' :
-                        'bg-rose-950 text-rose-400 border border-rose-800/60'
-                      }`}>
-                        {o.status}
-                      </span>
-                    </td>
-                    <td className="py-2.5 text-right">
-                      <span className="text-[11px] text-slate-400 group-hover:text-emerald-400 underline font-mono">
-                        View
-                      </span>
-                    </td>
+          {showLiveTransactions && (
+            <div className="overflow-x-auto pt-1 animate-in fade-in duration-200">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className={`border-b text-[11px] font-mono ${
+                    isLight ? 'border-slate-200 text-slate-500' : 'border-slate-800 text-slate-400'
+                  }`}>
+                    <th className="pb-3 font-semibold">Order #</th>
+                    <th className="pb-3 font-semibold">Customer</th>
+                    <th className="pb-3 font-semibold">State</th>
+                    <th className="pb-3 font-semibold">Amount</th>
+                    <th className="pb-3 font-semibold">Status</th>
+                    <th className="pb-3 font-semibold text-right">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className={`divide-y ${
+                  isLight ? 'divide-slate-100' : 'divide-slate-800/60'
+                }`}>
+                  {orders.slice(0, 7).map((o) => (
+                    <tr 
+                      key={o.id} 
+                      className={`transition-colors group cursor-pointer ${
+                        isLight ? 'hover:bg-slate-50' : 'hover:bg-slate-800/40'
+                      }`}
+                      onClick={() => setSelectedOrderForModal(o)}
+                    >
+                      <td className="py-3 font-mono font-bold">
+                        <span className={`group-hover:underline ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                          {o.orderNumber}
+                        </span>
+                      </td>
+                      <td className="py-3">
+                        <p className={`font-semibold truncate max-w-[180px] ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                          {o.customerName}
+                        </p>
+                        <p className={`text-[10px] font-mono ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>
+                          {o.customerPhone}
+                        </p>
+                      </td>
+                      <td className={`py-3 font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
+                        {o.deliveryState}
+                      </td>
+                      <td className={`py-3 font-mono font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                        {formatCurrency(convertAmount(o.totalAmount, currency), currency)}
+                      </td>
+                      <td className="py-3">
+                        <span className={`px-2.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                          o.status === 'DELIVERED' 
+                            ? (isLight ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800/60') :
+                          o.status === 'DISPATCHED' 
+                            ? (isLight ? 'bg-sky-100 text-sky-800' : 'bg-sky-950 text-sky-400 border border-sky-800/60') :
+                          o.status === 'CONFIRMED' 
+                            ? (isLight ? 'bg-purple-100 text-purple-800' : 'bg-cyan-950 text-cyan-400 border border-cyan-800/60') :
+                          o.status === 'NEW' 
+                            ? (isLight ? 'bg-amber-100 text-amber-800' : 'bg-amber-950 text-amber-400 border border-amber-800/60') :
+                          o.status === 'SCHEDULED' 
+                            ? (isLight ? 'bg-sky-100 text-sky-800' : 'bg-sky-950 text-sky-400 border border-sky-800/60') :
+                            (isLight ? 'bg-rose-100 text-rose-800' : 'bg-rose-950 text-rose-400 border border-rose-800/60')
+                        }`}>
+                          {o.status}
+                        </span>
+                        {(o.scheduledDate || o.status === 'SCHEDULED') && (
+                          <span className={`block mt-1 text-[9px] font-mono ${isLight ? 'text-sky-700' : 'text-sky-400'}`}>
+                            🗓 {o.scheduledDate || 'Date set'}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 text-right whitespace-nowrap space-x-1.5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOrderToSchedule(o);
+                          }}
+                          className={`px-2 py-1 rounded text-xs font-semibold border transition inline-flex items-center gap-1 cursor-pointer ${
+                            isLight
+                              ? 'bg-sky-50 hover:bg-sky-100 border-sky-300 text-sky-700'
+                              : 'bg-sky-950/80 hover:bg-sky-900 border-sky-700/80 text-sky-300'
+                          }`}
+                          title="Schedule delivery date"
+                        >
+                          <Calendar className="w-3 h-3" />
+                          <span>Schedule</span>
+                        </button>
+                        <span className={`text-xs font-mono underline font-medium ${
+                          isLight ? 'text-slate-600 hover:text-emerald-700' : 'text-slate-400 group-hover:text-emerald-400'
+                        }`}>
+                          View Details
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
       </div>
@@ -1215,6 +1617,14 @@ export const DashboardHome: React.FC = () => {
         <OrderDetailsModal 
           order={selectedOrderForModal} 
           onClose={() => setSelectedOrderForModal(null)} 
+        />
+      )}
+
+      {/* MODAL 2b: Schedule Delivery Modal */}
+      {orderToSchedule && (
+        <ScheduleDeliveryModal
+          order={orderToSchedule}
+          onClose={() => setOrderToSchedule(null)}
         />
       )}
 
@@ -1267,12 +1677,13 @@ export const DashboardHome: React.FC = () => {
                     onChange={(e) => setExpenseCategory(e.target.value as any)}
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500"
                   >
+                    <option value="Advertising / Media Buying">Advertising / Media Buying</option>
+                    <option value="Logistics">Logistics</option>
                     <option value="Agent Delivery Fees">Agent Delivery Fees</option>
-                    <option value="Meta / TikTok Ads">Meta / TikTok Ads</option>
                     <option value="Product Manufacturing">Product Manufacturing</option>
-                    <option value="Freight / Customs">Freight / Customs</option>
                     <option value="Software & Tools">Software & Tools</option>
                     <option value="Office & Staff">Office & Staff</option>
+                    <option value="Miscellaneous">Miscellaneous</option>
                   </select>
                 </div>
               </div>

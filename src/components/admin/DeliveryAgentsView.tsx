@@ -42,7 +42,7 @@ export const DeliveryAgentsView: React.FC = () => {
     addNotification
   } = useCrm();
 
-  // Search & Filter States (Matching Ordello Screenshot 2)
+  // Search & Filter States (Matching BettaTraka Screenshot 2)
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedZoneFilter, setSelectedZoneFilter] = useState('All');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('All');
@@ -78,7 +78,7 @@ export const DeliveryAgentsView: React.FC = () => {
   const [toAgentId, setToAgentId] = useState<string>('');
   const [transferUnits, setTransferUnits] = useState<number>(10);
 
-  // Currency options matching Ordello format
+  // Currency options matching BettaTraka format
   const currencyOptions: { code: CurrencyCode; label: string; symbol: string }[] = [
     { code: 'NGN', label: 'Nigerian Naira', symbol: '₦' },
     { code: 'USD', label: 'US Dollar', symbol: '$' },
@@ -182,9 +182,9 @@ export const DeliveryAgentsView: React.FC = () => {
       .reduce((sum, s) => sum + s.unitsHeld, 0);
   };
 
-  // Export CSV Handler matching Ordello format
+  // Export CSV Handler matching BettaTraka format
   const handleExportCsv = () => {
-    const filename = `ordello_delivery_agents_${new Date().toISOString().slice(0, 10)}.csv`;
+    const filename = `bettatraka_delivery_agents_${new Date().toISOString().slice(0, 10)}.csv`;
     let csv = "Agent Name,Phone,Primary Zone,Status,Success Rate,Units Held,Stock Value (NGN),Defective Stock Value (NGN),Missing Stock Value (NGN)\n";
     
     agents.forEach(a => {
@@ -369,7 +369,7 @@ export const DeliveryAgentsView: React.FC = () => {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto text-slate-100 animate-in fade-in select-none">
       {/* =========================================================
-          1. HEADER (Ordello Style: Sky Blue Title + Description)
+          1. HEADER (BettaTraka Style: Sky Blue Title + Description)
           Matching Screenshot 1: agents.png
           ========================================================= */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-2">
@@ -382,7 +382,7 @@ export const DeliveryAgentsView: React.FC = () => {
           </p>
         </div>
 
-        {/* Export CSV Button (Ordello Sky Button) */}
+        {/* Export CSV Button (BettaTraka Sky Button) */}
         <button
           type="button"
           onClick={handleExportCsv}
@@ -584,7 +584,7 @@ export const DeliveryAgentsView: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Side: + Add Agent Button (Ordello Solid Sky Blue) */}
+        {/* Right Side: + Add Agent Button (BettaTraka Solid Sky Blue) */}
         <button
           type="button"
           onClick={handleOpenAddAgent}

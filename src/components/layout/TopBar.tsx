@@ -18,7 +18,9 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
-  Coins
+  Coins,
+  Truck,
+  Megaphone
 } from 'lucide-react';
 
 export const TopBar: React.FC = () => {
@@ -51,9 +53,25 @@ export const TopBar: React.FC = () => {
     if (newPersona === 'rep') {
       const rep = users.find(u => u.role === 'Sales Representative') || users[1];
       setCurrentUser(rep);
+    } else if (newPersona === 'distributor') {
+      const dist = users.find(u => u.role === 'Distributor') || users.find(u => u.id === 'user-distributor-1');
+      if (dist) setCurrentUser(dist);
     } else if (newPersona === 'inventory') {
       const inv = users.find(u => u.role === 'Inventory Manager') || users[5];
       setCurrentUser(inv);
+    } else if (newPersona === 'media_buyer') {
+      const mb = users.find(u => u.role === 'Media Buyer') || users.find(u => u.id === 'user-media-buyer-1') || {
+        id: 'user-media-buyer-1',
+        name: 'Kayode Daniels',
+        email: 'kayode.ads@growthpilot.ng',
+        phone: '+234 802 881 9922',
+        role: 'Media Buyer' as const,
+        status: 'Active' as const,
+        createdAt: '2026-03-10',
+        payStructure: 'Performance-based' as const,
+        fixedSalary: 150000
+      };
+      setCurrentUser(mb);
     } else if (newPersona === 'admin') {
       const owner = users.find(u => u.role === 'Owner') || users[0];
       setCurrentUser(owner);
@@ -75,17 +93,17 @@ export const TopBar: React.FC = () => {
     <header className="sticky top-0 z-40 w-full h-14 bg-black/95 backdrop-blur border-b border-neutral-800 flex items-center justify-between px-2 sm:px-4 lg:px-6 gap-1.5 sm:gap-2">
       {/* Zone 1: Mobile Hamburger, Desktop Collapse & Wordmark */}
       <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
-        {persona === 'admin' && (
+        {(persona === 'admin' || persona === 'rep' || persona === 'distributor' || persona === 'inventory') && (
           <>
             {/* Mobile Hamburger */}
             <button
               type="button"
               onClick={toggleMobileSidebar}
               className="md:hidden p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-neutral-900 transition cursor-pointer"
-              title="Open 32-Page Admin Menu"
+              title="Open Navigation Menu"
               aria-label="Toggle Mobile Navigation"
             >
-              <Menu className="w-5 h-5 text-emerald-400" />
+              <Menu className="w-5 h-5 text-lime-400" />
             </button>
 
             {/* Desktop Sidebar Collapse / Expand Toggle Button */}
@@ -97,7 +115,7 @@ export const TopBar: React.FC = () => {
               aria-label="Toggle Desktop Navigation Collapse"
             >
               {isSidebarCollapsed ? (
-                <PanelLeftOpen className="w-4 h-4 text-emerald-400" />
+                <PanelLeftOpen className="w-4 h-4 text-lime-400" />
               ) : (
                 <PanelLeftClose className="w-4 h-4 text-slate-400" />
               )}
@@ -150,6 +168,20 @@ export const TopBar: React.FC = () => {
         </button>
 
         <button
+          onClick={() => handlePersonaChange('distributor')}
+          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
+            persona === 'distributor' 
+              ? 'bg-emerald-600 text-white shadow-sm font-semibold' 
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+          title="Distributor Dashboard & Regional Inventory Hub"
+        >
+          <Truck className="w-3.5 h-3.5 flex-shrink-0" />
+          <span className="hidden sm:inline">Distributor</span>
+          <span className="sm:hidden text-[11px]">Dist</span>
+        </button>
+
+        <button
           onClick={() => handlePersonaChange('inventory')}
           className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
             persona === 'inventory' 
@@ -161,6 +193,20 @@ export const TopBar: React.FC = () => {
           <Package className="w-3.5 h-3.5 flex-shrink-0" />
           <span className="hidden md:inline">Inventory Mgr</span>
           <span className="md:hidden text-[11px]">Stock</span>
+        </button>
+
+        <button
+          onClick={() => handlePersonaChange('media_buyer')}
+          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
+            persona === 'media_buyer' 
+              ? 'bg-emerald-600 text-white shadow-sm font-semibold' 
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+          title="Media Buyer Performance Marketing Dashboard"
+        >
+          <Megaphone className="w-3.5 h-3.5 flex-shrink-0" />
+          <span className="hidden md:inline">Media Buyer</span>
+          <span className="md:hidden text-[11px]">Ads</span>
         </button>
 
         <button
@@ -207,26 +253,26 @@ export const TopBar: React.FC = () => {
             onClick={() => setThemeMode('light')}
             className={`flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded text-xs font-medium transition cursor-pointer ${
               themeMode === 'light'
-                ? 'bg-white text-amber-600 font-semibold shadow-sm border border-slate-200/60'
+                ? 'bg-white text-lime-700 font-extrabold shadow-sm border border-slate-200/80'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
-            title="Switch to Day Mode (Clean Light Setting)"
+            title="Switch to Day Mode (Clean White + Lemon Green Setting)"
             aria-label="Day Mode"
           >
-            <Sun className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+            <Sun className={`w-3.5 h-3.5 flex-shrink-0 ${themeMode === 'light' ? 'text-amber-500' : 'text-slate-400'}`} />
             <span className="hidden sm:inline text-[11px]">Day</span>
           </button>
           <button
             onClick={() => setThemeMode('dark')}
             className={`flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded text-xs font-medium transition cursor-pointer ${
               themeMode === 'dark'
-                ? 'bg-emerald-600 text-white font-semibold shadow-sm'
-                : 'text-slate-500 hover:text-slate-900'
+                ? 'bg-lime-500 text-black font-extrabold shadow-sm shadow-lime-950/40'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
-            title="Switch to Night Mode (Pure Pitch Black Setting)"
+            title="Switch to Night Mode (Pure Pitch Black + Lemon Green Setting)"
             aria-label="Night Mode"
           >
-            <Moon className={`w-3.5 h-3.5 flex-shrink-0 ${themeMode === 'dark' ? 'text-emerald-200' : 'text-slate-500'}`} />
+            <Moon className={`w-3.5 h-3.5 flex-shrink-0 ${themeMode === 'dark' ? 'text-black' : 'text-slate-400'}`} />
             <span className="hidden sm:inline text-[11px]">Night</span>
           </button>
         </div>
@@ -303,9 +349,9 @@ export const TopBar: React.FC = () => {
                 {notifications.length === 0 ? (
                   <p className="py-6 text-center text-slate-500">No new notifications</p>
                 ) : (
-                  notifications.slice(0, 6).map((n) => (
+                  notifications.slice(0, 6).map((n, idx) => (
                     <div 
-                      key={n.id} 
+                      key={`${n.id || 'notif'}-${idx}`} 
                       className={`py-2.5 px-2 hover:bg-slate-800/40 rounded transition ${!n.isRead ? 'bg-slate-800/20' : ''}`}
                     >
                       <div className="flex items-center justify-between text-[11px] text-slate-400">
@@ -377,7 +423,9 @@ export const TopBar: React.FC = () => {
                     onClick={() => {
                       setCurrentUser(u);
                       if (u.role === 'Sales Representative') setPersona('rep');
+                      else if (u.role === 'Distributor') setPersona('distributor');
                       else if (u.role === 'Inventory Manager') setPersona('inventory');
+                      else if (u.role === 'Media Buyer') setPersona('media_buyer');
                       else setPersona('admin');
                       setShowUserMenu(false);
                     }}

@@ -39,14 +39,14 @@ export const OrderReportsView: React.FC = () => {
     addNotification 
   } = useCrm();
 
-  // Filter States (Matching Ordello Screenshot ord1.png: 'This Month' active by default)
+  // Filter States (Matching BettaTraka Screenshot ord1.png: 'This Month' active by default)
   const [datePeriod, setDatePeriod] = useState<DatePeriod>('month');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
 
-  // Currency options matching Ordello format
+  // Currency options matching BettaTraka format
   const currencyOptions: { code: CurrencyCode; label: string; symbol: string }[] = [
     { code: 'NGN', label: 'Nigerian Naira', symbol: '₦' },
     { code: 'USD', label: 'US Dollar', symbol: '$' },
@@ -366,7 +366,7 @@ export const OrderReportsView: React.FC = () => {
 
   // Export PDF / CSV Report
   const handleExportPdf = () => {
-    const filename = `ordello_order_reports_${datePeriod}_${new Date().toISOString().slice(0, 10)}.csv`;
+    const filename = `bettatraka_order_reports_${datePeriod}_${new Date().toISOString().slice(0, 10)}.csv`;
     let csv = "Order Reports Summary\n";
     csv += `"Metric","Value"\n`;
     csv += `"Total Revenue (NGN)",${totalRevenueNgn}\n`;
@@ -455,7 +455,7 @@ export const OrderReportsView: React.FC = () => {
             )}
           </div>
 
-          {/* Date Period Pills (Ordello Solid White Active Pill: 'This Month' in ord1.png) */}
+          {/* Date Period Pills (BettaTraka Solid White Active Pill: 'This Month' in ord1.png) */}
           <div className="flex items-center bg-black/80 p-0.5 rounded-xl border border-neutral-800">
             {(
               [
@@ -553,7 +553,7 @@ export const OrderReportsView: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Side: Export PDF Button (Ordello Sky Button) */}
+        {/* Right Side: Export PDF Button (BettaTraka Sky Button) */}
         <button
           type="button"
           onClick={handleExportPdf}

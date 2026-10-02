@@ -194,11 +194,11 @@ export const TeamPerformanceView: React.FC = () => {
     );
   }, [teamsWithMetrics, searchQuery]);
 
-  // Export CSV Handler matching Ordello format
+  // Export CSV Handler matching BettaTraka format
   const handleExportCsv = () => {
     const filename = selectedTeam 
-      ? `ordello_team_performance_${selectedTeam.name.toLowerCase().replace(/\s+/g, '_')}_${selectedPeriod}.csv`
-      : `ordello_teams_overview_${selectedPeriod}.csv`;
+      ? `bettatraka_team_performance_${selectedTeam.name.toLowerCase().replace(/\s+/g, '_')}_${selectedPeriod}.csv`
+      : `bettatraka_teams_overview_${selectedPeriod}.csv`;
 
     let csvContent = "data:text/csv;charset=utf-8,";
     
@@ -223,10 +223,10 @@ export const TeamPerformanceView: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  // Reusable Ordello-style Filter Bar Component
-  const renderOrdelloFilterBar = () => (
+  // Reusable BettaTraka-style Filter Bar Component
+  const renderBettaTrakaFilterBar = () => (
     <div className="flex flex-wrap items-center gap-2">
-      {/* Date Filter Pills (Ordello Signature: bg-white text-black when active) */}
+      {/* Date Filter Pills (BettaTraka Signature: bg-white text-black when active) */}
       <div className="flex items-center bg-black/80 p-0.5 rounded-xl border border-neutral-800">
         {(
           [
@@ -324,7 +324,7 @@ export const TeamPerformanceView: React.FC = () => {
         )}
       </div>
 
-      {/* Export CSV Button (Ordello Standard) */}
+      {/* Export CSV Button (BettaTraka Standard) */}
       <button
         type="button"
         onClick={handleExportCsv}
@@ -364,7 +364,7 @@ export const TeamPerformanceView: React.FC = () => {
           <span className="text-white font-bold">{selectedTeam.name}</span>
         </div>
 
-        {/* Header Row: Title & Ordello Filter Bar */}
+        {/* Header Row: Title & BettaTraka Filter Bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-neutral-800">
           <div>
             <div className="flex items-center gap-2.5">
@@ -380,11 +380,11 @@ export const TeamPerformanceView: React.FC = () => {
             </p>
           </div>
 
-          {/* Ordello Date Filters & Export */}
-          {renderOrdelloFilterBar()}
+          {/* BettaTraka Date Filters & Export */}
+          {renderBettaTrakaFilterBar()}
         </div>
 
-        {/* 4 KPI Metric Cards in a Row (Ordello Style) */}
+        {/* 4 KPI Metric Cards in a Row (BettaTraka Style) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Total Orders */}
           <div className="rounded-2xl border border-neutral-800 bg-neutral-950 p-5 space-y-2 shadow-sm">
@@ -426,7 +426,7 @@ export const TeamPerformanceView: React.FC = () => {
           </div>
         </div>
 
-        {/* Bottom Section: Table or Empty State (Ordello Style) */}
+        {/* Bottom Section: Table or Empty State (BettaTraka Style) */}
         <div className="rounded-2xl border border-neutral-800 bg-neutral-950 overflow-hidden shadow-sm space-y-4 p-5">
           {totalOrders === 0 ? (
             /* Exactly matching Screenshot 2: team performance 2.png */
@@ -681,7 +681,7 @@ export const TeamPerformanceView: React.FC = () => {
         <span className="text-white font-bold">Team Performance</span>
       </div>
 
-      {/* Top Header & Ordello Filter Bar */}
+      {/* Top Header & BettaTraka Filter Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-neutral-800">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
@@ -692,8 +692,8 @@ export const TeamPerformanceView: React.FC = () => {
           </p>
         </div>
 
-        {/* Ordello Date Filters & Export */}
-        {renderOrdelloFilterBar()}
+        {/* BettaTraka Date Filters & Export */}
+        {renderBettaTrakaFilterBar()}
       </div>
 
       {/* Top Summary Metrics Cards (Company-Wide Overview) */}
@@ -771,7 +771,7 @@ export const TeamPerformanceView: React.FC = () => {
         </button>
       </div>
 
-      {/* Teams Grid (Matching Screenshot 1: team performance.png with Ordello aesthetics) */}
+      {/* Teams Grid (Matching Screenshot 1: team performance.png with BettaTraka aesthetics) */}
       {filteredTeams.length === 0 ? (
         <div className="rounded-2xl border border-neutral-800 bg-neutral-950 p-12 text-center space-y-3">
           <Building2 className="w-10 h-10 text-slate-600 mx-auto" />

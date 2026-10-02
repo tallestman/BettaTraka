@@ -28,7 +28,8 @@ import {
   PayrollRun,
   PayrollItem,
   ProductPackage,
-  ProductPricing
+  ProductPricing,
+  DistributorStockItem
 } from '../types/crm';
 import {
   INITIAL_ORG_SETTINGS,
@@ -36,6 +37,7 @@ import {
   INITIAL_PRODUCTS,
   INITIAL_AGENTS,
   INITIAL_AGENT_STOCK,
+  INITIAL_DISTRIBUTOR_STOCK,
   INITIAL_ORDERS,
   INITIAL_ABANDONED_CARTS,
   INITIAL_STOCK_MOVEMENTS,
@@ -55,7 +57,7 @@ import {
   INITIAL_ORDER_FORMS
 } from '../data/initialData';
 
-export type ActivePersona = 'admin' | 'rep' | 'inventory' | 'public_form' | 'marketing';
+export type ActivePersona = 'admin' | 'rep' | 'distributor' | 'inventory' | 'media_buyer' | 'public_form' | 'marketing';
 
 interface CrmContextType {
   // Navigation & Personas
@@ -65,8 +67,12 @@ interface CrmContextType {
   setAdminActiveTab: (tab: string) => void;
   repActiveTab: string;
   setRepActiveTab: (tab: string) => void;
+  distributorActiveTab: string;
+  setDistributorActiveTab: (tab: string) => void;
   invActiveTab: string;
   setInvActiveTab: (tab: string) => void;
+  mediaBuyerActiveTab: string;
+  setMediaBuyerActiveTab: (tab: string) => void;
   isMobileSidebarOpen: boolean;
   setIsMobileSidebarOpen: (open: boolean) => void;
   toggleMobileSidebar: () => void;
@@ -115,12 +121,23 @@ interface CrmContextType {
   transferStockAgentToAgent: (fromAgentId: string, toAgentId: string, productId: string, units: number) => void;
   reconcileAgentStock: (agentId: string, productId: string, defectiveDelta: number, missingDelta: number) => void;
 
+  // Distributors & Regional Stock
+  distributors: User[];
+  distributorStock: DistributorStockItem[];
+  assignStockToDistributor: (distributorId: string, productId: string, units: number, notes?: string) => void;
+  returnStockFromDistributor: (distributorId: string, productId: string, units: number, notes?: string) => void;
+  setDistributorStockLevel: (distributorId: string, productId: string, unitsHeld: number, notes?: string) => void;
+  requestDistributorRestock: (distributorId: string, productId: string, requestedUnits: number, notes?: string) => void;
+
   // Orders
   orders: Order[];
   createOrder: (orderData: Partial<Order>) => Order;
-  updateOrderStatus: (orderId: string, newStatus: OrderStatus) => void;
+  updateOrderStatus: (orderId: string, newStatus: OrderStatus, scheduledDate?: string, preferredDeliveryTime?: string, notes?: string) => void;
+  scheduleOrderDelivery: (orderId: string, scheduledDate: string, preferredTime?: string, agentId?: string, notes?: string) => void;
+  updateOrder: (orderId: string, updates: Partial<Order>) => void;
   assignOrderRep: (orderId: string, repId: string) => void;
   assignOrderAgent: (orderId: string, agentId: string) => void;
+  assignOrderDistributor: (orderId: string, distributorId: string, notes?: string) => void;
   deleteOrder: (orderId: string) => void;
   deletedOrders: Order[];
   restoreOrder: (orderId: string) => void;
@@ -150,7 +167,7 @@ interface CrmContextType {
   updateExpense: (id: string, updates: Partial<Expense>) => void;
   deleteExpense: (id: string) => void;
   remittances: Remittance[];
-  markRemittanceAsPaid: (remittanceId: string) => void;
+  markRemittanceAsPaid: (remittanceId: string, deliveryFee?: number, notes?: string, paymentRef?: string) => void;
 
   // Payroll
   payrollRuns: PayrollRun[];
@@ -214,7 +231,9 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [persona, setPersona] = useState<ActivePersona>('admin');
   const [adminActiveTab, setAdminActiveTabState] = useState<string>('dashboard');
   const [repActiveTab, setRepActiveTab] = useState<string>('dashboard');
+  const [distributorActiveTab, setDistributorActiveTab] = useState<string>('dashboard');
   const [invActiveTab, setInvActiveTab] = useState<string>('inventory');
+  const [mediaBuyerActiveTab, setMediaBuyerActiveTab] = useState<string>('overview');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsedState] = useState<boolean>(() => {
     try {
@@ -319,7 +338,18 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [users, setUsers] = useState<User[]>(() => {
     try {
       const saved = localStorage.getItem(`${STORAGE_KEY}_users`);
-      return saved ? JSON.parse(saved) : INITIAL_USERS;
+      const list: User[] = saved ? JSON.parse(saved) : INITIAL_USERS;
+      // Team Leads are sales representatives designated in sales teams
+      list.forEach(u => {
+        if ((u.role as string) === 'Team Lead') {
+          u.role = 'Sales Representative';
+        }
+      });
+      if (!list.some(u => u.role === 'Media Buyer')) {
+        const defaultMb = INITIAL_USERS.find(u => u.role === 'Media Buyer');
+        if (defaultMb) list.push(defaultMb);
+      }
+      return list;
     } catch {
       return INITIAL_USERS;
     }
@@ -354,10 +384,25 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
+  const [distributorStock, setDistributorStock] = useState<DistributorStockItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_distributor_stock`);
+      return saved ? JSON.parse(saved) : INITIAL_DISTRIBUTOR_STOCK;
+    } catch {
+      return INITIAL_DISTRIBUTOR_STOCK;
+    }
+  });
+
   const [orders, setOrders] = useState<Order[]>(() => {
     try {
       const saved = localStorage.getItem(`${STORAGE_KEY}_orders`);
-      return saved ? JSON.parse(saved) : INITIAL_ORDERS;
+      if (saved) {
+        const parsed: Order[] = JSON.parse(saved);
+        const existingIds = new Set(parsed.map(o => o.id));
+        const missing = INITIAL_ORDERS.filter(o => !existingIds.has(o.id));
+        return [...parsed, ...missing];
+      }
+      return INITIAL_ORDERS;
     } catch {
       return INITIAL_ORDERS;
     }
@@ -404,7 +449,16 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [expenses, setExpenses] = useState<Expense[]>(() => {
     try {
       const saved = localStorage.getItem(`${STORAGE_KEY}_expenses`);
-      return saved ? JSON.parse(saved) : INITIAL_EXPENSES;
+      const list: Expense[] = saved ? JSON.parse(saved) : INITIAL_EXPENSES;
+      // Auto-migrate legacy expense types
+      list.forEach(e => {
+        if ((e.type as string) === 'Meta / TikTok Ads' || (e.type as string) === 'Meta / TikTok' || (e.type as string) === 'Meta/TikTok') {
+          e.type = 'Advertising / Media Buying';
+        } else if ((e.type as string) === 'Freight / Customs' || (e.type as string) === 'Freight/ Customs' || (e.type as string) === 'Freight/Customs') {
+          e.type = 'Logistics';
+        }
+      });
+      return list;
     } catch {
       return INITIAL_EXPENSES;
     }
@@ -413,7 +467,20 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [remittances, setRemittances] = useState<Remittance[]>(() => {
     try {
       const saved = localStorage.getItem(`${STORAGE_KEY}_remittances`);
-      return saved ? JSON.parse(saved) : INITIAL_REMITTANCES;
+      const list: Remittance[] = saved ? JSON.parse(saved) : INITIAL_REMITTANCES;
+      return list.map(r => {
+        if (r.status === 'Pending') {
+          // Restore original product order price for pending remittances
+          const originalPrice = r.orderTotal || (r.deliveryFeeDeducted ? r.amountToRemit + r.deliveryFeeDeducted : r.amountToRemit);
+          return {
+            ...r,
+            orderTotal: originalPrice,
+            amountToRemit: originalPrice,
+            deliveryFeeDeducted: 0
+          };
+        }
+        return r;
+      });
     } catch {
       return INITIAL_REMITTANCES;
     }
@@ -485,7 +552,19 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [notifications, setNotifications] = useState<NotificationItem[]>(() => {
     try {
       const saved = localStorage.getItem(`${STORAGE_KEY}_notifications`);
-      return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
+      const raw: NotificationItem[] = saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
+      const seen = new Set<string>();
+      const deduped: NotificationItem[] = [];
+      let counter = 1;
+      for (const item of raw) {
+        if (!item) continue;
+        const validId = item.id && !seen.has(item.id)
+          ? item.id
+          : `notif-${Date.now()}-${counter++}-${Math.random().toString(36).substring(2, 7)}`;
+        seen.add(validId);
+        deduped.push({ ...item, id: validId });
+      }
+      return deduped;
     } catch {
       return INITIAL_NOTIFICATIONS;
     }
@@ -638,6 +717,7 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem(`${STORAGE_KEY}_products`, JSON.stringify(products));
       localStorage.setItem(`${STORAGE_KEY}_agents`, JSON.stringify(agents));
       localStorage.setItem(`${STORAGE_KEY}_agent_stock`, JSON.stringify(agentStock));
+      localStorage.setItem(`${STORAGE_KEY}_distributor_stock`, JSON.stringify(distributorStock));
       localStorage.setItem(`${STORAGE_KEY}_orders`, JSON.stringify(orders));
       localStorage.setItem(`${STORAGE_KEY}_carts`, JSON.stringify(abandonedCarts));
       localStorage.setItem(`${STORAGE_KEY}_stock_movements`, JSON.stringify(stockMovements));
@@ -655,7 +735,7 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch {
       // LocalStorage quotas handled silently
     }
-  }, [settings, users, products, agents, agentStock, orders, abandonedCarts, stockMovements, salesTeams, expenses, remittances, customers, roundRobin, chatMessages, notifications, formConfig, orderForms]);
+  }, [settings, users, products, agents, agentStock, distributorStock, orders, abandonedCarts, stockMovements, salesTeams, expenses, remittances, customers, roundRobin, chatMessages, notifications, formConfig, orderForms]);
 
   // Round-Robin Assignment helper
   const getNextAssignedRep = (poolType: 'order' | 'cart', customerPhone?: string): { repId: string; repName: string } => {
@@ -775,6 +855,9 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       agentName: agentName,
       status: orderData.status || 'NEW',
       responseTimeMinutes: 2,
+      scheduledDate: orderData.scheduledDate,
+      preferredDeliveryTime: orderData.preferredDeliveryTime || orderData.deliveryWindowPreference,
+      notes: orderData.notes,
       createdAt: new Date().toISOString(),
       isSandbox: orderData.isSandbox || false,
       deliveryWindowPreference: orderData.deliveryWindowPreference,
@@ -830,9 +913,19 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Update Order Status
-  const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
+  const updateOrderStatus = (
+    orderId: string, 
+    newStatus: OrderStatus, 
+    scheduledDate?: string, 
+    preferredDeliveryTime?: string, 
+    notes?: string
+  ) => {
     setOrders(prev => prev.map(order => {
-      if (order.id !== orderId) return order;
+      const isMatch = order.id === orderId || 
+                      order.orderNumber === orderId || 
+                      order.orderNumber.replace(/^#/, '') === orderId.replace(/^#/, '') ||
+                      order.id.replace(/^ord-/, '') === orderId.replace(/^ord-/, '');
+      if (!isMatch) return order;
 
       const isDeliveredNow = newStatus === 'DELIVERED' && order.status !== 'DELIVERED';
       const deliveredDate = isDeliveredNow ? new Date().toISOString() : order.deliveredDate;
@@ -840,8 +933,6 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       // When marked DELIVERED, generate pending agent remittance and update customer stats
       if (isDeliveredNow && order.agentId) {
-        const agentCut = 2500;
-        const amountToRemit = Math.max(0, order.totalAmount - agentCut);
         const newRemittance: Remittance = {
           id: `remit-${Date.now()}`,
           orderId: order.id,
@@ -852,7 +943,8 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           customerName: order.customerName,
           customerPhone: order.customerPhone,
           productSummary: order.items.map(i => `${i.quantity}x ${i.productName}`).join(', '),
-          amountToRemit: amountToRemit,
+          orderTotal: order.totalAmount,
+          amountToRemit: order.totalAmount, // Original product order price, not deducted until remittance is done!
           currency: order.currency,
           deliveredDate: new Date().toISOString().split('T')[0],
           status: 'Pending'
@@ -903,29 +995,117 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         addNotification({
           title: `Delivery Completed #${order.orderNumber}`,
-          message: `${order.agentName} completed delivery for ${order.customerName}. Remittance pending: ₦${amountToRemit.toLocaleString()}.`,
+          message: `${order.agentName} completed delivery for ${order.customerName}. Remittance pending: ₦${order.totalAmount.toLocaleString()}.`,
           type: 'delivery_completed',
           linkTab: 'deliveries'
         });
       }
 
+      const finalScheduledDate = scheduledDate !== undefined 
+        ? scheduledDate 
+        : (newStatus === 'SCHEDULED' && !order.scheduledDate) ? '2026-10-02' : order.scheduledDate;
+
       return {
         ...order,
         status: newStatus,
+        scheduledDate: finalScheduledDate,
+        preferredDeliveryTime: preferredDeliveryTime || order.preferredDeliveryTime,
         deliveredDate,
-        fulfillmentDays
+        fulfillmentDays,
+        notes: notes ? (order.notes ? `${order.notes} | ${notes}` : notes) : order.notes
       };
+    }));
+  };
+
+  // Schedule or Reschedule an Order Delivery with specific date, time slot, agent, and notes
+  const scheduleOrderDelivery = (
+    orderId: string, 
+    scheduledDate: string, 
+    preferredTime?: string, 
+    agentId?: string, 
+    notes?: string
+  ) => {
+    const assignedAgent = agentId ? agents.find(a => a.id === agentId) : undefined;
+    setOrders(prev => prev.map(order => {
+      const isMatch = order.id === orderId || 
+                      order.orderNumber === orderId || 
+                      order.orderNumber.replace(/^#/, '') === orderId.replace(/^#/, '') ||
+                      order.id.replace(/^ord-/, '') === orderId.replace(/^ord-/, '');
+      if (!isMatch) return order;
+
+      return {
+        ...order,
+        status: 'SCHEDULED',
+        scheduledDate,
+        preferredDeliveryTime: preferredTime || order.preferredDeliveryTime || 'Morning (8:00 AM - 12:00 PM)',
+        agentId: assignedAgent ? assignedAgent.id : order.agentId,
+        agentName: assignedAgent ? assignedAgent.name : order.agentName,
+        notes: notes ? (order.notes ? `${order.notes} | Delivery Scheduled: ${notes}` : `Delivery Scheduled: ${notes}`) : order.notes
+      };
+    }));
+
+    const targetOrder = orders.find(o => o.id === orderId || o.orderNumber === orderId || o.orderNumber.replace(/^#/, '') === orderId.replace(/^#/, ''));
+    if (targetOrder) {
+      addNotification({
+        title: `Delivery Scheduled #${targetOrder.orderNumber}`,
+        message: `Delivery for ${targetOrder.customerName} scheduled for ${scheduledDate} (${preferredTime || 'Flexible'}).`,
+        type: 'info',
+        linkTab: 'scheduled'
+      });
+    }
+  };
+
+  // Generic order updater
+  const updateOrder = (orderId: string, updates: Partial<Order>) => {
+    setOrders(prev => prev.map(order => {
+      const isMatch = order.id === orderId || 
+                      order.orderNumber === orderId || 
+                      order.orderNumber.replace(/^#/, '') === orderId.replace(/^#/, '') ||
+                      order.id.replace(/^ord-/, '') === orderId.replace(/^ord-/, '');
+      return isMatch ? { ...order, ...updates } : order;
     }));
   };
 
   const assignOrderRep = (orderId: string, repId: string) => {
     const rep = users.find(u => u.id === repId);
-    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, salesRepId: repId, salesRepName: rep?.name || 'Rep' } : o));
+    setOrders(prev => prev.map(o => {
+      const isMatch = o.id === orderId || o.orderNumber === orderId || o.orderNumber.replace(/^#/, '') === orderId.replace(/^#/, '');
+      return isMatch ? { ...o, salesRepId: repId, salesRepName: rep?.name || 'Rep' } : o;
+    }));
   };
 
   const assignOrderAgent = (orderId: string, agentId: string) => {
     const agent = agents.find(a => a.id === agentId);
-    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, agentId: agentId, agentName: agent?.name || 'Agent' } : o));
+    setOrders(prev => prev.map(o => {
+      const isMatch = o.id === orderId || o.orderNumber === orderId || o.orderNumber.replace(/^#/, '') === orderId.replace(/^#/, '');
+      return isMatch ? { ...o, agentId: agentId, agentName: agent?.name || '' } : o;
+    }));
+  };
+
+  const assignOrderDistributor = (orderId: string, distributorId: string, notes?: string) => {
+    const dist = users.find(u => u.id === distributorId);
+    setOrders(prev => prev.map(o => {
+      const isMatch = o.id === orderId || o.orderNumber === orderId || o.orderNumber.replace(/^#/, '') === orderId.replace(/^#/, '');
+      if (isMatch) {
+        return {
+          ...o,
+          distributorId: dist ? dist.id : undefined,
+          distributorName: dist ? dist.name : undefined,
+          notes: notes 
+            ? (o.notes ? `${o.notes} | Assigned to Distributor: ${notes}` : `Assigned to Distributor: ${notes}`)
+            : o.notes
+        };
+      }
+      return o;
+    }));
+
+    if (dist) {
+      addNotification({
+        title: 'Order Assigned to Distributor',
+        message: `Order assigned to regional distributor ${dist.name}`,
+        type: 'info'
+      });
+    }
   };
 
   const deleteOrder = (orderId: string) => {
@@ -1269,6 +1449,147 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
+  const distributors = users.filter(u => u.role === 'Distributor');
+
+  const assignStockToDistributor = (distributorId: string, productId: string, units: number, notes?: string) => {
+    const dist = users.find(u => u.id === distributorId && u.role === 'Distributor');
+    const prod = products.find(p => p.id === productId);
+    if (!dist || !prod || units <= 0 || prod.stockWarehouse < units) return;
+
+    // Deduct from central warehouse
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, stockWarehouse: Math.max(0, p.stockWarehouse - units) } : p));
+
+    // Increase in distributor stock
+    setDistributorStock(prev => {
+      const existing = prev.find(s => s.distributorId === distributorId && s.productId === productId);
+      if (existing) {
+        return prev.map(s => s.distributorId === distributorId && s.productId === productId ? {
+          ...s,
+          unitsHeld: s.unitsHeld + units,
+          lastRestockedDate: new Date().toISOString().slice(0, 10),
+          notes: notes || s.notes
+        } : s);
+      } else {
+        const newItem: DistributorStockItem = {
+          id: `dstock-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+          distributorId,
+          distributorName: dist.name,
+          productId,
+          productName: prod.name,
+          unitsHeld: units,
+          allocatedDate: new Date().toISOString().slice(0, 10),
+          notes: notes || 'Allocated from Central Warehouse'
+        };
+        return [...prev, newItem];
+      }
+    });
+
+    // Log stock movement
+    setStockMovements(m => [
+      {
+        id: `mov-${Date.now()}`,
+        date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        productId: prod.id,
+        productName: prod.name,
+        type: 'Warehouse to Distributor',
+        fromLocation: 'Central Warehouse (Ikeja)',
+        toLocation: dist.name,
+        quantity: units,
+        referenceOrderOrAgent: notes || `Direct allocation to ${dist.name}`
+      },
+      ...m
+    ]);
+
+    addNotification({
+      title: 'Stock Assigned to Distributor',
+      message: `${units} units of ${prod.name} successfully assigned to ${dist.name}. Warehouse stock adjusted.`,
+      type: 'success'
+    });
+  };
+
+  const returnStockFromDistributor = (distributorId: string, productId: string, units: number, notes?: string) => {
+    const dist = users.find(u => u.id === distributorId);
+    const prod = products.find(p => p.id === productId);
+    if (!dist || !prod || units <= 0) return;
+
+    setDistributorStock(prev => {
+      return prev.map(s => {
+        if (s.distributorId === distributorId && s.productId === productId) {
+          const newUnits = Math.max(0, s.unitsHeld - units);
+          return { ...s, unitsHeld: newUnits };
+        }
+        return s;
+      });
+    });
+
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, stockWarehouse: p.stockWarehouse + units } : p));
+
+    setStockMovements(m => [
+      {
+        id: `mov-${Date.now()}`,
+        date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        productId: prod.id,
+        productName: prod.name,
+        type: 'Distributor Return to Warehouse',
+        fromLocation: dist.name,
+        toLocation: 'Central Warehouse (Ikeja)',
+        quantity: units,
+        referenceOrderOrAgent: notes || `Returned by ${dist.name}`
+      },
+      ...m
+    ]);
+
+    addNotification({
+      title: 'Distributor Stock Returned',
+      message: `${units} units of ${prod.name} returned to Central Warehouse from ${dist.name}`,
+      type: 'info'
+    });
+  };
+
+  const setDistributorStockLevel = (distributorId: string, productId: string, unitsHeld: number, notes?: string) => {
+    const dist = users.find(u => u.id === distributorId);
+    const prod = products.find(p => p.id === productId);
+    if (!dist || !prod) return;
+
+    setDistributorStock(prev => {
+      const existing = prev.find(s => s.distributorId === distributorId && s.productId === productId);
+      if (existing) {
+        return prev.map(s => s.distributorId === distributorId && s.productId === productId ? {
+          ...s,
+          unitsHeld: Math.max(0, unitsHeld),
+          notes: notes || s.notes
+        } : s);
+      } else {
+        return [...prev, {
+          id: `dstock-${Date.now()}`,
+          distributorId,
+          distributorName: dist.name,
+          productId,
+          productName: prod.name,
+          unitsHeld: Math.max(0, unitsHeld),
+          allocatedDate: new Date().toISOString().slice(0, 10),
+          notes: notes || 'Calibrated stock level'
+        }];
+      }
+    });
+
+    addNotification({
+      title: 'Distributor Stock Level Calibrated',
+      message: `Stock level for ${prod.name} held by ${dist.name} set to ${unitsHeld} units.`,
+      type: 'info'
+    });
+  };
+
+  const requestDistributorRestock = (distributorId: string, productId: string, requestedUnits: number, notes?: string) => {
+    const dist = users.find(u => u.id === distributorId);
+    const prod = products.find(p => p.id === productId);
+    addNotification({
+      title: 'Distributor Restock Request',
+      message: `${dist?.name || 'Distributor'} requested ${requestedUnits} units of ${prod?.name || 'product'}. Notes: ${notes || 'Immediate warehouse dispatch required.'}`,
+      type: 'info'
+    });
+  };
+
   const addAgent = (agentData: Omit<DeliveryAgent, 'id'>): DeliveryAgent => {
     const newAgent: DeliveryAgent = {
       ...agentData,
@@ -1390,8 +1711,52 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setExpenses(prev => prev.filter(e => e.id !== id));
   };
 
-  const markRemittanceAsPaid = (remittanceId: string) => {
-    setRemittances(prev => prev.map(r => r.id === remittanceId ? { ...r, status: 'Remitted', remittedAt: new Date().toISOString() } : r));
+  const markRemittanceAsPaid = (remittanceId: string, deliveryFee: number = 0, notes?: string, paymentRef?: string) => {
+    let targetRemittance: Remittance | undefined;
+
+    setRemittances(prev => prev.map(r => {
+      if (r.id === remittanceId || r.orderId === remittanceId || r.orderNumber === remittanceId) {
+        const gross = r.orderTotal || (r.amountToRemit + (r.deliveryFeeDeducted || 0));
+        const netRemitted = Math.max(0, gross - deliveryFee);
+        const updated: Remittance = {
+          ...r,
+          status: 'Remitted',
+          deliveryFeeDeducted: deliveryFee,
+          amountToRemit: netRemitted,
+          remittedAt: new Date().toISOString(),
+          paymentReference: paymentRef || r.paymentReference,
+          notes: notes || r.notes
+        };
+        targetRemittance = updated;
+        return updated;
+      }
+      return r;
+    }));
+
+    // If an agent delivery fee was deducted, log it as an expense so it reflects in Financials and Accounting
+    if (deliveryFee > 0) {
+      const orderNum = targetRemittance?.orderNumber || remittanceId;
+      const agentInfo = targetRemittance ? ` - ${targetRemittance.agentName}` : '';
+      const customerInfo = targetRemittance ? ` (${targetRemittance.customerName})` : '';
+
+      const newExpense: Expense = {
+        id: `exp-agent-${Date.now()}`,
+        date: new Date().toISOString().split('T')[0],
+        type: 'Agent Delivery Fees',
+        amount: deliveryFee,
+        currency: targetRemittance?.currency || currency || 'NGN',
+        description: `Delivery fee deducted for order ${orderNum}${agentInfo}${customerInfo}`,
+        reference: orderNum
+      };
+
+      setExpenses(prev => [newExpense, ...prev]);
+
+      addNotification({
+        title: 'Remittance & Delivery Expense Logged',
+        message: `Order #${orderNum} marked remitted. Delivery fee of ₦${deliveryFee.toLocaleString()} was logged under Agent Delivery Fees in financial accounts.`,
+        type: 'success'
+      });
+    }
   };
 
   // Customers
@@ -1431,7 +1796,21 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteMediaBuyerSpendLog = (id: string) => {
+    // Only Administrators and Owners are permitted to delete ad spend records
+    if (currentUser && currentUser.role !== 'Owner' && currentUser.role !== 'Admin') {
+      addNotification({
+        title: 'Delete Permission Denied',
+        message: 'Ad spend records are audit-locked and can only be deleted by an Administrator.',
+        type: 'info'
+      });
+      return;
+    }
     setMediaBuyerSpendLogs(prev => prev.filter(s => s.id !== id));
+    addNotification({
+      title: 'Ad Spend Record Deleted',
+      message: 'Ad spend entry deleted by Administrator.',
+      type: 'info'
+    });
   };
 
   // AI Calling & Tokens
@@ -1564,13 +1943,14 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addNotification = (n: Omit<NotificationItem, 'id' | 'timestamp' | 'isRead'>) => {
+    const uniqueId = `notif-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     const item: NotificationItem = {
       ...n,
-      id: `notif-${Date.now()}`,
+      id: uniqueId,
       timestamp: 'Just now',
       isRead: false
     };
-    setNotifications(prev => [item, ...prev]);
+    setNotifications(prev => [item, ...prev.filter(existing => existing.id !== uniqueId)]);
   };
 
   const markNotificationAsRead = (id: string) => {
@@ -1661,8 +2041,12 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setAdminActiveTab,
         repActiveTab,
         setRepActiveTab,
+        distributorActiveTab,
+        setDistributorActiveTab,
         invActiveTab,
         setInvActiveTab,
+        mediaBuyerActiveTab,
+        setMediaBuyerActiveTab,
         isMobileSidebarOpen,
         setIsMobileSidebarOpen,
         toggleMobileSidebar,
@@ -1699,11 +2083,20 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addWarehouseStock,
         transferStockAgentToAgent,
         reconcileAgentStock,
+        distributors,
+        distributorStock,
+        assignStockToDistributor,
+        returnStockFromDistributor,
+        setDistributorStockLevel,
+        requestDistributorRestock,
         orders,
         createOrder,
         updateOrderStatus,
+        scheduleOrderDelivery,
+        updateOrder,
         assignOrderRep,
         assignOrderAgent,
+        assignOrderDistributor,
         deleteOrder,
         deletedOrders,
         restoreOrder,
