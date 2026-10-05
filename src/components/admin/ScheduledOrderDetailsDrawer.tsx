@@ -579,7 +579,7 @@ Status: ${liveOrder.status}`;
               Order Items
             </h3>
 
-            <div className={`rounded-lg border overflow-hidden text-xs ${
+            <div className={`rounded-lg border overflow-x-auto text-xs ${
               isLight 
                 ? 'bg-white border-slate-200' 
                 : 'bg-[#060b14] border-[#1e293b]/80'

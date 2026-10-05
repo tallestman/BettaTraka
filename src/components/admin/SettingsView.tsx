@@ -418,27 +418,28 @@ export const SettingsView: React.FC = () => {
             />
           </div>
 
-          {/* Row 2: Assign orders to me */}
+          {/* Row 2: Round Robin Sales Reps Only Policy */}
           <div className="p-4 sm:p-5 flex items-center justify-between gap-4">
             <div className="flex items-start gap-3.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-sky-950/60 border border-sky-800/50 flex items-center justify-center shrink-0 mt-0.5">
-                <UserCheck className="w-4 h-4 text-sky-400" />
+              <div className="w-9 h-9 rounded-xl bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center shrink-0 mt-0.5">
+                <UserCheck className="w-4 h-4 text-emerald-400" />
               </div>
               <div className="space-y-1">
-                <h4 className="text-xs font-bold text-white">
-                  Assign orders to me
+                <h4 className="text-xs font-bold text-white flex items-center gap-2">
+                  <span>Round-Robin Order Sales Reps Only Policy</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/60 font-bold">
+                    Active
+                  </span>
                 </h4>
                 <p className="text-xs text-slate-400 leading-relaxed max-w-2xl">
-                  Add yourself to the order round-robin. You'll get new orders like a sales rep and appear in reassign dropdowns. Orders already assigned to you stay with you if you turn this off.
+                  Automated round-robin order distribution strictly routes leads to verified, active Sales Representatives only. Admins, managers, distributors, and logistics personnel are strictly excluded from order rotation.
                 </p>
               </div>
             </div>
 
-            <ToggleSwitch
-              checked={settings.assignOrdersToMe ?? false}
-              onChange={(checked) => updateSettings({ assignOrdersToMe: checked })}
-              label="Assign orders to me"
-            />
+            <span className="text-xs font-mono font-bold text-emerald-400 px-3 py-1.5 rounded-lg bg-emerald-950/80 border border-emerald-800/60">
+              Enforced
+            </span>
           </div>
 
           {/* Row 3: Assign abandoned carts to me */}

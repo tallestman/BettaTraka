@@ -80,8 +80,11 @@ export const SalesRepView: React.FC = () => {
     toggleSidebarCollapse,
     isMobileSidebarOpen,
     setIsMobileSidebarOpen,
-    toggleMobileSidebar
+    toggleMobileSidebar,
+    themeMode
   } = useCrm();
+
+  const isLight = themeMode === 'light';
 
   const [repTab, setRepTab] = useState<string>('dashboard');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -337,21 +340,27 @@ export const SalesRepView: React.FC = () => {
 
   // Render Expanded Rep Sidebar
   const renderExpandedContent = (isMobile = false) => (
-    <div className="w-full flex-shrink-0 bg-[#090d16] border-r border-slate-800/80 flex flex-col h-full select-none justify-between p-3">
+    <div className={`w-full flex-shrink-0 border-r flex flex-col h-full select-none justify-between p-3 ${
+      isLight ? 'bg-white border-slate-200' : 'bg-[#090d16] border-slate-800/80'
+    }`}>
       {/* Scrollable Nav Area */}
       <div className="flex-1 min-h-0 overflow-y-auto space-y-1 pr-0.5 custom-scrollbar">
         {/* User Profile Mini Badge & Collapse Toggle */}
-        <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/80 mb-3 space-y-1">
+        <div className={`p-2.5 rounded-xl border mb-3 space-y-1 ${
+          isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/80 border-slate-800/80'
+        }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-lime-950 border border-lime-500/40 flex items-center justify-center font-bold text-xs text-lime-400 shrink-0">
+              <div className={`w-7 h-7 rounded-lg border flex items-center justify-center font-bold text-xs shrink-0 ${
+                isLight ? 'bg-lime-100 text-lime-800 border-lime-300' : 'bg-lime-950 border-lime-500/40 text-lime-400'
+              }`}>
                 {currentUser.name.split(' ').map(n => n[0]).join('')}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-white text-xs truncate">{currentUser.name}</p>
+                <p className={`font-semibold text-xs truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>{currentUser.name}</p>
                 <div className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse" />
-                  <p className="text-[10px] text-lime-400 font-mono truncate">
+                  <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isLight ? 'bg-lime-600' : 'bg-lime-400'}`} />
+                  <p className={`text-[10px] font-mono truncate ${isLight ? 'text-lime-700' : 'text-lime-400'}`}>
                     {isAvailableForLeads ? 'Online & Active' : 'Away / Paused'}
                   </p>
                 </div>
@@ -403,10 +412,16 @@ export const SalesRepView: React.FC = () => {
               }}
               className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition cursor-pointer ${
                 item.isLogOut
-                  ? 'text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 mt-2 border border-rose-500/20'
+                  ? isLight
+                    ? 'text-rose-600 hover:bg-rose-50 hover:text-rose-700 mt-2 border border-rose-200'
+                    : 'text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 mt-2 border border-rose-500/20'
                   : isActive 
-                  ? 'bg-lime-500 text-black font-extrabold shadow-md shadow-lime-950/40' 
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                  ? isLight
+                    ? 'bg-lime-100 text-lime-950 font-extrabold border border-lime-300 shadow-xs'
+                    : 'bg-lime-500 text-black font-extrabold shadow-md shadow-lime-950/40' 
+                  : isLight
+                    ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
               }`}
             >
               <div className="flex items-center gap-2 min-w-0">
@@ -416,10 +431,10 @@ export const SalesRepView: React.FC = () => {
               {item.badge !== undefined && (
                 <span className={`font-mono text-[10px] px-1.5 py-0.2 rounded font-bold ${
                   isActive 
-                    ? 'bg-black text-lime-400' 
+                    ? (isLight ? 'bg-lime-700 text-white' : 'bg-black text-lime-400') 
                     : item.id === 'leaderboard'
-                    ? 'bg-amber-950 text-amber-400 border border-amber-800/60'
-                    : 'bg-lime-950 text-lime-400 border border-lime-800/60'
+                    ? (isLight ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-amber-950 text-amber-400 border border-amber-800/60')
+                    : (isLight ? 'bg-lime-100 text-lime-800 border border-lime-300' : 'bg-lime-950 text-lime-400 border border-lime-800/60')
                 }`}>
                   {item.badge}
                 </span>
@@ -428,36 +443,22 @@ export const SalesRepView: React.FC = () => {
           );
         })}
       </div>
-
-      {/* Rep Bottom Session & Log Out */}
-      <div className="pt-3 border-t border-slate-800/80 space-y-2 mt-2">
-        <div className="px-2 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-mono text-slate-400 flex items-center justify-between">
-          <span>Rate / Order:</span>
-          <span className="text-lime-400 font-bold">₦{commissionRate.toLocaleString()}</span>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setShowLogoutConfirm(true)}
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/30 hover:border-rose-500/50 text-xs font-semibold transition cursor-pointer"
-          title="Log Out of Session"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          <span>Log Out</span>
-        </button>
-      </div>
     </div>
   );
 
   // Render Collapsed Rep Sidebar (Icon-Only Rail)
   const renderCollapsedContent = () => (
-    <div className="w-full flex-shrink-0 bg-[#090d16] border-r border-slate-800/80 flex flex-col h-full select-none justify-between items-center py-3 px-1.5">
+    <div className={`w-full flex-shrink-0 border-r flex flex-col h-full select-none justify-between items-center py-3 px-1.5 ${
+      isLight ? 'bg-white border-slate-200' : 'bg-[#090d16] border-slate-800/80'
+    }`}>
       <div className="space-y-3 flex flex-col items-center w-full">
         {/* Expand Toggle Button */}
         <button
           type="button"
           onClick={toggleSidebarCollapse}
-          className="w-9 h-9 rounded-xl bg-slate-900 border border-lime-500/40 text-lime-400 hover:bg-lime-950/40 flex items-center justify-center transition cursor-pointer shadow-sm"
+          className={`w-9 h-9 rounded-xl border flex items-center justify-center transition cursor-pointer shadow-sm ${
+            isLight ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100' : 'bg-slate-900 border-lime-500/40 text-lime-400 hover:bg-lime-950/40'
+          }`}
           title="Expand Rep Menu"
           aria-label="Expand Sidebar"
         >
@@ -476,21 +477,25 @@ export const SalesRepView: React.FC = () => {
                   onClick={() => setRepTab(item.id)}
                   className={`relative w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-lime-500 text-black font-extrabold shadow-md shadow-lime-950/50'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                      ? (isLight ? 'bg-emerald-600 text-white font-bold shadow-sm' : 'bg-lime-500 text-black font-extrabold shadow-md shadow-lime-950/50')
+                      : (isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : 'text-slate-400 hover:text-white hover:bg-slate-900')
                   }`}
                   title={item.label}
                 >
                   <Icon className="w-4 h-4 flex-shrink-0" />
                   {item.badge !== undefined && (
-                    <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 rounded-full bg-lime-400 text-black text-[8px] font-black flex items-center justify-center font-mono">
+                    <span className={`absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 rounded-full text-[8px] font-black flex items-center justify-center font-mono ${
+                      isLight ? 'bg-emerald-600 text-white' : 'bg-lime-400 text-black'
+                    }`}>
                       •
                     </span>
                   )}
                 </button>
 
                 {/* Flyout Tooltip on Hover */}
-                <div className="opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-semibold z-50 whitespace-nowrap shadow-2xl flex items-center gap-1.5">
+                <div className={`opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1.5 rounded-xl border text-xs font-semibold z-50 whitespace-nowrap shadow-md flex items-center gap-1.5 ${
+                  isLight ? 'bg-slate-100 border-slate-300 text-slate-800' : 'bg-slate-900 border-slate-700 text-white'
+                }`}>
                   <span>{item.label}</span>
                 </div>
               </div>
@@ -498,23 +503,13 @@ export const SalesRepView: React.FC = () => {
           })}
         </div>
       </div>
-
-      {/* Mini Logout at Bottom */}
-      <div className="pt-2 border-t border-slate-800/80 w-full flex flex-col items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setShowLogoutConfirm(true)}
-          className="p-2 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 transition cursor-pointer"
-          title="Log Out"
-        >
-          <LogOut className="w-4 h-4" />
-        </button>
-      </div>
     </div>
   );
 
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-3.5rem)] bg-slate-950 select-none overflow-hidden">
+    <div className={`flex flex-col md:flex-row h-[calc(100vh-3.5rem)] select-none overflow-hidden ${
+      isLight ? 'bg-[#f8fafc] text-slate-900' : 'bg-slate-950 text-white'
+    }`}>
       
       {/* 1. Mobile Drawer (Overlay when opened on small devices) */}
       {isMobileSidebarOpen && (
@@ -762,6 +757,7 @@ export const SalesRepView: React.FC = () => {
                       <th className="py-3 px-4">Phone</th>
                       <th className="py-3 px-4">Delivery City</th>
                       <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4">Distributor Hub</th>
                       <th className="py-3 px-4 text-right">Amount</th>
                       <th className="py-3 px-4 text-right">Action</th>
                     </tr>
@@ -769,7 +765,7 @@ export const SalesRepView: React.FC = () => {
                   <tbody className="divide-y divide-slate-800/60">
                     {myOrders.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-8 text-center text-slate-500">
+                        <td colSpan={8} className="py-8 text-center text-slate-500">
                           No orders assigned to you yet.
                         </td>
                       </tr>
@@ -781,13 +777,6 @@ export const SalesRepView: React.FC = () => {
                           <td className="py-3 px-4 font-mono text-slate-400">{o.customerPhone}</td>
                           <td className="py-3 px-4 text-slate-300">
                             <p>{o.deliveryCity}</p>
-                            {o.distributorName ? (
-                              <span className="text-[10px] text-lime-400 bg-lime-950/70 border border-lime-800/50 px-1.5 py-0.5 rounded font-mono inline-block mt-0.5">
-                                Hub: {o.distributorName.split(' ')[0]}
-                              </span>
-                            ) : (
-                              <span className="text-[10px] text-slate-500 font-mono block mt-0.5">Direct Delivery</span>
-                            )}
                           </td>
                           <td className="py-3 px-4 font-mono text-[11px]">
                             <span className={`px-2 py-0.5 rounded ${
@@ -808,6 +797,25 @@ export const SalesRepView: React.FC = () => {
                               </button>
                             )}
                           </td>
+                          <td className="py-3 px-4">
+                            <select
+                              value={o.distributorId || ''}
+                              onChange={(e) => assignOrderDistributor(o.id, e.target.value)}
+                              className={`px-2 py-1 rounded-lg border text-xs font-mono cursor-pointer focus:outline-none transition ${
+                                o.distributorId
+                                  ? 'bg-lime-950/80 border-lime-500/60 text-lime-400 font-bold'
+                                  : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
+                              }`}
+                              title="Assign this order to Regional Distributor Hub"
+                            >
+                              <option value="">No Distributor</option>
+                              {distributors.map(d => (
+                                <option key={d.id} value={d.id}>
+                                  {d.name.split(' ')[0]} Hub
+                                </option>
+                              ))}
+                            </select>
+                          </td>
                           <td className="py-3 px-4 text-right font-mono font-bold text-white">
                             {formatCurrency(convertAmount(o.totalAmount, currency), currency)}
                           </td>
@@ -821,19 +829,6 @@ export const SalesRepView: React.FC = () => {
                               <Calendar className="w-3 h-3" />
                               <span>Schedule</span>
                             </button>
-                            <select
-                              value={o.distributorId || ''}
-                              onChange={(e) => assignOrderDistributor(o.id, e.target.value)}
-                              className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-lime-300 focus:outline-none focus:border-lime-500 cursor-pointer"
-                              title="Assign this order to Regional Distributor Hub"
-                            >
-                              <option value="">No Distributor</option>
-                              {distributors.map(d => (
-                                <option key={d.id} value={d.id}>
-                                  {d.name.split(' ')[0]} (Distributor)
-                                </option>
-                              ))}
-                            </select>
                             <button
                               onClick={() => setSelectedOrder(o)}
                               className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold cursor-pointer"
@@ -1251,24 +1246,38 @@ export const SalesRepView: React.FC = () => {
           <div className="space-y-6 animate-in fade-in">
             
             {/* Header & Monthly Incentive Banner */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b ${
+              isLight ? 'border-slate-200' : 'border-slate-800'
+            }`}>
               <div>
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-amber-400" />
+                <h2 className={`text-xl font-bold flex items-center gap-2 ${
+                  isLight ? 'text-slate-900' : 'text-white'
+                }`}>
+                  <Trophy className="w-5 h-5 text-amber-500" />
                   <span>Sales Rep Performance Leaderboard</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className={`text-xs mt-0.5 ${
+                  isLight ? 'text-slate-500' : 'text-slate-400'
+                }`}>
                   Real-time national rankings, delivery conversion rates, and monthly closer bonuses.
                 </p>
               </div>
 
               {/* Timeframe Filter */}
-              <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900 border border-slate-800 text-xs self-start sm:self-auto">
+              <div className={`flex items-center gap-1 p-1 rounded-xl border text-xs self-start sm:self-auto ${
+                isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900 border-slate-800'
+              }`}>
                 <button
                   type="button"
                   onClick={() => setLeaderboardTimeframe('month')}
-                  className={`px-3 py-1 rounded-lg font-semibold transition cursor-pointer ${
-                    leaderboardTimeframe === 'month' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                  className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
+                    leaderboardTimeframe === 'month'
+                      ? isLight
+                        ? 'bg-lime-600 text-white shadow-xs'
+                        : 'bg-lime-500 text-black font-extrabold shadow-md shadow-lime-950/40'
+                      : isLight
+                        ? 'text-slate-600 hover:text-slate-900'
+                        : 'text-slate-400 hover:text-white'
                   }`}
                 >
                   This Month
@@ -1276,8 +1285,14 @@ export const SalesRepView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setLeaderboardTimeframe('week')}
-                  className={`px-3 py-1 rounded-lg font-semibold transition cursor-pointer ${
-                    leaderboardTimeframe === 'week' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                  className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
+                    leaderboardTimeframe === 'week'
+                      ? isLight
+                        ? 'bg-lime-600 text-white shadow-xs'
+                        : 'bg-lime-500 text-black font-extrabold shadow-md shadow-lime-950/40'
+                      : isLight
+                        ? 'text-slate-600 hover:text-slate-900'
+                        : 'text-slate-400 hover:text-white'
                   }`}
                 >
                   Last 7 Days
@@ -1285,8 +1300,14 @@ export const SalesRepView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setLeaderboardTimeframe('all')}
-                  className={`px-3 py-1 rounded-lg font-semibold transition cursor-pointer ${
-                    leaderboardTimeframe === 'all' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                  className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
+                    leaderboardTimeframe === 'all'
+                      ? isLight
+                        ? 'bg-lime-600 text-white shadow-xs'
+                        : 'bg-lime-500 text-black font-extrabold shadow-md shadow-lime-950/40'
+                      : isLight
+                        ? 'text-slate-600 hover:text-slate-900'
+                        : 'text-slate-400 hover:text-white'
                   }`}
                 >
                   All-Time
@@ -1295,31 +1316,55 @@ export const SalesRepView: React.FC = () => {
             </div>
 
             {/* Monthly Grand Prize Challenge Card */}
-            <div className="p-4 sm:p-5 rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+            <div className={`p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm ${
+              isLight 
+                ? 'border-amber-300 bg-gradient-to-r from-amber-50 via-amber-100/40 to-white' 
+                : 'border-amber-500/30 bg-gradient-to-r from-amber-950/40 via-slate-900 to-[#090d16]'
+            }`}>
               <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
+                <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0 shadow-inner ${
+                  isLight 
+                    ? 'bg-amber-100 border-amber-300 text-amber-600' 
+                    : 'bg-amber-500/20 border-amber-500/40 text-amber-400'
+                }`}>
                   <Crown className="w-6 h-6 stroke-[2]" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono font-bold text-amber-400 px-2 py-0.5 rounded bg-amber-950 border border-amber-800 uppercase">
+                    <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase ${
+                      isLight 
+                        ? 'bg-amber-100 text-amber-800 border border-amber-300' 
+                        : 'bg-amber-950 text-amber-400 border border-amber-800'
+                    }`}>
                       Active Challenge
                     </span>
-                    <h3 className="font-extrabold text-white text-sm sm:text-base">Top Closer of the Month: ₦50,000 Cash Bonus</h3>
+                    <h3 className={`font-extrabold text-sm sm:text-base ${
+                      isLight ? 'text-slate-900' : 'text-white'
+                    }`}>Top Closer of the Month: ₦50,000 Cash Bonus</h3>
                   </div>
-                  <p className="text-xs text-slate-300 mt-1">
+                  <p className={`text-xs mt-1 ${
+                    isLight ? 'text-slate-600' : 'text-slate-300'
+                  }`}>
                     The representative with the highest number of door-delivered COD orders wins the monthly champion cash reward.
                   </p>
                 </div>
               </div>
 
               {/* Personal Standing Pill */}
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-right shrink-0">
-                <span className="text-[10px] text-slate-400 font-mono uppercase block">Your Current Rank</span>
-                <span className="text-xl font-black font-mono text-emerald-400">
-                  Rank #{myRank} <span className="text-xs text-slate-400 font-sans">of {repRankings.length} reps</span>
+              <div className={`p-3 rounded-xl border text-right shrink-0 ${
+                isLight ? 'bg-white border-amber-200 shadow-xs' : 'bg-slate-950 border-slate-800'
+              }`}>
+                <span className={`text-[10px] font-mono uppercase block ${
+                  isLight ? 'text-slate-500' : 'text-slate-400'
+                }`}>Your Current Rank</span>
+                <span className={`text-xl font-black font-mono ${
+                  isLight ? 'text-lime-700' : 'text-lime-400'
+                }`}>
+                  Rank #{myRank} <span className={`text-xs font-sans ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>of {repRankings.length} reps</span>
                 </span>
-                <span className="text-[10px] text-slate-400 block font-mono">
+                <span className={`text-[10px] block font-mono ${
+                  isLight ? 'text-slate-600' : 'text-slate-400'
+                }`}>
                   {myDeliveredOrders.length} Delivered Orders
                 </span>
               </div>
@@ -1337,49 +1382,65 @@ export const SalesRepView: React.FC = () => {
                     key={rep.id}
                     className={`rounded-2xl border p-4 space-y-3 relative overflow-hidden transition ${
                       rep.isCurrent 
-                        ? 'border-emerald-500 bg-emerald-950/20 shadow-emerald-950/50 shadow-lg' 
+                        ? isLight
+                          ? 'border-lime-500 bg-lime-50/70 shadow-md shadow-lime-900/10'
+                          : 'border-lime-500 bg-lime-950/20 shadow-lime-950/50 shadow-lg' 
                         : isFirst
-                        ? 'border-amber-500/40 bg-slate-900/90'
-                        : 'border-slate-800 bg-[#090d16]'
+                        ? isLight
+                          ? 'border-amber-300 bg-amber-50/40 shadow-xs'
+                          : 'border-amber-500/40 bg-slate-900/90'
+                        : isLight
+                          ? 'border-slate-200 bg-white shadow-xs'
+                          : 'border-slate-800 bg-[#090d16]'
                     }`}
                   >
                     {/* Top Podium Badge */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
-                          isFirst ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' :
-                          isSecond ? 'bg-slate-700/40 text-slate-300 border border-slate-600' :
-                          'bg-amber-900/30 text-amber-600 border border-amber-800/40'
+                          isFirst 
+                            ? isLight ? 'bg-amber-100 text-amber-700 border border-amber-300' : 'bg-amber-500/20 text-amber-400 border border-amber-500/40' 
+                            : isSecond 
+                            ? isLight ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'bg-slate-700/40 text-slate-300 border border-slate-600' 
+                            : isLight ? 'bg-amber-100/60 text-amber-800 border border-amber-200' : 'bg-amber-900/30 text-amber-600 border border-amber-800/40'
                         }`}>
-                          {isFirst ? <Trophy className="w-4 h-4 text-amber-400" /> : isSecond ? <Medal className="w-4 h-4 text-slate-300" /> : <Award className="w-4 h-4 text-amber-600" />}
+                          {isFirst ? <Trophy className="w-4 h-4 text-amber-500" /> : isSecond ? <Medal className="w-4 h-4 text-slate-400" /> : <Award className="w-4 h-4 text-amber-600" />}
                         </div>
                         <div>
-                          <span className="text-xs font-bold text-white block">{rep.name}</span>
-                          <span className="text-[10px] text-slate-400 font-mono">{rep.team}</span>
+                          <span className={`text-xs font-bold block ${isLight ? 'text-slate-900' : 'text-white'}`}>{rep.name}</span>
+                          <span className={`text-[10px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{rep.team}</span>
                         </div>
                       </div>
 
                       {rep.isCurrent && (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-emerald-400 border border-emerald-800 animate-pulse">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold animate-pulse ${
+                          isLight 
+                            ? 'bg-lime-100 text-lime-800 border border-lime-300' 
+                            : 'bg-lime-950 text-lime-400 border border-lime-800'
+                        }`}>
                           YOU
                         </span>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/60 text-xs font-mono">
+                    <div className={`grid grid-cols-2 gap-2 pt-2 border-t text-xs font-mono ${
+                      isLight ? 'border-slate-200' : 'border-slate-800/60'
+                    }`}>
                       <div>
-                        <span className="text-[10px] text-slate-500 block">Delivered</span>
-                        <span className="text-base font-bold text-white">{rep.deliveredCount} orders</span>
+                        <span className={`text-[10px] block ${isLight ? 'text-slate-500' : 'text-slate-500'}`}>Delivered</span>
+                        <span className={`text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{rep.deliveredCount} orders</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-500 block">Success Rate</span>
-                        <span className="text-base font-bold text-emerald-400">{rep.conversion}%</span>
+                        <span className={`text-[10px] block ${isLight ? 'text-slate-500' : 'text-slate-500'}`}>Success Rate</span>
+                        <span className={`text-base font-bold ${isLight ? 'text-lime-700' : 'text-lime-400'}`}>{rep.conversion}%</span>
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] font-mono">
-                      <span className="text-slate-400">Gross Collected:</span>
-                      <span className="text-white font-bold">{formatCurrency(convertAmount(rep.revenue, currency), currency)}</span>
+                    <div className={`pt-2 border-t flex items-center justify-between text-[11px] font-mono ${
+                      isLight ? 'border-slate-200' : 'border-slate-800/60'
+                    }`}>
+                      <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>Gross Collected:</span>
+                      <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{formatCurrency(convertAmount(rep.revenue, currency), currency)}</span>
                     </div>
                   </div>
                 );
@@ -1387,13 +1448,19 @@ export const SalesRepView: React.FC = () => {
             </div>
 
             {/* Complete Leaderboard Table */}
-            <div className="rounded-2xl border border-slate-800 bg-[#090d16] p-5 space-y-3 shadow-xl">
-              <h3 className="font-bold text-white text-sm">Full National Rep Standings</h3>
+            <div className={`rounded-2xl border p-5 space-y-3 shadow-sm ${
+              isLight ? 'bg-white border-slate-200' : 'border-slate-800 bg-[#090d16]'
+            }`}>
+              <h3 className={`font-bold text-sm ${isLight ? 'text-slate-900' : 'text-white'}`}>Full National Rep Standings</h3>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="border-b border-slate-800 bg-slate-950/80 text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+                    <tr className={`border-b text-[10px] font-mono uppercase tracking-wider ${
+                      isLight 
+                        ? 'border-slate-200 bg-slate-50 text-slate-600' 
+                        : 'border-slate-800 bg-slate-950/80 text-slate-400'
+                    }`}>
                       <th className="py-3 px-4">Rank</th>
                       <th className="py-3 px-4">Sales Representative</th>
                       <th className="py-3 px-4">Region / Hub</th>
@@ -1404,7 +1471,7 @@ export const SalesRepView: React.FC = () => {
                       <th className="py-3 px-4 text-right">Commissions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className={`divide-y ${isLight ? 'divide-slate-200' : 'divide-slate-800/60'}`}>
                     {repRankings.map((rep, idx) => {
                       const rankNum = idx + 1;
                       return (
@@ -1412,69 +1479,43 @@ export const SalesRepView: React.FC = () => {
                           key={rep.id} 
                           className={`transition ${
                             rep.isCurrent 
-                              ? 'bg-emerald-950/30 hover:bg-emerald-950/40 border-l-4 border-l-emerald-500' 
-                              : 'hover:bg-slate-900/60'
+                              ? isLight
+                                ? 'bg-lime-50/80 hover:bg-lime-50 border-l-4 border-l-lime-500 font-semibold'
+                                : 'bg-lime-950/30 hover:bg-lime-950/40 border-l-4 border-l-lime-500' 
+                              : isLight
+                                ? 'hover:bg-slate-50 text-slate-800'
+                                : 'hover:bg-slate-900/60 text-slate-300'
                           }`}
                         >
                           {/* Rank */}
                           <td className="py-3 px-4 font-mono font-bold whitespace-nowrap">
                             <span className={`w-6 h-6 rounded-lg inline-flex items-center justify-center text-xs ${
-                              rankNum === 1 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 font-black' :
-                              rankNum === 2 ? 'bg-slate-700/30 text-slate-300 border border-slate-700 font-bold' :
+                              rankNum === 1 ? 'bg-amber-500/20 text-amber-500 border border-amber-500/40 font-black' :
+                              rankNum === 2 ? 'bg-slate-500/20 text-slate-400 border border-slate-500/40 font-bold' :
                               rankNum === 3 ? 'bg-amber-900/30 text-amber-600 border border-amber-800 font-bold' :
-                              'text-slate-400'
+                              isLight ? 'text-slate-500' : 'text-slate-400'
                             }`}>
-                              #{rankNum}
+                              {rankNum}
                             </span>
                           </td>
-
-                          {/* Name */}
-                          <td className="py-3 px-4 font-semibold text-white whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <span>{rep.name}</span>
-                              {rep.isCurrent && (
-                                <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
-                                  YOU
-                                </span>
-                              )}
-                            </div>
+                          <td className={`py-3 px-4 font-medium ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                            {rep.name}
+                            {rep.isCurrent && (
+                              <span className={`ml-2 text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${
+                                isLight ? 'bg-lime-100 text-lime-800' : 'bg-lime-950 text-lime-400'
+                              }`}>
+                                YOU
+                              </span>
+                            )}
                           </td>
-
-                          {/* Team */}
-                          <td className="py-3 px-4 text-slate-400 font-mono whitespace-nowrap">
-                            {rep.team}
-                          </td>
-
-                          {/* Assigned */}
-                          <td className="py-3 px-4 text-center font-mono text-slate-300">
-                            {rep.assignedCount}
-                          </td>
-
-                          {/* Delivered */}
-                          <td className="py-3 px-4 text-center font-mono font-bold text-white">
-                            {rep.deliveredCount}
-                          </td>
-
-                          {/* Conversion % */}
-                          <td className="py-3 px-4 text-center whitespace-nowrap">
-                            <div className="flex items-center justify-center gap-2">
-                              <div className="w-16 h-1.5 rounded-full bg-slate-800 overflow-hidden hidden sm:block">
-                                <div 
-                                  className="h-full bg-emerald-500 rounded-full" 
-                                  style={{ width: `${Math.min(100, rep.conversion)}%` }} 
-                                />
-                              </div>
-                              <span className="font-mono font-bold text-emerald-400">{rep.conversion}%</span>
-                            </div>
-                          </td>
-
-                          {/* Revenue */}
-                          <td className="py-3 px-4 text-right font-mono font-bold text-white whitespace-nowrap">
+                          <td className={`py-3 px-4 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>{rep.team}</td>
+                          <td className={`py-3 px-4 text-center font-mono ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>{rep.assignedCount}</td>
+                          <td className={`py-3 px-4 text-center font-mono font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{rep.deliveredCount}</td>
+                          <td className={`py-3 px-4 text-center font-mono font-bold ${isLight ? 'text-lime-700' : 'text-lime-400'}`}>{rep.conversion}%</td>
+                          <td className={`py-3 px-4 text-right font-mono font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
                             {formatCurrency(convertAmount(rep.revenue, currency), currency)}
                           </td>
-
-                          {/* Commissions */}
-                          <td className="py-3 px-4 text-right font-mono font-bold text-emerald-400 whitespace-nowrap">
+                          <td className={`py-3 px-4 text-right font-mono font-bold ${isLight ? 'text-lime-700' : 'text-lime-400'}`}>
                             {formatCurrency(convertAmount(rep.commissions, currency), currency)}
                           </td>
                         </tr>

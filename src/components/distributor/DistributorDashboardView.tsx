@@ -62,8 +62,11 @@ export const DistributorDashboardView: React.FC = () => {
     setIsMobileSidebarOpen,
     requestDistributorRestock,
     distributorActiveTab,
-    setDistributorActiveTab
+    setDistributorActiveTab,
+    themeMode
   } = useCrm();
+
+  const isLight = themeMode === 'light';
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderToSchedule, setOrderToSchedule] = useState<Order | null>(null);
@@ -241,21 +244,27 @@ export const DistributorDashboardView: React.FC = () => {
 
   // Render Expanded Sidebar
   const renderExpandedContent = (isMobile = false) => (
-    <div className="w-full flex-shrink-0 bg-[#090d16] border-r border-slate-800/80 flex flex-col h-full select-none justify-between p-3">
+    <div className={`w-full flex-shrink-0 border-r flex flex-col h-full select-none justify-between p-3 ${
+      isLight ? 'bg-white border-slate-200' : 'bg-[#090d16] border-slate-800/80'
+    }`}>
       {/* Scrollable Nav Area */}
       <div className="flex-1 min-h-0 overflow-y-auto space-y-1 pr-0.5 custom-scrollbar">
         {/* User Profile Mini Badge & Collapse Toggle */}
-        <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/80 mb-3 space-y-1">
+        <div className={`p-2.5 rounded-xl border mb-3 space-y-1 ${
+          isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/80 border-slate-800/80'
+        }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-lime-950 border border-lime-500/40 flex items-center justify-center font-bold text-xs text-lime-400 shrink-0">
+              <div className={`w-7 h-7 rounded-lg border flex items-center justify-center font-bold text-xs shrink-0 ${
+                isLight ? 'bg-lime-100 text-lime-800 border-lime-300' : 'bg-lime-950 border-lime-500/40 text-lime-400'
+              }`}>
                 <Truck className="w-4 h-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-white text-xs truncate">{activeDistributor.name}</p>
+                <p className={`font-semibold text-xs truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>{activeDistributor.name}</p>
                 <div className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse" />
-                  <p className="text-[10px] text-lime-400 font-mono truncate">
+                  <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isLight ? 'bg-lime-600' : 'bg-lime-400'}`} />
+                  <p className={`text-[10px] font-mono truncate ${isLight ? 'text-lime-700' : 'text-lime-400'}`}>
                     Distributor Hub (Online)
                   </p>
                 </div>
@@ -267,7 +276,9 @@ export const DistributorDashboardView: React.FC = () => {
               <button
                 type="button"
                 onClick={toggleSidebarCollapse}
-                className="p-1 rounded-lg border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer ml-1"
+                className={`p-1 rounded-lg border transition cursor-pointer ml-1 ${
+                  isLight ? 'border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-100' : 'border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
                 title="Collapse Sidebar"
                 aria-label="Collapse Navigation"
               >
@@ -277,14 +288,18 @@ export const DistributorDashboardView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsMobileSidebarOpen(false)}
-                className="p-1 rounded-lg border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer ml-1"
+                className={`p-1 rounded-lg border transition cursor-pointer ml-1 ${
+                  isLight ? 'border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-100' : 'border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
                 title="Close Menu"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
-          <p className="text-[9px] text-slate-400 font-mono truncate pt-1 border-t border-slate-800/60">
+          <p className={`text-[9px] font-mono truncate pt-1 border-t ${
+            isLight ? 'text-slate-500 border-slate-200' : 'text-slate-400 border-slate-800/60'
+          }`}>
             {territoryState}
           </p>
         </div>
@@ -305,10 +320,16 @@ export const DistributorDashboardView: React.FC = () => {
               }}
               className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition cursor-pointer ${
                 item.isSignOut
-                  ? 'text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 mt-2 border border-rose-500/20'
+                  ? isLight
+                    ? 'text-rose-600 hover:bg-rose-50 hover:text-rose-700 mt-2 border border-rose-200'
+                    : 'text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 mt-2 border border-rose-500/20'
                   : isActive 
-                  ? 'bg-lime-500 text-black font-extrabold shadow-md shadow-lime-950/40' 
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                  ? isLight
+                    ? 'bg-lime-100 text-lime-950 font-extrabold border border-lime-300 shadow-xs'
+                    : 'bg-lime-500 text-black font-extrabold shadow-md shadow-lime-950/40' 
+                  : isLight
+                    ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
               }`}
             >
               <div className="flex items-center gap-2 min-w-0">
@@ -318,8 +339,8 @@ export const DistributorDashboardView: React.FC = () => {
               {item.badge !== undefined && (
                 <span className={`font-mono text-[10px] px-1.5 py-0.2 rounded font-bold ${
                   isActive 
-                    ? 'bg-black text-lime-400' 
-                    : 'bg-lime-950 text-lime-400 border border-lime-800/60'
+                    ? (isLight ? 'bg-lime-200 text-lime-950 border border-lime-400' : 'bg-black text-lime-400') 
+                    : (isLight ? 'bg-lime-100 text-lime-800 border border-lime-300' : 'bg-lime-950 text-lime-400 border border-lime-800/60')
                 }`}>
                   {item.badge}
                 </span>
@@ -328,36 +349,22 @@ export const DistributorDashboardView: React.FC = () => {
           );
         })}
       </div>
-
-      {/* Distributor Bottom Session & Quick Log Out */}
-      <div className="pt-3 border-t border-slate-800/80 space-y-2 mt-2">
-        <div className="px-2 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-mono text-slate-400 flex items-center justify-between">
-          <span>Fee / Order:</span>
-          <span className="text-lime-400 font-bold">₦{distributorFeePerOrder.toLocaleString()}</span>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setShowLogoutConfirm(true)}
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/30 hover:border-rose-500/50 text-xs font-semibold transition cursor-pointer"
-          title="Log Out of Distributor Session"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          <span>Log Out</span>
-        </button>
-      </div>
     </div>
   );
 
   // Render Collapsed Sidebar (Icon-Only Rail)
   const renderCollapsedContent = () => (
-    <div className="w-full flex-shrink-0 bg-[#090d16] border-r border-slate-800/80 flex flex-col h-full select-none justify-between items-center py-3 px-1.5">
+    <div className={`w-full flex-shrink-0 border-r flex flex-col h-full select-none justify-between items-center py-3 px-1.5 ${
+      isLight ? 'bg-white border-slate-200' : 'bg-[#090d16] border-slate-800/80'
+    }`}>
       <div className="space-y-3 flex flex-col items-center w-full">
         {/* Expand Toggle Button */}
         <button
           type="button"
           onClick={toggleSidebarCollapse}
-          className="w-9 h-9 rounded-xl bg-slate-900 border border-lime-500/40 text-lime-400 hover:bg-lime-950/40 flex items-center justify-center transition cursor-pointer shadow-sm"
+          className={`w-9 h-9 rounded-xl border flex items-center justify-center transition cursor-pointer shadow-sm ${
+            isLight ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100' : 'bg-slate-900 border-lime-500/40 text-lime-400 hover:bg-lime-950/40'
+          }`}
           title="Expand Distributor Menu"
           aria-label="Expand Sidebar"
         >
@@ -382,23 +389,27 @@ export const DistributorDashboardView: React.FC = () => {
                   }}
                   className={`relative w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
                     item.isSignOut
-                      ? 'text-rose-400 hover:bg-rose-500/20 mt-2'
+                      ? (isLight ? 'text-rose-600 hover:bg-rose-50 mt-2' : 'text-rose-400 hover:bg-rose-500/20 mt-2')
                       : isActive
-                      ? 'bg-lime-500 text-black font-extrabold shadow-md shadow-lime-950/50'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                      ? (isLight ? 'bg-lime-100 text-lime-950 font-bold border border-lime-400 shadow-xs' : 'bg-lime-500 text-black font-extrabold shadow-md shadow-lime-950/50')
+                      : (isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : 'text-slate-400 hover:text-white hover:bg-slate-900')
                   }`}
                   title={item.label}
                 >
                   <Icon className="w-4 h-4 flex-shrink-0" />
                   {item.badge !== undefined && (
-                    <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 rounded-full bg-lime-400 text-black text-[8px] font-black flex items-center justify-center font-mono">
+                    <span className={`absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 rounded-full text-[8px] font-black flex items-center justify-center font-mono ${
+                      isLight ? 'bg-emerald-600 text-white' : 'bg-lime-400 text-black'
+                    }`}>
                       {item.badge.toString().slice(0, 3)}
                     </span>
                   )}
                 </button>
 
                 {/* Flying Hover Tooltip */}
-                <div className="absolute left-full ml-2 px-2.5 py-1 rounded-md bg-slate-900 border border-slate-700 text-xs font-medium text-white shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+                <div className={`absolute left-full ml-2 px-2.5 py-1 rounded-md border text-xs font-semibold shadow-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 ${
+                  isLight ? 'bg-slate-100 border-slate-300 text-slate-800' : 'bg-slate-900 border-slate-700 text-white'
+                }`}>
                   {item.label}
                 </div>
               </div>
@@ -406,21 +417,11 @@ export const DistributorDashboardView: React.FC = () => {
           })}
         </div>
       </div>
-
-      {/* Bottom Sign Out Icon */}
-      <button
-        type="button"
-        onClick={() => setShowLogoutConfirm(true)}
-        className="w-9 h-9 rounded-xl flex items-center justify-center text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 transition cursor-pointer"
-        title="Sign Out"
-      >
-        <LogOut className="w-4 h-4" />
-      </button>
     </div>
   );
 
   return (
-    <div className="flex-1 flex overflow-hidden">
+    <div className={`flex-1 flex overflow-hidden ${isLight ? 'bg-[#f8fafc] text-slate-900' : 'bg-black text-white'}`}>
       {/* ------------------------------------------------------------- */}
       {/* 1. DESKTOP SIDEBAR (Collapsible between 224px and 68px)        */}
       {/* ------------------------------------------------------------- */}

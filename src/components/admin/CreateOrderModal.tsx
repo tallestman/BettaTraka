@@ -3,14 +3,15 @@ import { useCrm } from '../../context/CrmContext';
 import { NIGERIAN_STATES } from '../../data/initialData';
 import { ProductPackage } from '../../types/crm';
 import { formatCurrency, convertAmount } from '../../utils/formatters';
-import { X, Plus, ShoppingBag, Calendar, Clock } from 'lucide-react';
+import { X, Plus, ShoppingBag, Calendar, Clock, Boxes } from 'lucide-react';
 
 interface CreateOrderModalProps {
   onClose: () => void;
 }
 
 export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose }) => {
-  const { products, users, createOrder, currency, currentUser } = useCrm();
+  const { products, users, createOrder, currency, currentUser, distributors, themeMode } = useCrm();
+  const isLight = themeMode === 'light';
 
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -23,6 +24,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose }) =
   const [selectedProductId, setSelectedProductId] = useState(products[0]?.id || '');
   const [selectedPackageId, setSelectedPackageId] = useState<string>('');
   const [assignedRepId, setAssignedRepId] = useState<string>(currentUser.id);
+  const [assignedDistributorId, setAssignedDistributorId] = useState<string>('');
   const [source, setSource] = useState<'Order Form' | 'Manual Rep' | 'WhatsApp'>('Manual Rep');
 
   // Delivery Scheduling state
@@ -44,6 +46,8 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose }) =
       return;
     }
 
+    const chosenDist = distributors.find(d => d.id === assignedDistributorId);
+
     createOrder({
       customerName,
       customerPhone,
@@ -54,6 +58,8 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose }) =
       deliveryState,
       source,
       salesRepId: assignedRepId === 'me' ? undefined : assignedRepId,
+      distributorId: chosenDist ? chosenDist.id : undefined,
+      distributorName: chosenDist ? chosenDist.name : undefined,
       status: isScheduled ? 'SCHEDULED' : 'CONFIRMED',
       scheduledDate: isScheduled ? scheduledDate : undefined,
       preferredDeliveryTime: isScheduled ? preferredDeliveryTime : undefined,
@@ -77,15 +83,21 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose }) =
   const salesReps = users.filter(u => u.role === 'Sales Representative' || u.role === 'Owner');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-      <div className="w-full max-w-xl rounded-xl border border-slate-700 bg-slate-900 shadow-2xl text-slate-100 overflow-hidden max-h-[90vh] flex flex-col">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150 ${
+      isLight ? 'bg-slate-900/50' : 'bg-black/80'
+    }`}>
+      <div className={`w-full max-w-xl rounded-2xl border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col ${
+        isLight ? 'bg-white border-slate-200 text-slate-900' : 'border-slate-700 bg-slate-900 text-slate-100'
+      }`}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/40">
+        <div className={`flex items-center justify-between px-6 py-4 border-b ${
+          isLight ? 'border-slate-200 bg-slate-50' : 'border-slate-800 bg-slate-950/40'
+        }`}>
           <div className="flex items-center gap-2">
-            <Plus className="w-4 h-4 text-emerald-400" />
-            <h3 className="font-semibold text-white text-sm">Create New POD Order</h3>
+            <Plus className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
+            <h3 className={`font-bold text-sm ${isLight ? 'text-slate-900' : 'text-white'}`}>Create New POD Order</h3>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
+          <button onClick={onClose} className={`cursor-pointer ${isLight ? 'text-slate-400 hover:text-slate-700' : 'text-slate-400 hover:text-white'}`}>
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -272,6 +284,25 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose }) =
                 <option value="Order Form">Order Form</option>
               </select>
             </div>
+
+            <div className="sm:col-span-2">
+              <label className="text-[11px] text-lime-400 font-bold flex items-center gap-1.5 mb-1">
+                <Boxes className="w-3.5 h-3.5 text-lime-400" />
+                <span>Assigned Distributor Hub (Optional)</span>
+              </label>
+              <select
+                value={assignedDistributorId}
+                onChange={(e) => setAssignedDistributorId(e.target.value)}
+                className="w-full bg-slate-950 border border-lime-500/40 rounded-lg p-2 text-xs text-lime-300 focus:outline-none focus:border-lime-400 font-semibold"
+              >
+                <option value="">Central Warehouse Direct (No Distributor Hub)</option>
+                {distributors.map(dist => (
+                  <option key={dist.id} value={dist.id}>
+                    {dist.name} (Regional Hub)
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Delivery Scheduling Toggle & Date Selector */}
@@ -355,17 +386,21 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose }) =
             )}
           </div>
 
-          <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <div className={`pt-3 border-t flex justify-end gap-2 ${
+            isLight ? 'border-slate-200' : 'border-slate-800'
+          }`}>
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 font-medium text-slate-300 cursor-pointer"
+              className={`px-4 py-2 rounded-lg font-medium text-xs transition cursor-pointer ${
+                isLight ? 'bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+              }`}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-semibold text-white transition shadow-sm cursor-pointer"
+              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white transition shadow-sm cursor-pointer"
             >
               {isScheduled ? 'Schedule & Create Order' : 'Save & Confirm Order'}
             </button>

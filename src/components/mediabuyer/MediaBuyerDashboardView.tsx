@@ -53,7 +53,8 @@ import {
   Zap,
   Tag,
   Download,
-  FileSpreadsheet
+  FileSpreadsheet,
+  LogOut
 } from 'lucide-react';
 
 interface SavedUtmLink {
@@ -78,6 +79,9 @@ export const MediaBuyerDashboardView: React.FC = () => {
     currency,
     themeMode,
     addNotification,
+    setPersona,
+    isMobileSidebarOpen,
+    setIsMobileSidebarOpen,
     mediaBuyerActiveTab,
     setMediaBuyerActiveTab,
     mediaBuyerSpendLogs,
@@ -93,6 +97,7 @@ export const MediaBuyerDashboardView: React.FC = () => {
 
   // Sidebar collapse
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Permission check: only Admins/Owners can delete ad spend records
   const isAdmin = currentUser.role === 'Owner' || currentUser.role === 'Admin';
@@ -511,7 +516,8 @@ export const MediaBuyerDashboardView: React.FC = () => {
     { id: 'scheduled', label: 'Scheduled Delivery', icon: CalendarClock, isEditable: false, badge: scheduledUtmOrders.length },
     { id: 'deliveries', label: 'Deliveries', icon: Truck, isEditable: false, badge: deliveryFulfillmentUtmOrders.length },
     { id: 'ad-tracking', label: 'Ad Tracking (UTM)', icon: Target, isEditable: true, badge: 'Edit' },
-    { id: 'settings', label: 'Settings', icon: Settings, isEditable: true, badge: 'Edit' }
+    { id: 'settings', label: 'Settings', icon: Settings, isEditable: true, badge: 'Edit' },
+    { id: 'log-out', label: 'Log Out', icon: LogOut, isEditable: false, isLogOut: true }
   ];
 
   // Theme-aware design tokens (Lemon Green + Clean White in Day / Pure Pitch Black in Night)
@@ -533,13 +539,101 @@ export const MediaBuyerDashboardView: React.FC = () => {
     modal: isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#111111] border-neutral-800 text-white',
     primaryBtn: 'bg-lime-500 hover:bg-lime-400 text-black font-extrabold shadow-sm transition cursor-pointer',
     secondaryBtn: isLight 
-      ? 'bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold' 
+      ? 'bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 font-semibold' 
       : 'bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-slate-200 font-semibold'
   };
 
   return (
     <div className={`min-h-screen flex ${theme.bg}`}>
       
+      {/* Mobile Drawer Overlay */}
+      {isMobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden animate-in fade-in">
+          <div 
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+          />
+          <aside className={`relative z-10 w-72 max-w-[85vw] h-full shadow-2xl flex flex-col ${theme.sidebar}`}>
+            {/* User Identity Card */}
+            <div className={`p-4 border-b flex items-center justify-between ${isLight ? 'border-slate-200' : 'border-neutral-800'}`}>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-lime-500/20 border border-lime-500/40 flex items-center justify-center font-bold text-lime-500 text-sm shrink-0">
+                  <Megaphone className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className={`font-bold text-xs truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    {currentUser.name || 'Kayode Daniels'}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-lime-500 animate-pulse" />
+                    <span className="text-[10px] font-mono text-lime-500 uppercase tracking-wider font-semibold">
+                      Media Buyer
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-neutral-800 transition cursor-pointer"
+                title="Close Menu"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Mobile Navigation Links */}
+            <nav className="p-3 space-y-1 flex-1 overflow-y-auto">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      if (item.isLogOut) {
+                        setShowLogoutConfirm(true);
+                      } else {
+                        setActiveTab(item.id);
+                      }
+                      setIsMobileSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                      item.isLogOut
+                        ? 'text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 mt-2 border border-rose-500/20'
+                        : isActive
+                        ? 'bg-lime-500 text-black font-extrabold shadow-sm'
+                        : isLight
+                          ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                          : 'text-slate-400 hover:bg-neutral-900 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </div>
+
+                    {item.badge !== undefined && (
+                      <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                        isActive 
+                          ? 'bg-black text-lime-400' 
+                          : item.isEditable
+                          ? isLight ? 'bg-lime-100 text-lime-800 border border-lime-300' : 'bg-lime-950 text-lime-400 border border-lime-800/60'
+                          : isLight ? 'bg-slate-100 text-slate-700' : 'bg-neutral-800 text-slate-400'
+                      }`}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </aside>
+        </div>
+      )}
+
       {/* ===================================================================== */}
       {/* SIDEBAR NAVIGATION                                                    */}
       {/* ===================================================================== */}
@@ -590,9 +684,17 @@ export const MediaBuyerDashboardView: React.FC = () => {
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  if (item.isLogOut) {
+                    setShowLogoutConfirm(true);
+                  } else {
+                    setActiveTab(item.id);
+                  }
+                }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
-                  isActive
+                  item.isLogOut
+                    ? 'text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 mt-2 border border-rose-500/20'
+                    : isActive
                     ? 'bg-lime-500 text-black font-extrabold shadow-sm'
                     : isLight
                       ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
@@ -2107,6 +2209,49 @@ export const MediaBuyerDashboardView: React.FC = () => {
                 className={`px-4 py-2 rounded-xl text-xs ${theme.secondaryBtn}`}
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Log Out Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-700 p-6 space-y-4 shadow-2xl text-center">
+            <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
+              <LogOut className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white">Log Out of Media Buyer Workspace?</h3>
+              <p className="text-xs text-slate-400 mt-1">
+                You will be redirected back to the login portal. All UTM links and logs are saved automatically.
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-2 px-3 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  setPersona('marketing');
+                  if (addNotification) {
+                    addNotification({
+                      title: 'Signed Out',
+                      message: 'You have been logged out of your session.',
+                      type: 'info'
+                    });
+                  }
+                }}
+                className="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs cursor-pointer"
+              >
+                Yes, Log Out
               </button>
             </div>
           </div>

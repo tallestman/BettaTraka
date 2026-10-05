@@ -22,7 +22,9 @@ import {
   CheckSquare, 
   Square,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Boxes,
+  X
 } from 'lucide-react';
 
 export const OrdersView: React.FC = () => {
@@ -33,14 +35,19 @@ export const OrdersView: React.FC = () => {
     setCurrency,
     products, 
     users,
+    distributors,
+    assignOrderDistributor,
     updateOrderStatus,
     scheduleOrderDelivery,
     deleteOrder,
+    currentUser,
+    persona,
     themeMode,
     addNotification
   } = useCrm();
 
   const isLight = themeMode === 'light';
+  const isAccountant = currentUser?.role === 'Accountant' || persona === 'accountant';
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -216,6 +223,28 @@ export const OrdersView: React.FC = () => {
         </p>
       </div>
 
+      {/* Accountant Audit Notice Banner */}
+      {isAccountant && (
+        <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs animate-in fade-in ${
+          isLight ? 'bg-sky-50 border-sky-200 text-sky-900' : 'bg-sky-950/40 border-sky-800/60 text-sky-200'
+        }`}>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
+              <Eye className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-bold">Accountant Audit Mode: Read-Only Orders Ledger</p>
+              <p className={`text-[11px] ${isLight ? 'text-sky-700' : 'text-slate-300'}`}>
+                Orders are accessible in view-only ledger mode for payment verification and COD auditing. Creating orders, changing statuses, and altering distributor assignments are restricted to Sales & Operations staff.
+              </p>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 whitespace-nowrap self-start sm:self-auto">
+            View-Only Ledger
+          </span>
+        </div>
+      )}
+
       {/* 2. Date Tabs, Date Range, Currency & Action Buttons Bar (orders.png) */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Left Side: Today / This Week / This Month / This Year + Date Range + Currency */}
@@ -229,8 +258,8 @@ export const OrdersView: React.FC = () => {
               onClick={() => setDatePeriod('today')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 datePeriod === 'today'
-                  ? (isLight ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'bg-emerald-600 text-white shadow-sm font-semibold')
-                  : (isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white')
+                  ? (isLight ? 'bg-emerald-600 text-white font-bold shadow-sm' : 'bg-emerald-600 text-white shadow-sm font-semibold')
+                  : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60' : 'text-slate-400 hover:text-white')
               }`}
             >
               Today
@@ -240,8 +269,8 @@ export const OrdersView: React.FC = () => {
               onClick={() => setDatePeriod('week')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 datePeriod === 'week'
-                  ? (isLight ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'bg-emerald-600 text-white shadow-sm font-semibold')
-                  : (isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white')
+                  ? (isLight ? 'bg-emerald-600 text-white font-bold shadow-sm' : 'bg-emerald-600 text-white shadow-sm font-semibold')
+                  : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60' : 'text-slate-400 hover:text-white')
               }`}
             >
               This Week
@@ -251,8 +280,8 @@ export const OrdersView: React.FC = () => {
               onClick={() => setDatePeriod('month')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 datePeriod === 'month'
-                  ? (isLight ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'bg-emerald-600 text-white shadow-sm font-semibold')
-                  : (isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white')
+                  ? (isLight ? 'bg-emerald-600 text-white font-bold shadow-sm' : 'bg-emerald-600 text-white shadow-sm font-semibold')
+                  : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60' : 'text-slate-400 hover:text-white')
               }`}
             >
               This Month
@@ -262,27 +291,79 @@ export const OrdersView: React.FC = () => {
               onClick={() => setDatePeriod('year')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 datePeriod === 'year'
-                  ? (isLight ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'bg-emerald-600 text-white shadow-sm font-semibold')
-                  : (isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white')
+                  ? (isLight ? 'bg-emerald-600 text-white font-bold shadow-sm' : 'bg-emerald-600 text-white shadow-sm font-semibold')
+                  : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60' : 'text-slate-400 hover:text-white')
               }`}
             >
               This Year
             </button>
           </div>
 
-          {/* Date Range Button */}
-          <button
-            type="button"
-            onClick={() => setShowDateRangePicker(!showDateRangePicker)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition cursor-pointer shadow-sm ${
-              isLight 
-                ? 'bg-white hover:bg-slate-50 border-slate-300 text-slate-700' 
-                : 'bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white'
-            }`}
-          >
-            <Calendar className={`w-3.5 h-3.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
-            <span>Date Range</span>
-          </button>
+          {/* Date Range Button & Popover */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowDateRangePicker(!showDateRangePicker)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer shadow-xs ${
+                isLight 
+                  ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800' 
+                  : 'bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white'
+              }`}
+            >
+              <Calendar className={`w-3.5 h-3.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`} />
+              <span>Date Range</span>
+            </button>
+
+            {showDateRangePicker && (
+              <div className={`absolute left-0 mt-2 p-4 rounded-xl border shadow-2xl z-50 w-72 space-y-3 animate-in fade-in slide-in-from-top-2 ${
+                isLight ? 'bg-white border-slate-200 text-slate-900 shadow-slate-300/50' : 'bg-neutral-950 border-neutral-800 text-white'
+              }`}>
+                <div className={`flex items-center justify-between pb-2 border-b ${
+                  isLight ? 'border-slate-100' : 'border-neutral-800'
+                }`}>
+                  <span className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Select Date Range</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowDateRangePicker(false)}
+                    className={`cursor-pointer ${isLight ? 'text-slate-400 hover:text-slate-700' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div>
+                    <label className={`text-[10px] block mb-1 font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Start Date</label>
+                    <input
+                      type="date"
+                      defaultValue="2026-09-01"
+                      className={`w-full rounded-lg px-2.5 py-1.5 text-xs focus:outline-none transition border ${
+                        isLight ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-emerald-600' : 'bg-neutral-900 border-neutral-800 text-white focus:border-emerald-500'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`text-[10px] block mb-1 font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>End Date</label>
+                    <input
+                      type="date"
+                      defaultValue="2026-10-01"
+                      className={`w-full rounded-lg px-2.5 py-1.5 text-xs focus:outline-none transition border ${
+                        isLight ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-emerald-600' : 'bg-neutral-900 border-neutral-800 text-white focus:border-emerald-500'
+                      }`}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowDateRangePicker(false)}
+                      className="flex-1 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer"
+                    >
+                      Apply Filter
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Currency Dropdown Selector */}
           <div className="relative">
@@ -307,14 +388,16 @@ export const OrdersView: React.FC = () => {
 
         {/* Right Side: Create Order, Export CSV, Deleted Orders (orders.png) */}
         <div className="flex items-center gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white transition shadow-sm shadow-emerald-950/40 cursor-pointer active:scale-95"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Create Order</span>
-          </button>
+          {!isAccountant && (
+            <button
+              type="button"
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white transition shadow-sm shadow-emerald-950/40 cursor-pointer active:scale-95"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Create Order</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -329,26 +412,28 @@ export const OrdersView: React.FC = () => {
             <span>Export CSV</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => setShowRecycleBin(true)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition cursor-pointer shadow-sm ${
-              isLight 
-                ? 'bg-white hover:bg-slate-50 border-slate-300 text-slate-700 hover:text-red-600' 
-                : 'bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white'
-            }`}
-            title="Recycle bin for deleted orders"
-          >
-            <Trash2 className="w-3.5 h-3.5 text-slate-400" />
-            <span>Deleted Orders</span>
-            {deletedOrders.length > 0 && (
-              <span className={`font-mono text-[10px] px-1 rounded border ml-0.5 ${
-                isLight ? 'bg-red-100 text-red-700 border-red-200' : 'bg-red-950 text-red-400 border-red-800/60'
-              }`}>
-                {deletedOrders.length}
-              </span>
-            )}
-          </button>
+          {!isAccountant && (
+            <button
+              type="button"
+              onClick={() => setShowRecycleBin(true)}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer shadow-xs ${
+                isLight 
+                  ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800 hover:text-red-600' 
+                  : 'bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white'
+              }`}
+              title="Recycle bin for deleted orders"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-slate-500" />
+              <span>Deleted Orders</span>
+              {deletedOrders.length > 0 && (
+                <span className={`font-mono text-[10px] px-1 rounded border ml-0.5 ${
+                  isLight ? 'bg-red-100 text-red-700 border-red-200' : 'bg-red-950 text-red-400 border-red-800/60'
+                }`}>
+                  {deletedOrders.length}
+                </span>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
@@ -807,7 +892,7 @@ export const OrdersView: React.FC = () => {
         isLight ? 'bg-white border-slate-200' : 'bg-slate-900/60 border-slate-800'
       }`}>
         {/* Bulk Action Bar */}
-        {selectedOrderIds.size > 0 && (
+        {selectedOrderIds.size > 0 && !isAccountant && (
           <div className={`px-4 py-2.5 border-b flex flex-wrap items-center justify-between gap-3 animate-in fade-in ${
             isLight ? 'bg-sky-50 border-sky-200 text-sky-900' : 'bg-sky-950/40 border-sky-800 text-sky-200'
           }`}>
@@ -844,6 +929,43 @@ export const OrdersView: React.FC = () => {
               >
                 Mark Dispatched
               </button>
+
+              {/* Bulk Assign to Distributor */}
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs ${
+                isLight ? 'bg-white border-slate-300' : 'bg-slate-900 border-slate-700'
+              }`}>
+                <Boxes className="w-3.5 h-3.5 text-lime-500" />
+                <span className={`text-[11px] font-semibold ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>Assign Hub:</span>
+                <select
+                  defaultValue=""
+                  onChange={(e) => {
+                    const distId = e.target.value;
+                    if (!distId) return;
+                    const count = selectedOrderIds.size;
+                    selectedOrderIds.forEach(id => assignOrderDistributor(id, distId));
+                    setSelectedOrderIds(new Set());
+                    const distName = distributors.find(d => d.id === distId)?.name || 'Distributor Hub';
+                    if (addNotification) {
+                      addNotification({
+                        title: 'Orders Assigned to Distributor',
+                        message: `${count} orders successfully assigned to ${distName}.`,
+                        type: 'success'
+                      });
+                    }
+                  }}
+                  className={`bg-transparent text-xs font-bold cursor-pointer focus:outline-none ${
+                    isLight ? 'text-lime-700' : 'text-lime-400'
+                  }`}
+                >
+                  <option value="" disabled className={isLight ? 'bg-white text-slate-400' : 'bg-slate-900 text-slate-400'}>Choose Hub...</option>
+                  {distributors.map(d => (
+                    <option key={d.id} value={d.id} className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'}>
+                      {d.name} (Hub)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <button
                 type="button"
                 onClick={() => setSelectedOrderIds(new Set())}
@@ -872,6 +994,7 @@ export const OrdersView: React.FC = () => {
                 <th className="py-3 px-3 font-semibold">Status</th>
                 <th className="py-3 px-3 font-semibold">Response</th>
                 <th className="py-3 px-3 font-semibold">Sales Rep</th>
+                <th className="py-3 px-3 font-semibold">Distributor Hub</th>
                 <th className="py-3 px-3 font-semibold">Location</th>
                 <th className="py-3 px-3 text-right font-semibold">Total</th>
                 <th className="py-3 px-3 text-right font-semibold">Actions</th>
@@ -882,7 +1005,7 @@ export const OrdersView: React.FC = () => {
             }`}>
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className={`py-12 text-center text-slate-500 ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <td colSpan={11} className={`py-12 text-center text-slate-500 ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>
                     No orders match your filter criteria.
                   </td>
                 </tr>
@@ -929,43 +1052,65 @@ export const OrdersView: React.FC = () => {
 
                       {/* Status */}
                       <td className="py-3 px-3 whitespace-nowrap">
-                        <select
-                          value={o.status}
-                          onChange={(e) => {
-                            const val = e.target.value as OrderStatus;
-                            if (val === 'SCHEDULED') {
-                              setOrderToSchedule(o);
-                            } else {
-                              updateOrderStatus(o.id, val);
-                            }
-                          }}
-                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border cursor-pointer focus:outline-none ${
-                            isLight
-                              ? (o.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' :
-                                 o.status === 'DISPATCHED' ? 'bg-blue-50 text-blue-700 border-blue-300' :
-                                 o.status === 'CONFIRMED' ? 'bg-purple-50 text-purple-700 border-purple-300' :
-                                 o.status === 'SCHEDULED' ? 'bg-sky-50 text-sky-700 border-sky-300' :
-                                 o.status === 'NEW' ? 'bg-amber-50 text-amber-700 border-amber-300' :
-                                 'bg-rose-50 text-rose-700 border-rose-300')
-                              : (o.status === 'DELIVERED' ? 'bg-[#052416] text-[#4ade80] border-[#16a34a]/60' :
-                                 o.status === 'DISPATCHED' ? 'bg-[#0c1a36] text-[#60a5fa] border-[#2563eb]/60' :
-                                 o.status === 'CONFIRMED' ? 'bg-[#1e1035] text-[#c084fc] border-[#7e22ce]/60' :
-                                 o.status === 'SCHEDULED' ? 'bg-[#0a192f] text-[#38bdf8] border-[#0284c7]/60' :
-                                 o.status === 'NEW' ? 'bg-[#1c1917] text-[#fdba74] border-[#ea580c]/60' :
-                                 'bg-[#3b1219] text-[#f87171] border-[#dc2626]/60')
-                          }`}
-                        >
-                          <option value="NEW">NEW</option>
-                          <option value="CONFIRMED">CONFIRMED</option>
-                          <option value="DISPATCHED">DISPATCHED</option>
-                          <option value="DELIVERED">DELIVERED</option>
-                          <option value="SCHEDULED">SCHEDULED</option>
-                          <option value="NOT_REACHABLE">NOT_REACHABLE</option>
-                          <option value="NOT_PICKING_CALLS">NOT_PICKING</option>
-                          <option value="CANCELLED">CANCELLED</option>
-                        </select>
+                        {isAccountant ? (
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border inline-block ${
+                              isLight
+                                ? (o.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' :
+                                   o.status === 'DISPATCHED' ? 'bg-blue-50 text-blue-700 border-blue-300' :
+                                   o.status === 'CONFIRMED' ? 'bg-purple-50 text-purple-700 border-purple-300' :
+                                   o.status === 'SCHEDULED' ? 'bg-sky-50 text-sky-700 border-sky-300' :
+                                   o.status === 'NEW' ? 'bg-amber-50 text-amber-700 border-amber-300' :
+                                   'bg-rose-50 text-rose-700 border-rose-300')
+                                : (o.status === 'DELIVERED' ? 'bg-[#052416] text-[#4ade80] border-[#16a34a]/60' :
+                                   o.status === 'DISPATCHED' ? 'bg-[#0c1a36] text-[#60a5fa] border-[#2563eb]/60' :
+                                   o.status === 'CONFIRMED' ? 'bg-[#1e1035] text-[#c084fc] border-[#7e22ce]/60' :
+                                   o.status === 'SCHEDULED' ? 'bg-[#0a192f] text-[#38bdf8] border-[#0284c7]/60' :
+                                   o.status === 'NEW' ? 'bg-[#1c1917] text-[#fdba74] border-[#ea580c]/60' :
+                                   'bg-[#3b1219] text-[#f87171] border-[#dc2626]/60')
+                            }`}
+                          >
+                            {o.status.replace(/_/g, ' ')}
+                          </span>
+                        ) : (
+                          <select
+                            value={o.status}
+                            onChange={(e) => {
+                              const val = e.target.value as OrderStatus;
+                              if (val === 'SCHEDULED') {
+                                setOrderToSchedule(o);
+                              } else {
+                                updateOrderStatus(o.id, val);
+                              }
+                            }}
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border cursor-pointer focus:outline-none ${
+                              isLight
+                                ? (o.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' :
+                                   o.status === 'DISPATCHED' ? 'bg-blue-50 text-blue-700 border-blue-300' :
+                                   o.status === 'CONFIRMED' ? 'bg-purple-50 text-purple-700 border-purple-300' :
+                                   o.status === 'SCHEDULED' ? 'bg-sky-50 text-sky-700 border-sky-300' :
+                                   o.status === 'NEW' ? 'bg-amber-50 text-amber-700 border-amber-300' :
+                                   'bg-rose-50 text-rose-700 border-rose-300')
+                                : (o.status === 'DELIVERED' ? 'bg-[#052416] text-[#4ade80] border-[#16a34a]/60' :
+                                   o.status === 'DISPATCHED' ? 'bg-[#0c1a36] text-[#60a5fa] border-[#2563eb]/60' :
+                                   o.status === 'CONFIRMED' ? 'bg-[#1e1035] text-[#c084fc] border-[#7e22ce]/60' :
+                                   o.status === 'SCHEDULED' ? 'bg-[#0a192f] text-[#38bdf8] border-[#0284c7]/60' :
+                                   o.status === 'NEW' ? 'bg-[#1c1917] text-[#fdba74] border-[#ea580c]/60' :
+                                   'bg-[#3b1219] text-[#f87171] border-[#dc2626]/60')
+                            }`}
+                          >
+                            <option value="NEW">NEW</option>
+                            <option value="CONFIRMED">CONFIRMED</option>
+                            <option value="DISPATCHED">DISPATCHED</option>
+                            <option value="DELIVERED">DELIVERED</option>
+                            <option value="SCHEDULED">SCHEDULED</option>
+                            <option value="NOT_REACHABLE">NOT_REACHABLE</option>
+                            <option value="NOT_PICKING_CALLS">NOT_PICKING</option>
+                            <option value="CANCELLED">CANCELLED</option>
+                          </select>
+                        )}
 
-                        {(o.scheduledDate || o.status === 'SCHEDULED') && (
+                        {(o.scheduledDate || o.status === 'SCHEDULED') && !isAccountant && (
                           <button
                             type="button"
                             onClick={() => setOrderToSchedule(o)}
@@ -990,6 +1135,37 @@ export const OrdersView: React.FC = () => {
                         {o.salesRepName || <span className="text-slate-400 italic">Unassigned</span>}
                       </td>
 
+                      {/* Distributor Hub Assignment */}
+                      <td className="py-3 px-3 whitespace-nowrap">
+                        {isAccountant ? (
+                          <span className={`text-[11px] font-mono px-2 py-0.5 rounded ${
+                            o.distributorId
+                              ? (isLight ? 'bg-lime-100 text-lime-800 font-semibold' : 'bg-lime-950/60 text-lime-400 font-semibold')
+                              : (isLight ? 'text-slate-500' : 'text-slate-400')
+                          }`}>
+                            {distributors.find(d => d.id === o.distributorId)?.name.split(' ')[0] ? `${distributors.find(d => d.id === o.distributorId)?.name.split(' ')[0]} Hub` : 'Direct'}
+                          </span>
+                        ) : (
+                          <select
+                            value={o.distributorId || ''}
+                            onChange={(e) => assignOrderDistributor(o.id, e.target.value)}
+                            className={`text-[11px] px-2 py-1 rounded-lg border font-mono cursor-pointer focus:outline-none transition ${
+                              o.distributorId
+                                ? (isLight ? 'bg-lime-50 border-lime-300 text-lime-800 font-bold' : 'bg-lime-950/80 border-lime-500/60 text-lime-400 font-bold')
+                                : (isLight ? 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300' : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700')
+                            }`}
+                            title="Assign order to Regional Distributor Hub"
+                          >
+                            <option value="">No Distributor</option>
+                            {distributors.map(d => (
+                              <option key={d.id} value={d.id}>
+                                {d.name.split(' ')[0]} Hub
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </td>
+
                       {/* Location */}
                       <td className={`py-3 px-3 text-xs whitespace-nowrap ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
                         {o.deliveryCity}, {o.deliveryState}
@@ -1005,24 +1181,26 @@ export const OrdersView: React.FC = () => {
                       {/* Actions */}
                       <td className="py-3 px-3 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setOrderToSchedule(o)}
-                            className={`p-1.5 rounded-lg border transition cursor-pointer ${
-                              isLight 
-                                ? 'bg-sky-50 hover:bg-sky-100 border-sky-200 text-sky-700' 
-                                : 'bg-sky-950/70 hover:bg-sky-900/80 border-sky-800 text-sky-300'
-                            }`}
-                            title="Schedule Delivery Date"
-                          >
-                            <Calendar className="w-3.5 h-3.5" />
-                          </button>
+                          {!isAccountant && (
+                            <button
+                              type="button"
+                              onClick={() => setOrderToSchedule(o)}
+                              className={`p-1.5 rounded-lg border transition cursor-pointer ${
+                                isLight 
+                                  ? 'bg-sky-50 hover:bg-sky-100 border-sky-200 text-sky-700' 
+                                  : 'bg-sky-950/70 hover:bg-sky-900/80 border-sky-800 text-sky-300'
+                              }`}
+                              title="Schedule Delivery Date"
+                            >
+                              <Calendar className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => setSelectedOrder(o)}
                             className={`p-1.5 rounded-lg border transition cursor-pointer ${
                               isLight 
-                                ? 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700' 
+                                ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800' 
                                 : 'bg-slate-900 hover:bg-slate-800 border-slate-700/80 text-slate-300 hover:text-white'
                             }`}
                             title="View Order Details"
@@ -1034,7 +1212,7 @@ export const OrdersView: React.FC = () => {
                             onClick={() => copyOrder(o)}
                             className={`p-1.5 rounded-lg border transition cursor-pointer ${
                               isLight 
-                                ? 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700' 
+                                ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800' 
                                 : 'bg-slate-900 hover:bg-slate-800 border-slate-700/80 text-slate-300 hover:text-white'
                             }`}
                             title="Copy Order Summary"
@@ -1070,6 +1248,7 @@ export const OrdersView: React.FC = () => {
         <OrderDetailsModal
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
+          readOnly={isAccountant}
         />
       )}
 

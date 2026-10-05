@@ -31,8 +31,12 @@ export const DeliveriesView: React.FC = () => {
     users, 
     mediaBuyers, 
     products,
+    currentUser,
+    persona,
     setAdminActiveTab 
   } = useCrm();
+
+  const isAccountant = currentUser?.role === 'Accountant' || persona === 'accountant';
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
@@ -265,6 +269,26 @@ export const DeliveriesView: React.FC = () => {
 
   return (
     <div className="p-3 sm:p-5 lg:p-8 space-y-5 max-w-[1400px] mx-auto text-slate-100 animate-in fade-in">
+      {/* Accountant Audit Notice Banner */}
+      {isAccountant && (
+        <div className="p-4 rounded-xl border border-sky-800/60 bg-sky-950/40 text-sky-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
+              <Package className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-bold text-white">Accountant Audit Mode: Read-Only Deliveries Ledger</p>
+              <p className="text-[11px] text-slate-300">
+                Deliveries are accessible in view-only mode for fulfillment verification and cash-on-delivery tracking. Changing statuses or dispatching couriers is restricted.
+              </p>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 whitespace-nowrap self-start sm:self-auto">
+            Audit Clearance
+          </span>
+        </div>
+      )}
+
       {/* 1. TOP HEADER & FILTER BAR (Exactly as in BettaTraka) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-1">
         {/* Left Side: Date pills, Date Range button & Currency selector */}
@@ -273,9 +297,9 @@ export const DeliveriesView: React.FC = () => {
           <div className="flex items-center bg-black/80 p-0.5 rounded-xl border border-neutral-800">
             <button
               onClick={() => setDatePeriod('today')}
-              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 datePeriod === 'today'
-                  ? 'bg-white text-black shadow-sm'
+                  ? 'bg-emerald-600 text-white font-bold shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -283,9 +307,9 @@ export const DeliveriesView: React.FC = () => {
             </button>
             <button
               onClick={() => setDatePeriod('week')}
-              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 datePeriod === 'week'
-                  ? 'bg-white text-black shadow-sm'
+                  ? 'bg-emerald-600 text-white font-bold shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -293,9 +317,9 @@ export const DeliveriesView: React.FC = () => {
             </button>
             <button
               onClick={() => setDatePeriod('month')}
-              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 datePeriod === 'month'
-                  ? 'bg-white text-black shadow-sm'
+                  ? 'bg-emerald-600 text-white font-bold shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -303,9 +327,9 @@ export const DeliveriesView: React.FC = () => {
             </button>
             <button
               onClick={() => setDatePeriod('year')}
-              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 datePeriod === 'year'
-                  ? 'bg-white text-black shadow-sm'
+                  ? 'bg-emerald-600 text-white font-bold shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -363,7 +387,7 @@ export const DeliveriesView: React.FC = () => {
                     setDatePeriod('custom');
                     setShowDatePicker(false);
                   }}
-                  className="w-full py-1.5 rounded-lg bg-white text-black font-semibold text-xs transition hover:bg-slate-200"
+                  className="w-full py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-sm cursor-pointer"
                 >
                   Apply Filter
                 </button>
@@ -721,6 +745,7 @@ export const DeliveriesView: React.FC = () => {
         <OrderDetailsModal
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
+          readOnly={isAccountant}
         />
       )}
     </div>

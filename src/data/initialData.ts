@@ -148,6 +148,23 @@ export const INITIAL_USERS: User[] = [
     commissionPerOrder: 1600
   },
   {
+    id: 'user-accountant-1',
+    name: 'Kemi Adeleke, FCA (Head Accountant)',
+    email: 'kemi.finance@apexbrands.ng',
+    phone: '+234 803 445 1199',
+    role: 'Accountant',
+    status: 'Active',
+    createdAt: '2026-02-01',
+    payStructure: 'Fixed',
+    fixedSalary: 280000,
+    permissions: {
+      sales: { orders: true, salesReps: false, teamPerformance: false, customers: false, deliveries: true },
+      operations: { deliveryAgents: false, inventory: false, roundRobin: false },
+      finance: { expenses: true, reports: true, orderReports: true, remittances: true, mediaBuyers: false, payroll: true },
+      admin: { users: false, notifications: true, orderFormBuilder: false, adTracker: false, aiAgent: false, aiSandbox: false, tokenReporting: false, integrations: false, subscription: false, settings: true }
+    }
+  },
+  {
     id: 'user-inv-mgr',
     name: 'Babajide Cole',
     email: 'babajide.c@apexbrands.ng',
@@ -170,9 +187,9 @@ export const INITIAL_USERS: User[] = [
     fixedSalary: 220000,
     permissions: {
       sales: { orders: true, salesReps: true, teamPerformance: true, customers: true, deliveries: true },
-      operations: { deliveryAgents: true, inventory: true, roundRobin: false },
-      finance: { expenses: false, reports: false, orderReports: true, remittances: true, mediaBuyers: false, payroll: false },
-      admin: { users: false, notifications: true, orderFormBuilder: false, adTracker: true, aiAgent: false, subscription: false, settings: false }
+      operations: { deliveryAgents: true, inventory: true, roundRobin: true },
+      finance: { expenses: true, reports: true, orderReports: true, remittances: true, mediaBuyers: true, payroll: true },
+      admin: { users: true, notifications: true, orderFormBuilder: true, adTracker: true, aiAgent: false, aiSandbox: false, tokenReporting: false, integrations: false, subscription: true, settings: true }
     }
   },
   {

@@ -13,15 +13,17 @@ import {
   MapPin, 
   Tag, 
   Clock,
-  Sparkles
+  Sparkles,
+  Eye
 } from 'lucide-react';
 
 interface OrderDetailsModalProps {
   order: Order;
   onClose: () => void;
+  readOnly?: boolean;
 }
 
-export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose }) => {
+export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, readOnly }) => {
   const { 
     orders,
     updateOrderStatus, 
@@ -34,9 +36,16 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
     users, 
     agents, 
     currency,
+    currentUser,
+    persona,
     triggerAICall,
-    addNotification
+    addNotification,
+    themeMode
   } = useCrm();
+
+  const isLight = themeMode === 'light';
+  const isAccountant = currentUser?.role === 'Accountant' || persona === 'accountant';
+  const isReadOnly = Boolean(readOnly || isAccountant);
 
   const liveOrder = orders.find(o => o.id === order.id || o.orderNumber === order.orderNumber) || order;
 
@@ -92,30 +101,40 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
   const salesReps = users.filter(u => u.role === 'Sales Representative' || u.role === 'Owner' || u.role === 'Admin');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-      <div className="w-full max-w-2xl rounded-xl border border-slate-700 bg-slate-900 shadow-2xl text-slate-100 overflow-hidden max-h-[90vh] flex flex-col">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150 ${
+      isLight ? 'bg-slate-900/50' : 'bg-black/80'
+    }`}>
+      <div className={`w-full max-w-2xl rounded-2xl border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col ${
+        isLight ? 'bg-white border-slate-200 text-slate-900' : 'border-slate-700 bg-slate-900 text-slate-100'
+      }`}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/40">
+        <div className={`flex items-center justify-between px-6 py-4 border-b ${
+          isLight ? 'border-slate-200 bg-slate-50' : 'border-slate-800 bg-slate-950/40'
+        }`}>
           <div className="flex items-center gap-3">
-            <span className="font-mono text-base font-bold text-white">{liveOrder.orderNumber}</span>
+            <span className={`font-mono text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{liveOrder.orderNumber}</span>
             <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-medium ${
-              liveOrder.status === 'DELIVERED' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/60' :
-              liveOrder.status === 'DISPATCHED' ? 'bg-blue-950 text-blue-400 border border-blue-800/60' :
-              liveOrder.status === 'CONFIRMED' ? 'bg-cyan-950 text-cyan-400 border border-cyan-800/60' :
-              liveOrder.status === 'NEW' ? 'bg-amber-950 text-amber-400 border border-amber-800/60' :
-              'bg-red-950 text-red-400 border border-red-800/60'
+              liveOrder.status === 'DELIVERED' ? (isLight ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-emerald-950 text-emerald-400 border border-emerald-800/60') :
+              liveOrder.status === 'DISPATCHED' ? (isLight ? 'bg-blue-100 text-blue-800 border border-blue-300' : 'bg-blue-950 text-blue-400 border border-blue-800/60') :
+              liveOrder.status === 'CONFIRMED' ? (isLight ? 'bg-purple-100 text-purple-800 border border-purple-300' : 'bg-cyan-950 text-cyan-400 border border-cyan-800/60') :
+              liveOrder.status === 'NEW' ? (isLight ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-amber-950 text-amber-400 border border-amber-800/60') :
+              (isLight ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-red-950 text-red-400 border border-red-800/60')
             }`}>
               {liveOrder.status}
             </span>
             {liveOrder.isSandbox && (
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-purple-950 text-purple-400 border border-purple-800">
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono border ${
+                isLight ? 'bg-purple-100 text-purple-800 border-purple-300' : 'bg-purple-950 text-purple-400 border border-purple-800'
+              }`}>
                 SANDBOX TEST
               </span>
             )}
           </div>
           <button 
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+            className={`p-1 rounded-lg transition cursor-pointer ${
+              isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
           >
             <X className="w-5 h-5" />
           </button>
@@ -135,14 +154,16 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
               <span>WhatsApp Customer</span>
             </a>
 
-            <button
-              onClick={() => triggerAICall(order.id)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/30 border border-indigo-500/50 hover:bg-indigo-600/50 font-medium text-indigo-300 transition"
-              title="Trigger automated AI phone call to customer"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Trigger AI Call</span>
-            </button>
+            {!isReadOnly && (
+              <button
+                onClick={() => triggerAICall(order.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/30 border border-indigo-500/50 hover:bg-indigo-600/50 font-medium text-indigo-300 transition"
+                title="Trigger automated AI phone call to customer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Trigger AI Call</span>
+              </button>
+            )}
 
             <button
               onClick={copyOrderSummary}
@@ -152,15 +173,17 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
               <span>{copied ? 'Copied Details' : 'Copy Order'}</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => setShowScheduleForm(!showScheduleForm)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-950 border border-sky-600/50 hover:bg-sky-900/60 font-medium text-sky-300 transition"
-              title="Set or reschedule delivery date"
-            >
-              <Calendar className="w-3.5 h-3.5 text-sky-400" />
-              <span>{showScheduleForm ? 'Hide Schedule' : 'Schedule Delivery'}</span>
-            </button>
+            {!isReadOnly && (
+              <button
+                type="button"
+                onClick={() => setShowScheduleForm(!showScheduleForm)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-950 border border-sky-600/50 hover:bg-sky-900/60 font-medium text-sky-300 transition"
+                title="Set or reschedule delivery date"
+              >
+                <Calendar className="w-3.5 h-3.5 text-sky-400" />
+                <span>{showScheduleForm ? 'Hide Schedule' : 'Schedule Delivery'}</span>
+              </button>
+            )}
           </div>
 
           {/* Current Scheduled Delivery Highlight if active */}
@@ -251,6 +274,13 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
           </div>
 
           {/* Workflow & Assignment Controls */}
+          {isReadOnly && (
+            <div className="p-2.5 rounded-lg bg-sky-950/40 border border-sky-800/60 text-sky-200 text-xs flex items-center gap-2">
+              <Eye className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+              <span>Accountant Audit Mode: Order statuses and routing assignments are view-only.</span>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label className="text-[11px] text-slate-400 font-medium block mb-1">
@@ -258,8 +288,9 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
               </label>
               <select
                 value={selectedStatus}
+                disabled={isReadOnly}
                 onChange={(e) => handleStatusChange(e.target.value as OrderStatus)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs font-mono text-white focus:outline-none focus:border-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <option value="NEW">NEW</option>
                 <option value="CONFIRMED">CONFIRMED</option>
@@ -278,8 +309,9 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
               </label>
               <select
                 value={selectedRep}
+                disabled={isReadOnly}
                 onChange={(e) => handleRepChange(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <option value="">Unassigned</option>
                 {salesReps.map(rep => (
@@ -294,8 +326,9 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
               </label>
               <select
                 value={selectedAgent}
+                disabled={isReadOnly}
                 onChange={(e) => handleAgentChange(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <option value="">Select Agent</option>
                 {agents.map(ag => (
@@ -310,10 +343,11 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
               </label>
               <select
                 value={selectedDistributor}
+                disabled={isReadOnly}
                 onChange={(e) => handleDistributorChange(e.target.value)}
-                className="w-full bg-slate-950 border border-lime-500/50 rounded-lg p-2 text-xs text-lime-300 focus:outline-none focus:border-lime-400 font-semibold"
+                className="w-full bg-slate-950 border border-lime-500/50 rounded-lg p-2 text-xs text-lime-300 focus:outline-none focus:border-lime-400 font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <option value="">No Distributor</option>
+                <option value="">Central Warehouse Direct (No Distributor)</option>
                 {distributors.map(dist => (
                   <option key={dist.id} value={dist.id}>
                     {dist.name} (Hub)

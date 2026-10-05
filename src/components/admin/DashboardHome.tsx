@@ -347,17 +347,21 @@ export const DashboardHome: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-mono text-xs font-semibold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800/60">
+            <span className={`font-mono text-xs font-semibold px-2 py-0.5 rounded border ${
+              isLight ? 'text-emerald-900 bg-emerald-50 border-emerald-300' : 'text-emerald-400 bg-emerald-950/80 border-emerald-800/60'
+            }`}>
               {settings?.name || 'Betta Herbals Limited'} · Command Center
             </span>
-            <span className="text-[11px] text-slate-400 hidden sm:inline">
+            <span className={`text-[11px] hidden sm:inline ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
               Live Cash-on-Delivery Dispatch Engine
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+          <h1 className={`text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2 ${
+            isLight ? 'text-slate-900' : 'text-white'
+          }`}>
             <span>Operations & Revenue Overview</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
             Real-time Payment-on-Delivery cashflow, fulfillment velocity, and sales rep pipeline.
           </p>
         </div>
@@ -365,15 +369,17 @@ export const DashboardHome: React.FC = () => {
         {/* Action Controls & Date Filter */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Date Filter Segmented Control */}
-          <div className="flex items-center bg-slate-900 border border-slate-800 p-1 rounded-xl shadow-inner">
+          <div className={`flex items-center p-1 rounded-xl shadow-xs border overflow-x-auto max-w-full scrollbar-none ${
+            isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900 border-slate-800'
+          }`}>
             {(['today', 'yesterday', 'week', 'month', 'year'] as const).map((filter) => (
               <button
                 key={filter}
                 onClick={() => setDateFilter(filter)}
-                className={`px-2.5 py-1 text-xs font-medium rounded-lg transition capitalize cursor-pointer ${
+                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition capitalize cursor-pointer ${
                   dateFilter === filter
-                    ? 'bg-emerald-600 text-white shadow-sm font-semibold'
-                    : 'text-slate-400 hover:text-white'
+                    ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
+                    : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60' : 'text-slate-400 hover:text-white')
                 }`}
               >
                 {filter === 'today' ? 'Today' : filter === 'yesterday' ? 'Yesterday' : filter === 'week' ? 'This Week' : filter === 'month' ? 'This Month' : 'This Year'}
@@ -385,7 +391,9 @@ export const DashboardHome: React.FC = () => {
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setShowCreateOrderModal(true)}
-              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-950/40 transition cursor-pointer"
+              className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer ${
+                isLight ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-950 border border-emerald-300' : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              }`}
               title="Create new manual phone/WhatsApp order"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -394,34 +402,50 @@ export const DashboardHome: React.FC = () => {
 
             <button
               onClick={() => setShowQuickExpenseModal(true)}
-              className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-200 text-xs font-medium flex items-center gap-1 transition cursor-pointer"
+              className={`px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1 transition cursor-pointer shadow-xs ${
+                isLight 
+                  ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800' 
+                  : 'bg-slate-900 hover:bg-slate-800 border-slate-700/80 text-slate-200'
+              }`}
               title="Quickly record courier fees, packaging or operational costs"
             >
-              <Receipt className="w-3.5 h-3.5 text-amber-400" />
+              <Receipt className={`w-3.5 h-3.5 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
               <span className="hidden sm:inline">Expense</span>
             </button>
 
             <button
               onClick={() => setShowQuickSpendModal(true)}
-              className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-200 text-xs font-medium flex items-center gap-1 transition cursor-pointer"
+              className={`px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1 transition cursor-pointer shadow-xs ${
+                isLight 
+                  ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800' 
+                  : 'bg-slate-900 hover:bg-slate-800 border-slate-700/80 text-slate-200'
+              }`}
               title="Log daily ad spend for Facebook, TikTok or Google"
             >
-              <Megaphone className="w-3.5 h-3.5 text-sky-400" />
+              <Megaphone className={`w-3.5 h-3.5 ${isLight ? 'text-sky-600' : 'text-sky-400'}`} />
               <span className="hidden sm:inline">Ad Spend</span>
             </button>
 
             <button
               onClick={() => setAdminActiveTab('tokens')}
-              className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-200 text-xs font-medium flex items-center gap-1 transition cursor-pointer group"
+              className={`px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1 transition cursor-pointer shadow-xs group ${
+                isLight 
+                  ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800' 
+                  : 'bg-slate-900 hover:bg-slate-800 border-slate-700/80 text-slate-200'
+              }`}
               title="View Token Metering, Vapi Voice & Nigerian SMS API settings"
             >
-              <Coins className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+              <Coins className={`w-3.5 h-3.5 group-hover:scale-110 transition-transform ${isLight ? 'text-lime-700' : 'text-emerald-400'}`} />
               <span className="hidden sm:inline font-mono">{settings.tokenBalance} Tok</span>
             </button>
 
             <button 
               onClick={handleExportCsv}
-              className="px-2.5 py-1.5 text-xs font-medium text-emerald-400 hover:text-white bg-emerald-950/40 hover:bg-emerald-900/60 rounded-xl border border-emerald-500/30 flex items-center gap-1 transition cursor-pointer"
+              className={`px-2.5 py-1.5 text-xs font-bold rounded-xl border flex items-center gap-1 transition cursor-pointer shadow-xs ${
+                isLight 
+                  ? 'bg-lime-50 hover:bg-lime-100 border-lime-300 text-lime-800' 
+                  : 'text-emerald-400 hover:text-white bg-emerald-950/40 hover:bg-emerald-900/60 border-emerald-500/30'
+              }`}
               title="Export complete operational report to CSV"
             >
               <Download className="w-3.5 h-3.5" />
@@ -432,54 +456,104 @@ export const DashboardHome: React.FC = () => {
       </div>
 
       {/* 2. Today's Flash Operations Pulse (BettaTraka CRM Essential Real-Time Bar) */}
-      <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800/90 shadow-sm">
-        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/60 text-xs">
+      <div className={`p-4 rounded-2xl border shadow-sm ${
+        isLight ? 'bg-white border-slate-200' : 'bg-slate-900/80 border-slate-800/90'
+      }`}>
+        <div className={`flex items-center justify-between pb-2 mb-2 border-b text-xs ${
+          isLight ? 'border-slate-100' : 'border-slate-800/60'
+        }`}>
           <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-emerald-400" />
-            <span className="font-bold text-white uppercase tracking-wider text-[11px]">Today's Operational Pulse</span>
+            <Activity className={`w-4 h-4 ${isLight ? 'text-lime-700' : 'text-emerald-400'}`} />
+            <span className={`font-bold uppercase tracking-wider text-[11px] ${
+              isLight ? 'text-slate-900' : 'text-white'
+            }`}>
+              Today's Operational Pulse
+            </span>
           </div>
-          <span className="text-[11px] text-slate-400 font-mono">
+          <span className={`text-[11px] font-mono font-medium ${
+            isLight ? 'text-slate-500' : 'text-slate-400'
+          }`}>
             {formatDate(new Date().toISOString())}
           </span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center">
-          <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
-            <span className="text-[10px] text-slate-400 uppercase font-mono block">Orders Booked</span>
-            <span className="text-lg font-black font-mono text-white mt-0.5 block">{todayOrders.length}</span>
-            <span className="text-[10px] text-slate-500 font-mono">web forms + reps</span>
+          <div className={`p-3 rounded-xl border ${
+            isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/60 border-slate-800/80'
+          }`}>
+            <span className={`text-[10px] uppercase font-mono font-bold block ${
+              isLight ? 'text-slate-600' : 'text-slate-400'
+            }`}>Orders Booked</span>
+            <span className={`text-xl font-black font-mono mt-0.5 block ${
+              isLight ? 'text-slate-900' : 'text-white'
+            }`}>{todayOrders.length}</span>
+            <span className={`text-[11px] font-mono font-medium ${
+              isLight ? 'text-slate-600' : 'text-slate-500'
+            }`}>web forms + reps</span>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
-            <span className="text-[10px] text-slate-400 uppercase font-mono block">Dispatched Today</span>
-            <span className="text-lg font-black font-mono text-sky-400 mt-0.5 block">
+          <div className={`p-3 rounded-xl border ${
+            isLight ? 'bg-sky-50/70 border-sky-200' : 'bg-slate-950/60 border-slate-800/80'
+          }`}>
+            <span className={`text-[10px] uppercase font-mono font-bold block ${
+              isLight ? 'text-sky-800' : 'text-slate-400'
+            }`}>Dispatched Today</span>
+            <span className={`text-xl font-black font-mono mt-0.5 block ${
+              isLight ? 'text-sky-700' : 'text-sky-400'
+            }`}>
               {dispatchedOrders.length}
             </span>
-            <span className="text-[10px] text-sky-500/80 font-mono">with field couriers</span>
+            <span className={`text-[11px] font-mono font-medium ${
+              isLight ? 'text-sky-700' : 'text-sky-500/80'
+            }`}>with field couriers</span>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
-            <span className="text-[10px] text-slate-400 uppercase font-mono block">Delivered Today</span>
-            <span className="text-lg font-black font-mono text-emerald-400 mt-0.5 block">
+          <div className={`p-3 rounded-xl border ${
+            isLight ? 'bg-lime-50/70 border-lime-300' : 'bg-slate-950/60 border-slate-800/80'
+          }`}>
+            <span className={`text-[10px] uppercase font-mono font-bold block ${
+              isLight ? 'text-lime-900' : 'text-slate-400'
+            }`}>Delivered Today</span>
+            <span className={`text-xl font-black font-mono mt-0.5 block ${
+              isLight ? 'text-lime-700' : 'text-emerald-400'
+            }`}>
               {deliveredOrders.slice(0, 3).length}
             </span>
-            <span className="text-[10px] text-emerald-500/80 font-mono">successful cashout</span>
+            <span className={`text-[11px] font-mono font-semibold ${
+              isLight ? 'text-lime-800' : 'text-emerald-500/80'
+            }`}>successful cashout</span>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
-            <span className="text-[10px] text-slate-400 uppercase font-mono block">Cash Collected</span>
-            <span className="text-base sm:text-lg font-black font-mono text-emerald-300 mt-0.5 block truncate">
+          <div className={`p-3 rounded-xl border ${
+            isLight ? 'bg-emerald-50/70 border-emerald-300' : 'bg-slate-950/60 border-slate-800/80'
+          }`}>
+            <span className={`text-[10px] uppercase font-mono font-bold block ${
+              isLight ? 'text-emerald-900' : 'text-slate-400'
+            }`}>Cash Collected</span>
+            <span className={`text-lg font-black font-mono mt-0.5 block truncate ${
+              isLight ? 'text-emerald-800' : 'text-emerald-300'
+            }`}>
               {formatCurrency(convertAmount(todayRevenueNgn, currency), currency)}
             </span>
-            <span className="text-[10px] text-emerald-500/80 font-mono">cash & bank transfers</span>
+            <span className={`text-[11px] font-mono font-semibold ${
+              isLight ? 'text-emerald-800' : 'text-emerald-500/80'
+            }`}>cash & bank transfers</span>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 col-span-2 sm:col-span-1">
-            <span className="text-[10px] text-slate-400 uppercase font-mono block">Awaiting Rep Call</span>
-            <span className="text-lg font-black font-mono text-amber-400 mt-0.5 block">{newOrders.length}</span>
+          <div className={`p-3 rounded-xl border col-span-2 sm:col-span-1 ${
+            isLight ? 'bg-amber-50/70 border-amber-200' : 'bg-slate-950/60 border-slate-800/80'
+          }`}>
+            <span className={`text-[10px] uppercase font-mono font-bold block ${
+              isLight ? 'text-amber-900' : 'text-slate-400'
+            }`}>Awaiting Rep Call</span>
+            <span className={`text-xl font-black font-mono mt-0.5 block ${
+              isLight ? 'text-amber-800' : 'text-amber-400'
+            }`}>{newOrders.length}</span>
             <button
               onClick={() => setAdminActiveTab('orders')}
-              className="text-[10px] text-amber-400 hover:underline font-mono"
+              className={`text-[11px] font-bold font-mono ${
+                isLight ? 'text-amber-800 hover:text-amber-900 underline' : 'text-amber-400 hover:underline'
+              }`}
             >
               Call leads ➔
             </button>
@@ -491,104 +565,176 @@ export const DashboardHome: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
         
         {/* Card 1: Delivered Revenue */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-2 hover:border-slate-700 transition">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-medium">Delivered Revenue</span>
-            <span className="text-emerald-400 flex items-center font-mono text-[11px] font-bold">
+        <div className={`rounded-2xl border p-4 space-y-2 transition shadow-xs ${
+          isLight ? 'bg-white border-slate-200 hover:border-slate-300' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+        }`}>
+          <div className={`flex items-center justify-between text-xs ${
+            isLight ? 'text-slate-500' : 'text-slate-400'
+          }`}>
+            <span className="font-semibold">Delivered Revenue</span>
+            <span className={`flex items-center font-mono text-[11px] font-bold ${
+              isLight ? 'text-emerald-700' : 'text-emerald-400'
+            }`}>
               <ArrowUpRight className="w-3 h-3" /> +18.4%
             </span>
           </div>
-          <p className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-white tabular-nums">
+          <p className={`text-xl sm:text-2xl font-black font-mono tracking-tight tabular-nums ${
+            isLight ? 'text-slate-900' : 'text-white'
+          }`}>
             {formatCurrency(convertAmount(totalDeliveredRevenueNgn, currency), currency)}
           </p>
-          <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/60">
+          <div className={`flex items-center justify-between text-[11px] pt-1 border-t ${
+            isLight ? 'border-slate-100 text-slate-500' : 'border-slate-800/60 text-slate-400'
+          }`}>
             <span>AOV:</span>
-            <span className="font-mono text-slate-200 font-semibold">
+            <span className={`font-mono font-bold ${
+              isLight ? 'text-slate-800' : 'text-slate-200'
+            }`}>
               {formatCurrency(convertAmount(avgOrderValueNgn, currency), currency)}
             </span>
           </div>
         </div>
 
         {/* Card 2: Net Profit & Margin */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-2 hover:border-slate-700 transition">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-medium">Net Profit</span>
-            <span className="text-emerald-400 font-mono text-[11px] font-bold">
+        <div className={`rounded-2xl border p-4 space-y-2 transition shadow-xs ${
+          isLight ? 'bg-white border-slate-200 hover:border-slate-300' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+        }`}>
+          <div className={`flex items-center justify-between text-xs ${
+            isLight ? 'text-slate-500' : 'text-slate-400'
+          }`}>
+            <span className="font-semibold">Net Profit</span>
+            <span className={`font-mono text-[11px] font-bold ${
+              isLight ? 'text-emerald-700' : 'text-emerald-400'
+            }`}>
               {netProfitMarginPct}% margin
             </span>
           </div>
-          <p className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-emerald-400 tabular-nums">
+          <p className={`text-xl sm:text-2xl font-black font-mono tracking-tight tabular-nums ${
+            isLight ? 'text-emerald-700' : 'text-emerald-400'
+          }`}>
             {formatCurrency(convertAmount(netProfitNgn, currency), currency)}
           </p>
-          <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/60">
+          <div className={`flex items-center justify-between text-[11px] pt-1 border-t ${
+            isLight ? 'border-slate-100 text-slate-500' : 'border-slate-800/60 text-slate-400'
+          }`}>
             <span>After COGS & Ads</span>
-            <span className="text-emerald-500 font-mono font-medium">Verified POD</span>
+            <span className={`font-mono font-bold ${
+              isLight ? 'text-emerald-700' : 'text-emerald-500'
+            }`}>Verified POD</span>
           </div>
         </div>
 
         {/* Card 3: Total Orders Logged */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-2 hover:border-slate-700 transition">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-medium">Total Orders</span>
-            <span className="text-slate-400 font-mono text-[11px]">{orders.length} in db</span>
+        <div className={`rounded-2xl border p-4 space-y-2 transition shadow-xs ${
+          isLight ? 'bg-white border-slate-200 hover:border-slate-300' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+        }`}>
+          <div className={`flex items-center justify-between text-xs ${
+            isLight ? 'text-slate-500' : 'text-slate-400'
+          }`}>
+            <span className="font-semibold">Total Orders</span>
+            <span className={`font-mono text-[11px] font-medium ${
+              isLight ? 'text-slate-600' : 'text-slate-400'
+            }`}>{orders.length} in db</span>
           </div>
-          <p className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-white tabular-nums">
+          <p className={`text-xl sm:text-2xl font-black font-mono tracking-tight tabular-nums ${
+            isLight ? 'text-slate-900' : 'text-white'
+          }`}>
             {orders.length}
           </p>
-          <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/60">
-            <span className="text-emerald-400 font-mono">{deliveredOrders.length} done</span>
-            <span className="text-sky-400 font-mono">{dispatchedOrders.length} transit</span>
+          <div className={`flex items-center justify-between text-[11px] pt-1 border-t font-mono font-bold ${
+            isLight ? 'border-slate-100' : 'border-slate-800/60'
+          }`}>
+            <span className={isLight ? 'text-emerald-700' : 'text-emerald-400'}>{deliveredOrders.length} done</span>
+            <span className={isLight ? 'text-sky-700' : 'text-sky-400'}>{dispatchedOrders.length} transit</span>
           </div>
         </div>
 
         {/* Card 4: Delivery / Fulfillment Rate */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-2 hover:border-slate-700 transition">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-medium">Fulfillment Rate</span>
-            <span className={`font-mono text-[11px] font-bold ${fulfillmentRate >= 75 ? 'text-emerald-400' : 'text-amber-400'}`}>
+        <div className={`rounded-2xl border p-4 space-y-2 transition shadow-xs ${
+          isLight ? 'bg-white border-slate-200 hover:border-slate-300' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+        }`}>
+          <div className={`flex items-center justify-between text-xs ${
+            isLight ? 'text-slate-500' : 'text-slate-400'
+          }`}>
+            <span className="font-semibold">Fulfillment Rate</span>
+            <span className={`font-mono text-[11px] font-bold ${
+              fulfillmentRate >= 75 
+                ? (isLight ? 'text-emerald-700' : 'text-emerald-400')
+                : (isLight ? 'text-amber-700' : 'text-amber-400')
+            }`}>
               {fulfillmentRate >= 75 ? 'Healthy' : 'Needs Call'}
             </span>
           </div>
-          <p className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-white tabular-nums">
+          <p className={`text-xl sm:text-2xl font-black font-mono tracking-tight tabular-nums ${
+            isLight ? 'text-slate-900' : 'text-white'
+          }`}>
             {fulfillmentRate}%
           </p>
-          <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/60">
+          <div className={`flex items-center justify-between text-[11px] pt-1 border-t ${
+            isLight ? 'border-slate-100 text-slate-500' : 'border-slate-800/60 text-slate-400'
+          }`}>
             <span>vs. Cancelled:</span>
-            <span className="font-mono text-rose-400 font-semibold">{cancelledOrders.length} RTO</span>
+            <span className={`font-mono font-bold ${
+              isLight ? 'text-rose-700' : 'text-rose-400'
+            }`}>{cancelledOrders.length} RTO</span>
           </div>
         </div>
 
         {/* Card 5: Ad Spend & Blended CPA */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-2 hover:border-slate-700 transition">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-medium">Ad Spend & CPA</span>
-            <span className="text-sky-400 font-mono text-[11px] font-semibold">{blendedRoas}x ROAS</span>
+        <div className={`rounded-2xl border p-4 space-y-2 transition shadow-xs ${
+          isLight ? 'bg-white border-slate-200 hover:border-slate-300' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+        }`}>
+          <div className={`flex items-center justify-between text-xs ${
+            isLight ? 'text-slate-500' : 'text-slate-400'
+          }`}>
+            <span className="font-semibold">Ad Spend & CPA</span>
+            <span className={`font-mono text-[11px] font-bold ${
+              isLight ? 'text-sky-700' : 'text-sky-400'
+            }`}>{blendedRoas}x ROAS</span>
           </div>
-          <p className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-white tabular-nums">
+          <p className={`text-xl sm:text-2xl font-black font-mono tracking-tight tabular-nums ${
+            isLight ? 'text-slate-900' : 'text-white'
+          }`}>
             {formatCurrency(convertAmount(totalAdSpendNgn, currency), currency)}
           </p>
-          <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/60">
+          <div className={`flex items-center justify-between text-[11px] pt-1 border-t ${
+            isLight ? 'border-slate-100 text-slate-500' : 'border-slate-800/60 text-slate-400'
+          }`}>
             <span>Blended CPA:</span>
-            <span className="font-mono text-amber-400 font-semibold">
+            <span className={`font-mono font-bold ${
+              isLight ? 'text-amber-700' : 'text-amber-400'
+            }`}>
               {formatCurrency(convertAmount(blendedCpaNgn, currency), currency)}
             </span>
           </div>
         </div>
 
         {/* Card 6: Field Rider Remittances Pending */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-2 hover:border-slate-700 transition">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-medium">Rider Remittances</span>
-            <span className="text-amber-400 font-mono text-[11px] font-semibold">Pending Bank</span>
+        <div className={`rounded-2xl border p-4 space-y-2 transition shadow-xs ${
+          isLight ? 'bg-white border-slate-200 hover:border-slate-300' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+        }`}>
+          <div className={`flex items-center justify-between text-xs ${
+            isLight ? 'text-slate-500' : 'text-slate-400'
+          }`}>
+            <span className="font-semibold">Rider Remittances</span>
+            <span className={`font-mono text-[11px] font-bold ${
+              isLight ? 'text-amber-700' : 'text-amber-400'
+            }`}>Pending Bank</span>
           </div>
-          <p className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-amber-300 tabular-nums">
+          <p className={`text-xl sm:text-2xl font-black font-mono tracking-tight tabular-nums ${
+            isLight ? 'text-amber-800' : 'text-amber-300'
+          }`}>
             {formatCurrency(convertAmount(pendingRemittanceAmountNgn, currency), currency)}
           </p>
-          <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/60">
-            <span className="text-slate-400">In Couriers Hand</span>
+          <div className={`flex items-center justify-between text-[11px] pt-1 border-t ${
+            isLight ? 'border-slate-100 text-slate-500' : 'border-slate-800/60 text-slate-400'
+          }`}>
+            <span>In Couriers Hand</span>
             <button
               onClick={() => setAdminActiveTab('remittances')}
-              className="text-[11px] text-emerald-400 hover:underline font-mono"
+              className={`text-[11px] font-bold font-mono ${
+                isLight ? 'text-emerald-700 hover:underline' : 'text-emerald-400 hover:underline'
+              }`}
             >
               Reconcile ➔
             </button>
@@ -598,21 +744,31 @@ export const DashboardHome: React.FC = () => {
       </div>
 
       {/* 4. BettaTraka CRM Order Lifecycle Stage Funnel (Interactive Pipeline) */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 sm:p-5 space-y-3.5 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800">
+      <div className={`rounded-2xl border p-4 sm:p-5 space-y-3.5 shadow-sm ${
+        isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900/50 border-slate-800 text-white'
+      }`}>
+        <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b ${
+          isLight ? 'border-slate-100' : 'border-slate-800'
+        }`}>
           <div>
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              <Layers className="w-4 h-4 text-emerald-400" />
+            <h2 className={`text-sm font-bold flex items-center gap-2 ${
+              isLight ? 'text-slate-900' : 'text-white'
+            }`}>
+              <Layers className={`w-4 h-4 ${isLight ? 'text-lime-700' : 'text-emerald-400'}`} />
               <span>Order Lifecycle Pipeline Funnel (COD Stages)</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className={`text-xs mt-0.5 ${
+              isLight ? 'text-slate-500' : 'text-slate-400'
+            }`}>
               Click any stage to filter or open live orders in that operational status.
             </p>
           </div>
 
           <button
             onClick={() => setAdminActiveTab('orders')}
-            className="text-xs text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1 self-start sm:self-auto"
+            className={`text-xs font-bold flex items-center gap-1 self-start sm:self-auto ${
+              isLight ? 'text-emerald-700 hover:text-emerald-800' : 'text-emerald-400 hover:text-emerald-300'
+            }`}
           >
             <span>Open All Orders ({orders.length})</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -624,23 +780,37 @@ export const DashboardHome: React.FC = () => {
           {/* Stage 1: New */}
           <div 
             onClick={() => setAdminActiveTab('orders')}
-            className="p-3 rounded-xl bg-slate-950/70 border border-amber-900/40 hover:border-amber-500/60 hover:bg-slate-900 transition cursor-pointer space-y-1.5 group"
+            className={`p-3 rounded-xl border transition cursor-pointer space-y-1.5 group shadow-xs ${
+              isLight
+                ? 'bg-amber-50/60 border-amber-200 hover:border-amber-300 hover:bg-amber-50/90 text-amber-950'
+                : 'bg-slate-950/70 border-amber-900/40 hover:border-amber-500/60 hover:bg-slate-900'
+            }`}
           >
             <div className="flex items-center justify-between text-[11px]">
-              <span className="font-bold text-amber-400 flex items-center gap-1">
+              <span className={`font-bold flex items-center gap-1 ${
+                isLight ? 'text-amber-800' : 'text-amber-400'
+              }`}>
                 <Clock className="w-3 h-3" /> 1. New Orders
               </span>
-              <span className="font-mono text-[10px] text-slate-500">
+              <span className={`font-mono text-[10px] font-bold ${
+                isLight ? 'text-amber-700' : 'text-slate-500'
+              }`}>
                 {orders.length > 0 ? Math.round((newOrders.length / orders.length) * 100) : 0}%
               </span>
             </div>
-            <p className="text-xl font-bold font-mono text-white group-hover:text-amber-300 transition">
+            <p className={`text-2xl font-black font-mono transition ${
+              isLight ? 'text-amber-950' : 'text-white group-hover:text-amber-300'
+            }`}>
               {newOrders.length}
             </p>
-            <p className="text-[10px] text-slate-400 font-mono truncate">
+            <p className={`text-[10px] font-mono truncate font-medium ${
+              isLight ? 'text-slate-700' : 'text-slate-400'
+            }`}>
               {formatCurrency(convertAmount(newOrders.reduce((s, o) => s + o.totalAmount, 0), currency), currency)}
             </p>
-            <span className="text-[10px] text-amber-400/80 block pt-1 border-t border-slate-800">
+            <span className={`text-[10px] font-medium block pt-1 border-t ${
+              isLight ? 'text-amber-800 border-amber-200' : 'text-amber-400/80 border-slate-800'
+            }`}>
               Needs phone call
             </span>
           </div>
@@ -648,23 +818,37 @@ export const DashboardHome: React.FC = () => {
           {/* Stage 2: Confirmed */}
           <div 
             onClick={() => setAdminActiveTab('orders')}
-            className="p-3 rounded-xl bg-slate-950/70 border border-cyan-900/40 hover:border-cyan-500/60 hover:bg-slate-900 transition cursor-pointer space-y-1.5 group"
+            className={`p-3 rounded-xl border transition cursor-pointer space-y-1.5 group shadow-xs ${
+              isLight
+                ? 'bg-cyan-50/60 border-cyan-200 hover:border-cyan-300 hover:bg-cyan-50/90 text-cyan-950'
+                : 'bg-slate-950/70 border-cyan-900/40 hover:border-cyan-500/60 hover:bg-slate-900'
+            }`}
           >
             <div className="flex items-center justify-between text-[11px]">
-              <span className="font-bold text-cyan-400 flex items-center gap-1">
+              <span className={`font-bold flex items-center gap-1 ${
+                isLight ? 'text-cyan-800' : 'text-cyan-400'
+              }`}>
                 <Phone className="w-3 h-3" /> 2. Confirmed
               </span>
-              <span className="font-mono text-[10px] text-slate-500">
+              <span className={`font-mono text-[10px] font-bold ${
+                isLight ? 'text-cyan-700' : 'text-slate-500'
+              }`}>
                 {orders.length > 0 ? Math.round((confirmedOrders.length / orders.length) * 100) : 0}%
               </span>
             </div>
-            <p className="text-xl font-bold font-mono text-white group-hover:text-cyan-300 transition">
+            <p className={`text-2xl font-black font-mono transition ${
+              isLight ? 'text-cyan-950' : 'text-white group-hover:text-cyan-300'
+            }`}>
               {confirmedOrders.length}
             </p>
-            <p className="text-[10px] text-slate-400 font-mono truncate">
+            <p className={`text-[10px] font-mono truncate font-medium ${
+              isLight ? 'text-slate-700' : 'text-slate-400'
+            }`}>
               {formatCurrency(convertAmount(confirmedOrders.reduce((s, o) => s + o.totalAmount, 0), currency), currency)}
             </p>
-            <span className="text-[10px] text-cyan-400/80 block pt-1 border-t border-slate-800">
+            <span className={`text-[10px] font-medium block pt-1 border-t ${
+              isLight ? 'text-cyan-800 border-cyan-200' : 'text-cyan-400/80 border-slate-800'
+            }`}>
               Ready for packing
             </span>
           </div>
@@ -672,47 +856,75 @@ export const DashboardHome: React.FC = () => {
           {/* Stage 3: Dispatched / In Transit */}
           <div 
             onClick={() => setAdminActiveTab('deliveries')}
-            className="p-3 rounded-xl bg-slate-950/70 border border-sky-900/40 hover:border-sky-500/60 hover:bg-slate-900 transition cursor-pointer space-y-1.5 group"
+            className={`p-3 rounded-xl border transition cursor-pointer space-y-1.5 group shadow-xs ${
+              isLight
+                ? 'bg-sky-50/60 border-sky-200 hover:border-sky-300 hover:bg-sky-50/90 text-sky-950'
+                : 'bg-slate-950/70 border-sky-900/40 hover:border-sky-500/60 hover:bg-slate-900'
+            }`}
           >
             <div className="flex items-center justify-between text-[11px]">
-              <span className="font-bold text-sky-400 flex items-center gap-1">
+              <span className={`font-bold flex items-center gap-1 ${
+                isLight ? 'text-sky-800' : 'text-sky-400'
+              }`}>
                 <Truck className="w-3 h-3" /> 3. In Transit
               </span>
-              <span className="font-mono text-[10px] text-slate-500">
+              <span className={`font-mono text-[10px] font-bold ${
+                isLight ? 'text-sky-700' : 'text-slate-500'
+              }`}>
                 {orders.length > 0 ? Math.round((dispatchedOrders.length / orders.length) * 100) : 0}%
               </span>
             </div>
-            <p className="text-xl font-bold font-mono text-white group-hover:text-sky-300 transition">
+            <p className={`text-2xl font-black font-mono transition ${
+              isLight ? 'text-sky-950' : 'text-white group-hover:text-sky-300'
+            }`}>
               {dispatchedOrders.length}
             </p>
-            <p className="text-[10px] text-slate-400 font-mono truncate">
+            <p className={`text-[10px] font-mono truncate font-medium ${
+              isLight ? 'text-slate-700' : 'text-slate-400'
+            }`}>
               {formatCurrency(convertAmount(dispatchedOrders.reduce((s, o) => s + o.totalAmount, 0), currency), currency)}
             </p>
-            <span className="text-[10px] text-sky-400/80 block pt-1 border-t border-slate-800">
+            <span className={`text-[10px] font-medium block pt-1 border-t ${
+              isLight ? 'text-sky-800 border-sky-200' : 'text-sky-400/80 border-slate-800'
+            }`}>
               With courier / rider
             </span>
           </div>
 
-          {/* Stage 4: Delivered (Cash Collected) */}
+          {/* Stage 4: Delivered (Cash Collected) - FULLY VISIBLE IN DAYLIGHT */}
           <div 
             onClick={() => setAdminActiveTab('orders')}
-            className="p-3 rounded-xl bg-slate-950/70 border border-emerald-900/40 hover:border-emerald-500/60 hover:bg-slate-900 transition cursor-pointer space-y-1.5 group"
+            className={`p-3 rounded-xl border transition cursor-pointer space-y-1.5 group shadow-xs ${
+              isLight
+                ? 'bg-emerald-50/70 border-emerald-300 hover:border-emerald-400 hover:bg-emerald-50 text-emerald-950'
+                : 'bg-slate-950/70 border-emerald-900/40 hover:border-emerald-500/60 hover:bg-slate-900'
+            }`}
           >
             <div className="flex items-center justify-between text-[11px]">
-              <span className="font-bold text-emerald-400 flex items-center gap-1">
+              <span className={`font-bold flex items-center gap-1 ${
+                isLight ? 'text-emerald-800' : 'text-emerald-400'
+              }`}>
                 <CheckCircle className="w-3 h-3" /> 4. Delivered
               </span>
-              <span className="font-mono text-[10px] text-emerald-500">
+              <span className={`font-mono text-[10px] font-bold ${
+                isLight ? 'text-emerald-700' : 'text-emerald-500'
+              }`}>
                 {orders.length > 0 ? Math.round((deliveredOrders.length / orders.length) * 100) : 0}%
               </span>
             </div>
-            <p className="text-xl font-bold font-mono text-emerald-400 group-hover:text-emerald-300 transition">
+            <p className={`text-2xl font-black font-mono transition ${
+              isLight ? 'text-emerald-900' : 'text-emerald-400 group-hover:text-emerald-300'
+            }`}>
               {deliveredOrders.length}
             </p>
-            <p className="text-[10px] text-slate-400 font-mono truncate">
+            <p className={`text-[10px] font-mono truncate font-medium ${
+              isLight ? 'text-slate-700' : 'text-slate-400'
+            }`}>
               {formatCurrency(convertAmount(totalDeliveredRevenueNgn, currency), currency)}
             </p>
-            <span className="text-[10px] text-emerald-400/90 block pt-1 border-t border-slate-800 font-semibold">
+            <span className={`text-[10px] font-bold block pt-1 border-t ${
+              isLight ? 'text-emerald-800 border-emerald-200' : 'text-emerald-400/90 border-slate-800 font-semibold'
+            }`}>
               Cash collected
             </span>
           </div>
@@ -720,23 +932,37 @@ export const DashboardHome: React.FC = () => {
           {/* Stage 5: Rescheduled */}
           <div 
             onClick={() => setAdminActiveTab('scheduled')}
-            className="p-3 rounded-xl bg-slate-950/70 border border-purple-900/40 hover:border-purple-500/60 hover:bg-slate-900 transition cursor-pointer space-y-1.5 group"
+            className={`p-3 rounded-xl border transition cursor-pointer space-y-1.5 group shadow-xs ${
+              isLight
+                ? 'bg-purple-50/60 border-purple-200 hover:border-purple-300 hover:bg-purple-50/90 text-purple-950'
+                : 'bg-slate-950/70 border-purple-900/40 hover:border-purple-500/60 hover:bg-slate-900'
+            }`}
           >
             <div className="flex items-center justify-between text-[11px]">
-              <span className="font-bold text-purple-400 flex items-center gap-1">
+              <span className={`font-bold flex items-center gap-1 ${
+                isLight ? 'text-purple-800' : 'text-purple-400'
+              }`}>
                 <RotateCcw className="w-3 h-3" /> 5. Rescheduled
               </span>
-              <span className="font-mono text-[10px] text-slate-500">
+              <span className={`font-mono text-[10px] font-bold ${
+                isLight ? 'text-purple-700' : 'text-slate-500'
+              }`}>
                 {orders.length > 0 ? Math.round((rescheduledOrders.length / orders.length) * 100) : 0}%
               </span>
             </div>
-            <p className="text-xl font-bold font-mono text-white group-hover:text-purple-300 transition">
+            <p className={`text-2xl font-black font-mono transition ${
+              isLight ? 'text-purple-950' : 'text-white group-hover:text-purple-300'
+            }`}>
               {rescheduledOrders.length}
             </p>
-            <p className="text-[10px] text-slate-400 font-mono truncate">
+            <p className={`text-[10px] font-mono truncate font-medium ${
+              isLight ? 'text-slate-700' : 'text-slate-400'
+            }`}>
               {formatCurrency(convertAmount(rescheduledOrders.reduce((s, o) => s + o.totalAmount, 0), currency), currency)}
             </p>
-            <span className="text-[10px] text-purple-400/80 block pt-1 border-t border-slate-800">
+            <span className={`text-[10px] font-medium block pt-1 border-t ${
+              isLight ? 'text-purple-800 border-purple-200' : 'text-purple-400/80 border-slate-800'
+            }`}>
               Future delivery date
             </span>
           </div>
@@ -744,23 +970,37 @@ export const DashboardHome: React.FC = () => {
           {/* Stage 6: Cancelled / RTO */}
           <div 
             onClick={() => setAdminActiveTab('orders')}
-            className="p-3 rounded-xl bg-slate-950/70 border border-rose-900/40 hover:border-rose-500/60 hover:bg-slate-900 transition cursor-pointer space-y-1.5 group"
+            className={`p-3 rounded-xl border transition cursor-pointer space-y-1.5 group shadow-xs ${
+              isLight
+                ? 'bg-rose-50/60 border-rose-200 hover:border-rose-300 hover:bg-rose-50/90 text-rose-950'
+                : 'bg-slate-950/70 border-rose-900/40 hover:border-rose-500/60 hover:bg-slate-900'
+            }`}
           >
             <div className="flex items-center justify-between text-[11px]">
-              <span className="font-bold text-rose-400 flex items-center gap-1">
+              <span className={`font-bold flex items-center gap-1 ${
+                isLight ? 'text-rose-800' : 'text-rose-400'
+              }`}>
                 <XCircle className="w-3 h-3" /> 6. Cancelled
               </span>
-              <span className="font-mono text-[10px] text-rose-500">
+              <span className={`font-mono text-[10px] font-bold ${
+                isLight ? 'text-rose-700' : 'text-rose-500'
+              }`}>
                 {orders.length > 0 ? Math.round((cancelledOrders.length / orders.length) * 100) : 0}%
               </span>
             </div>
-            <p className="text-xl font-bold font-mono text-rose-400 group-hover:text-rose-300 transition">
+            <p className={`text-2xl font-black font-mono transition ${
+              isLight ? 'text-rose-950' : 'text-rose-400 group-hover:text-rose-300'
+            }`}>
               {cancelledOrders.length}
             </p>
-            <p className="text-[10px] text-slate-400 font-mono truncate">
+            <p className={`text-[10px] font-mono truncate font-medium ${
+              isLight ? 'text-slate-700' : 'text-slate-400'
+            }`}>
               {formatCurrency(convertAmount(cancelledOrders.reduce((s, o) => s + o.totalAmount, 0), currency), currency)}
             </p>
-            <span className="text-[10px] text-rose-400/80 block pt-1 border-t border-slate-800">
+            <span className={`text-[10px] font-medium block pt-1 border-t ${
+              isLight ? 'text-rose-800 border-rose-200' : 'text-rose-400/80 border-slate-800'
+            }`}>
               Refused / fake order
             </span>
           </div>
@@ -776,7 +1016,11 @@ export const DashboardHome: React.FC = () => {
         }`}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <span className={`p-2 rounded-xl ${isLight ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-950 text-emerald-400 border border-emerald-800/60'}`}>
+              <span className={`p-2 rounded-xl border ${
+                isLight 
+                  ? 'bg-lime-50 text-lime-800 border-lime-200 shadow-xs' 
+                  : 'bg-emerald-950 text-emerald-400 border-emerald-800/60'
+              }`}>
                 <Users className="w-5 h-5" />
               </span>
               <div>
@@ -784,24 +1028,26 @@ export const DashboardHome: React.FC = () => {
                   <h2 className={`text-base font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     Sales Reps Confirmation Velocity
                   </h2>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${
-                    isLight ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                    isLight 
+                      ? 'bg-slate-100 text-slate-800 border-slate-200 shadow-2xs' 
+                      : 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
                   }`}>
                     {repPerformance.length} Reps
                   </span>
                 </div>
-                <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                   Monitor which sales agents confirm incoming order forms the fastest to prevent cancellation.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 self-start sm:self-auto">
+            <div className="flex items-center gap-3 self-start sm:self-auto shrink-0">
               <button
                 type="button"
                 onClick={() => setAdminActiveTab('sales-reps')}
-                className={`text-xs font-semibold hover:underline flex items-center gap-1 ${
-                  isLight ? 'text-emerald-700' : 'text-emerald-400'
+                className={`text-xs font-bold hover:underline flex items-center gap-1.5 transition cursor-pointer py-1 px-1.5 ${
+                  isLight ? 'text-lime-800 hover:text-lime-950' : 'text-emerald-400 hover:text-emerald-300'
                 }`}
               >
                 <span>View All Reps</span>
@@ -1630,16 +1876,24 @@ export const DashboardHome: React.FC = () => {
 
       {/* MODAL 3: Quick Expense Modal */}
       {showQuickExpenseModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4 shadow-2xl text-slate-100">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in ${
+          isLight ? 'bg-slate-900/50' : 'bg-black/80'
+        }`}>
+          <div className={`w-full max-w-md rounded-2xl border p-6 space-y-4 shadow-2xl ${
+            isLight ? 'border-slate-200 bg-white text-slate-900' : 'border-slate-800 bg-slate-900 text-slate-100'
+          }`}>
+            <div className={`flex items-center justify-between pb-3 border-b ${
+              isLight ? 'border-slate-200' : 'border-slate-800'
+            }`}>
               <div className="flex items-center gap-2">
-                <Receipt className="w-5 h-5 text-amber-400" />
-                <h3 className="text-base font-bold text-white">Record Operating Expense</h3>
+                <Receipt className="w-5 h-5 text-amber-500" />
+                <h3 className={`text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Record Operating Expense</h3>
               </div>
               <button 
                 onClick={() => setShowQuickExpenseModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white"
+                className={`p-1 rounded-lg transition cursor-pointer ${
+                  isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-slate-400 hover:text-white'
+                }`}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1647,35 +1901,41 @@ export const DashboardHome: React.FC = () => {
 
             <form onSubmit={handleQuickExpenseSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="text-slate-400 block mb-1">Expense Title / Description *</label>
+                <label className={`block mb-1 font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Expense Title / Description *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Courier Remittance Fee - Fez Delivery"
                   value={expenseTitle}
                   onChange={(e) => setExpenseTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500"
+                  className={`w-full rounded-xl p-2.5 focus:outline-none transition border ${
+                    isLight ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-amber-500' : 'bg-slate-950 border-slate-700 text-white focus:border-amber-500'
+                  }`}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-slate-400 block mb-1">Amount (NGN) *</label>
+                  <label className={`block mb-1 font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Amount (NGN) *</label>
                   <input
                     type="number"
                     required
                     placeholder="e.g. 35000"
                     value={expenseAmount}
                     onChange={(e) => setExpenseAmount(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white font-mono focus:outline-none focus:border-amber-500"
+                    className={`w-full rounded-xl p-2.5 font-mono focus:outline-none transition border ${
+                      isLight ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-amber-500' : 'bg-slate-950 border-slate-700 text-white focus:border-amber-500'
+                    }`}
                   />
                 </div>
                 <div>
-                  <label className="text-slate-400 block mb-1">Category</label>
+                  <label className={`block mb-1 font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Category</label>
                   <select
                     value={expenseCategory}
                     onChange={(e) => setExpenseCategory(e.target.value as any)}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500"
+                    className={`w-full rounded-xl p-2.5 focus:outline-none transition border ${
+                      isLight ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-amber-500' : 'bg-slate-950 border-slate-700 text-white focus:border-amber-500'
+                    }`}
                   >
                     <option value="Advertising / Media Buying">Advertising / Media Buying</option>
                     <option value="Logistics">Logistics</option>
@@ -1692,13 +1952,15 @@ export const DashboardHome: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowQuickExpenseModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 font-semibold"
+                  className={`px-4 py-2 rounded-xl font-semibold border transition cursor-pointer ${
+                    isLight ? 'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200' : 'border-slate-700 bg-slate-800 text-slate-300'
+                  }`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold"
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition shadow-sm cursor-pointer"
                 >
                   Save Expense
                 </button>
@@ -1710,16 +1972,24 @@ export const DashboardHome: React.FC = () => {
 
       {/* MODAL 4: Quick Ad Spend Modal */}
       {showQuickSpendModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4 shadow-2xl text-slate-100">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in ${
+          isLight ? 'bg-slate-900/50' : 'bg-black/80'
+        }`}>
+          <div className={`w-full max-w-md rounded-2xl border p-6 space-y-4 shadow-2xl ${
+            isLight ? 'border-slate-200 bg-white text-slate-900' : 'border-slate-800 bg-slate-900 text-slate-100'
+          }`}>
+            <div className={`flex items-center justify-between pb-3 border-b ${
+              isLight ? 'border-slate-200' : 'border-slate-800'
+            }`}>
               <div className="flex items-center gap-2">
-                <Megaphone className="w-5 h-5 text-sky-400" />
-                <h3 className="text-base font-bold text-white">Log Daily Ad Spend</h3>
+                <Megaphone className="w-5 h-5 text-sky-500" />
+                <h3 className={`text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Log Daily Ad Spend</h3>
               </div>
               <button 
                 onClick={() => setShowQuickSpendModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white"
+                className={`p-1 rounded-lg transition cursor-pointer ${
+                  isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-slate-400 hover:text-white'
+                }`}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1727,11 +1997,13 @@ export const DashboardHome: React.FC = () => {
 
             <form onSubmit={handleQuickSpendSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="text-slate-400 block mb-1">Select Media Buyer *</label>
+                <label className={`block mb-1 font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Select Media Buyer *</label>
                 <select
                   value={spendBuyerId}
                   onChange={(e) => setSpendBuyerId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-sky-500 font-medium"
+                  className={`w-full rounded-xl p-2.5 font-medium focus:outline-none transition border ${
+                    isLight ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-sky-500' : 'bg-slate-950 border-slate-700 text-white focus:border-sky-500'
+                  }`}
                 >
                   {mediaBuyers.map(b => (
                     <option key={b.id} value={b.id}>
@@ -1743,11 +2015,13 @@ export const DashboardHome: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-slate-400 block mb-1">Platform</label>
+                  <label className={`block mb-1 font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Platform</label>
                   <select
                     value={spendPlatform}
                     onChange={(e) => setSpendPlatform(e.target.value as any)}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-sky-500"
+                    className={`w-full rounded-xl p-2.5 focus:outline-none transition border ${
+                      isLight ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-sky-500' : 'bg-slate-950 border-slate-700 text-white focus:border-sky-500'
+                    }`}
                   >
                     <option value="Facebook">Facebook / Meta Ads</option>
                     <option value="TikTok">TikTok Ads</option>
@@ -1757,26 +2031,30 @@ export const DashboardHome: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="text-slate-400 block mb-1">Spend Amount (NGN) *</label>
+                  <label className={`block mb-1 font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Spend Amount (NGN) *</label>
                   <input
                     type="number"
                     required
                     placeholder="e.g. 50000"
                     value={spendAmount}
                     onChange={(e) => setSpendAmount(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white font-mono focus:outline-none focus:border-sky-500"
+                    className={`w-full rounded-xl p-2.5 font-mono focus:outline-none transition border ${
+                      isLight ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-sky-500' : 'bg-slate-950 border-slate-700 text-white focus:border-sky-500'
+                    }`}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-slate-400 block mb-1">Campaign Tag / Name</label>
+                <label className={`block mb-1 font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Campaign Tag / Name</label>
                 <input
                   type="text"
                   placeholder="e.g. clarifying_glow_sept26"
                   value={spendCampaign}
                   onChange={(e) => setSpendCampaign(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-sky-500"
+                  className={`w-full rounded-xl p-2.5 focus:outline-none transition border ${
+                    isLight ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-sky-500' : 'bg-slate-950 border-slate-700 text-white focus:border-sky-500'
+                  }`}
                 />
               </div>
 
@@ -1784,13 +2062,15 @@ export const DashboardHome: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowQuickSpendModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 font-semibold"
+                  className={`px-4 py-2 rounded-xl font-semibold border transition cursor-pointer ${
+                    isLight ? 'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200' : 'border-slate-700 bg-slate-800 text-slate-300'
+                  }`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold"
+                  className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold transition shadow-sm cursor-pointer"
                 >
                   Save Ad Spend
                 </button>

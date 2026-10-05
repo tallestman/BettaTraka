@@ -37,7 +37,10 @@ export type PayStructure = 'Fixed' | 'Commission' | 'Hybrid' | 'Performance-base
 export interface ManagerPermissions {
   sales: {
     orders: boolean;
+    abandonedCarts?: boolean;
+    scheduledDeliveries?: boolean;
     salesReps: boolean;
+    salesTeams?: boolean;
     teamPerformance: boolean;
     customers: boolean;
     deliveries: boolean;
@@ -45,6 +48,7 @@ export interface ManagerPermissions {
   operations: {
     deliveryAgents: boolean;
     inventory: boolean;
+    distributors?: boolean;
     roundRobin: boolean;
   };
   finance: {
@@ -57,14 +61,20 @@ export interface ManagerPermissions {
   };
   admin: {
     users: boolean;
+    teamChat?: boolean;
     notifications: boolean;
     orderFormBuilder: boolean;
     adTracker: boolean;
     aiAgent: boolean;
+    aiSandbox?: boolean;
+    tokenReporting?: boolean;
+    integrations?: boolean;
     subscription: boolean;
     settings: boolean;
   };
 }
+
+export type UserPermissions = ManagerPermissions;
 
 export interface User {
   id: string;

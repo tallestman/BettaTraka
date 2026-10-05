@@ -7,6 +7,7 @@ import {
   Calendar, 
   Clock, 
   Truck, 
+  Boxes,
   User, 
   MapPin, 
   CheckCircle2, 
@@ -28,6 +29,8 @@ export const ScheduleDeliveryModal: React.FC<ScheduleDeliveryModalProps> = ({
 }) => {
   const { 
     scheduleOrderDelivery, 
+    assignOrderDistributor,
+    distributors,
     agents, 
     currency, 
     themeMode,
@@ -43,6 +46,7 @@ export const ScheduleDeliveryModal: React.FC<ScheduleDeliveryModalProps> = ({
     order.preferredDeliveryTime || 'Morning (8:00 AM - 12:00 PM)'
   );
   const [selectedAgentId, setSelectedAgentId] = useState<string>(order.agentId || '');
+  const [selectedDistributorId, setSelectedDistributorId] = useState<string>(order.distributorId || '');
   const [scheduleNotes, setScheduleNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -73,6 +77,10 @@ export const ScheduleDeliveryModal: React.FC<ScheduleDeliveryModalProps> = ({
       selectedAgentId || undefined, 
       scheduleNotes
     );
+
+    if (selectedDistributorId !== (order.distributorId || '')) {
+      assignOrderDistributor(order.id, selectedDistributorId, scheduleNotes || 'Assigned during delivery scheduling');
+    }
 
     if (addNotification) {
       addNotification({
@@ -281,6 +289,30 @@ export const ScheduleDeliveryModal: React.FC<ScheduleDeliveryModalProps> = ({
               {agents.map(ag => (
                 <option key={ag.id} value={ag.id}>
                   {ag.name} — {ag.primaryZone} ({ag.status})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 3b. Assigned Regional Distributor Hub (Optional) */}
+          <div className="space-y-1.5">
+            <label className="font-bold flex items-center gap-1.5">
+              <Boxes className="w-3.5 h-3.5 text-lime-400" />
+              <span>Assigned Regional Distributor Hub (Optional)</span>
+            </label>
+            <select
+              value={selectedDistributorId}
+              onChange={(e) => setSelectedDistributorId(e.target.value)}
+              className={`w-full px-3 py-2 rounded-xl border text-xs focus:outline-none focus:ring-1 focus:ring-lime-500 cursor-pointer ${
+                isLight 
+                  ? 'bg-white border-slate-300 text-slate-800' 
+                  : 'bg-slate-950 border-slate-800 text-lime-300 font-medium'
+              }`}
+            >
+              <option value="">Central Warehouse Direct (No Distributor Hub)</option>
+              {distributors.map(dist => (
+                <option key={dist.id} value={dist.id}>
+                  {dist.name} (Hub) — {dist.phone}
                 </option>
               ))}
             </select>

@@ -26,7 +26,8 @@ import {
   Receipt,
   PieChart,
   BarChart3,
-  DollarSign
+  DollarSign,
+  Eye
 } from 'lucide-react';
 
 type DatePeriod = 'today' | 'week' | 'month' | 'year' | 'all' | 'custom';
@@ -41,8 +42,12 @@ export const ExpensesView: React.FC = () => {
     products, 
     currency, 
     setCurrency, 
+    currentUser,
+    persona,
     addNotification 
   } = useCrm();
+
+  const isAccountant = currentUser?.role === 'Accountant' || persona === 'accountant';
 
   // Filter & Search states (Matching BettaTraka Screenshot exp1.png, exp2.png, exp3.png)
   const [datePeriod, setDatePeriod] = useState<DatePeriod>('today');
@@ -396,6 +401,7 @@ export const ExpensesView: React.FC = () => {
 
   // Open Add Modal
   const handleOpenAdd = () => {
+    if (isAccountant) return;
     setFormDate(new Date().toISOString().split('T')[0]);
     setFormType('Advertising / Media Buying');
     setFormProductId('');
@@ -408,7 +414,7 @@ export const ExpensesView: React.FC = () => {
   // Submit Add Expense
   const handleCreateExpenseSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formDesc.trim() || formAmount <= 0) return;
+    if (isAccountant || !formDesc.trim() || formAmount <= 0) return;
 
     const matchedProd = products.find(p => p.id === formProductId);
 
@@ -436,6 +442,7 @@ export const ExpensesView: React.FC = () => {
 
   // Open Edit Modal
   const handleOpenEdit = (exp: Expense) => {
+    if (isAccountant) return;
     setEditingExpense(exp);
     setFormDate(exp.date);
     setFormType(exp.type);
@@ -448,7 +455,7 @@ export const ExpensesView: React.FC = () => {
   // Submit Edit Expense
   const handleEditExpenseSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingExpense || !formDesc.trim() || formAmount <= 0) return;
+    if (isAccountant || !editingExpense || !formDesc.trim() || formAmount <= 0) return;
 
     const matchedProd = products.find(p => p.id === formProductId);
 
@@ -475,6 +482,7 @@ export const ExpensesView: React.FC = () => {
 
   // Handle Delete Expense
   const handleDeleteExpense = (id: string, desc: string) => {
+    if (isAccountant) return;
     if (confirm(`Are you sure you want to delete this expense record: "${desc}"?`)) {
       deleteExpense(id);
       setSelectedExpenseIds(prev => prev.filter(x => x !== id));
@@ -530,16 +538,43 @@ export const ExpensesView: React.FC = () => {
             <span>Refresh</span>
           </button>
 
-          <button
-            type="button"
-            onClick={handleOpenAdd}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition cursor-pointer active:scale-95"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Add Expense</span>
-          </button>
+          {!isAccountant ? (
+            <button
+              type="button"
+              onClick={handleOpenAdd}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition cursor-pointer active:scale-95"
+            >
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>Add Expense</span>
+            </button>
+          ) : (
+            <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20 text-xs font-semibold">
+              <Eye className="w-3.5 h-3.5" />
+              <span>Read-Only Audit Mode</span>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Accountant Audit Notice Banner */}
+      {isAccountant && (
+        <div className="p-4 rounded-xl border border-sky-800/60 bg-sky-950/40 text-sky-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
+              <Receipt className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-bold text-white">Accountant Audit Mode: Read-Only Expenses Ledger</p>
+              <p className="text-[11px] text-slate-300">
+                Operational expenses and cash outflows are accessible in view-only ledger mode for expenditure tracking, reconciliation and tax audits. Adding, modifying or deleting expense records is restricted to Administrators.
+              </p>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 whitespace-nowrap self-start sm:self-auto">
+            Audit Clearance
+          </span>
+        </div>
+      )}
 
       {/* Date Filter Pills, Date Range & Currency Selector Row */}
       <div className="flex flex-wrap items-center gap-2">
@@ -565,7 +600,7 @@ export const ExpensesView: React.FC = () => {
                 }}
                 className={`px-3.5 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-white text-black shadow-sm'
+                    ? 'bg-emerald-600 text-white font-bold shadow-sm'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -1275,25 +1310,31 @@ export const ExpensesView: React.FC = () => {
 
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEdit(exp)}
-                            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-neutral-800 transition cursor-pointer"
-                            title="Edit Expense"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
+                        {isAccountant ? (
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20 font-medium whitespace-nowrap">
+                            Audited
+                          </span>
+                        ) : (
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(exp)}
+                              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-neutral-800 transition cursor-pointer"
+                              title="Edit Expense"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteExpense(exp.id, exp.description)}
-                            className="p-1 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-950/40 transition cursor-pointer"
-                            title="Delete Expense"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteExpense(exp.id, exp.description)}
+                              className="p-1 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-950/40 transition cursor-pointer"
+                              title="Delete Expense"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );

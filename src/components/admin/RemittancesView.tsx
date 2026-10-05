@@ -16,7 +16,8 @@ import {
   ExternalLink,
   Receipt,
   Download,
-  AlertCircle
+  AlertCircle,
+  Eye
 } from 'lucide-react';
 
 export const RemittancesView: React.FC = () => {
@@ -26,11 +27,14 @@ export const RemittancesView: React.FC = () => {
     orders, 
     currency, 
     themeMode,
+    currentUser,
+    persona,
     addNotification,
     setAdminActiveTab
   } = useCrm();
 
   const isLight = themeMode === 'light';
+  const isAccountant = currentUser?.role === 'Accountant' || persona === 'accountant';
 
   // Tabs: 'pending' or 'remitted' matching screenshot (remit1.png)
   const [tab, setTab] = useState<'pending' | 'remitted'>('pending');
@@ -168,6 +172,7 @@ export const RemittancesView: React.FC = () => {
 
   // Open Remit Modal (remit2.png)
   const handleOpenRemitModal = (r: Remittance) => {
+    if (isAccountant) return;
     setRemitTarget(r);
     // Default fee: if already set use that, else default to 0.00 as in remit2.png
     if (r.deliveryFeeDeducted !== undefined && r.deliveryFeeDeducted > 0) {
@@ -181,7 +186,7 @@ export const RemittancesView: React.FC = () => {
   // Confirm Remit Handler
   const handleConfirmRemit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!remitTarget) return;
+    if (isAccountant || !remitTarget) return;
 
     const parsedFee = parseFloat(deliveryFeeInput.replace(/[^0-9.]/g, '')) || 0;
 
@@ -237,6 +242,28 @@ export const RemittancesView: React.FC = () => {
           Delivered orders awaiting delivery-fee remittance from your agents
         </p>
       </div>
+
+      {/* Accountant Audit Notice Banner */}
+      {isAccountant && (
+        <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs animate-in fade-in ${
+          isLight ? 'bg-sky-50 border-sky-200 text-sky-900' : 'bg-sky-950/40 border-sky-800/60 text-sky-200'
+        }`}>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
+              <Eye className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-bold">Accountant Audit Mode: Read-Only Remittance Ledger</p>
+              <p className={`text-[11px] ${isLight ? 'text-sky-700' : 'text-slate-300'}`}>
+                Courier and hub remittances are viewable for cash reconciliation and financial auditing. Settling remittances or recording fee deductions is restricted to Administrators.
+              </p>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 whitespace-nowrap self-start sm:self-auto">
+            Audit Clearance
+          </span>
+        </div>
+      )}
 
       {/* 2. Tabs Row matching remit1.png: [ Pending (22) ] [ Remitted ] */}
       <div className="flex items-center gap-2">
@@ -320,7 +347,7 @@ export const RemittancesView: React.FC = () => {
                 dateFilter === 'custom'
                   ? 'bg-sky-950/80 border-sky-600 text-sky-300 font-bold'
                   : isLight
-                    ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+                    ? 'border-slate-300 bg-slate-100 text-slate-800 hover:bg-slate-200'
                     : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white hover:border-slate-700'
               }`}
             >
@@ -510,7 +537,19 @@ export const RemittancesView: React.FC = () => {
 
                       {/* Action Column: [ Remit ] Button matching remit1.png */}
                       <td className="py-3.5 px-4 sm:px-6 text-right whitespace-nowrap">
-                        {r.status === 'Pending' ? (
+                        {isAccountant ? (
+                          r.status === 'Pending' ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-mono text-amber-400 font-semibold px-2 py-0.5 rounded bg-amber-950/40 border border-amber-800/40">
+                              <Clock className="w-3 h-3" />
+                              <span>Awaiting Remittance</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                              <span>Remitted</span>
+                            </span>
+                          )
+                        ) : r.status === 'Pending' ? (
                           <button
                             type="button"
                             onClick={() => handleOpenRemitModal(r)}
@@ -641,7 +680,7 @@ export const RemittancesView: React.FC = () => {
                   onClick={() => setRemitTarget(null)}
                   className={`px-4 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer ${
                     isLight 
-                      ? 'border-slate-300 bg-white hover:bg-slate-100 text-slate-700' 
+                      ? 'border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-800' 
                       : 'border-slate-700/80 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white'
                   }`}
                 >

@@ -248,7 +248,7 @@ export const TeamPerformanceView: React.FC = () => {
               }}
               className={`px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-white text-black shadow-sm'
+                  ? 'bg-emerald-600 text-white font-bold shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >

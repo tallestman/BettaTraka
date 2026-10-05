@@ -527,7 +527,7 @@ export const AdTrackingView: React.FC = () => {
                     }}
                     className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                       isActive
-                        ? 'bg-white text-black shadow-sm'
+                        ? 'bg-emerald-600 text-white font-bold shadow-sm'
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >

@@ -35,8 +35,11 @@ export const CustomersView: React.FC = () => {
     toggleCustomerBlock, 
     currency, 
     setCurrency, 
-    addNotification 
+    addNotification,
+    themeMode
   } = useCrm();
+
+  const isLight = themeMode === 'light';
 
   // Filter & Search states (Matching BettaTraka Screenshot)
   const [datePeriod, setDatePeriod] = useState<DatePeriod>('today');
@@ -253,8 +256,8 @@ export const CustomersView: React.FC = () => {
                   }}
                   className={`px-3.5 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-white text-black shadow-sm'
-                      : 'text-slate-400 hover:text-white'
+                      ? (isLight ? 'bg-lime-600 text-white shadow-xs font-bold' : 'bg-white text-black shadow-sm')
+                      : (isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white')
                   }`}
                 >
                   {item.label}
@@ -268,24 +271,28 @@ export const CustomersView: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowDatePicker(!showDatePicker)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer shadow-xs ${
                 datePeriod === 'custom' || showDatePicker
-                  ? 'bg-neutral-900 border-neutral-700 text-white'
-                  : 'bg-black/80 border-neutral-800 text-slate-300 hover:text-white hover:border-neutral-700'
+                  ? (isLight ? 'bg-slate-200 border-slate-400 text-slate-900 font-bold' : 'bg-neutral-900 border-neutral-700 text-white')
+                  : (isLight ? 'bg-slate-100 border-slate-300 text-slate-800 hover:bg-slate-200' : 'bg-black/80 border-neutral-800 text-slate-300 hover:text-white hover:border-neutral-700')
               }`}
             >
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+              <Calendar className={`w-3.5 h-3.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`} />
               <span>Date Range</span>
             </button>
 
             {showDatePicker && (
-              <div className="absolute left-0 mt-2 p-4 rounded-xl bg-neutral-950 border border-neutral-800 shadow-2xl z-50 w-72 space-y-3 animate-in fade-in slide-in-from-top-2">
-                <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
-                  <span className="text-xs font-semibold text-white">Select Date Range</span>
+              <div className={`absolute left-0 mt-2 p-4 rounded-xl border shadow-2xl z-50 w-72 space-y-3 animate-in fade-in slide-in-from-top-2 ${
+                isLight ? 'bg-white border-slate-200 text-slate-900 shadow-slate-300/50' : 'bg-neutral-950 border-neutral-800 text-white'
+              }`}>
+                <div className={`flex items-center justify-between pb-2 border-b ${
+                  isLight ? 'border-slate-100' : 'border-neutral-800'
+                }`}>
+                  <span className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Select Date Range</span>
                   <button
                     type="button"
                     onClick={() => setShowDatePicker(false)}
-                    className="text-slate-400 hover:text-white"
+                    className={isLight ? 'text-slate-400 hover:text-slate-700' : 'text-slate-400 hover:text-white'}
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -293,22 +300,26 @@ export const CustomersView: React.FC = () => {
 
                 <div className="space-y-2">
                   <div>
-                    <label className="text-[10px] text-slate-400 block mb-1">Start Date</label>
+                    <label className={`text-[10px] block mb-1 font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Start Date</label>
                     <input
                       type="date"
                       value={customStartDate}
                       onChange={(e) => setCustomStartDate(e.target.value)}
-                      className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500"
+                      className={`w-full rounded-lg px-2.5 py-1.5 text-xs focus:outline-none transition border ${
+                        isLight ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-lime-500' : 'bg-neutral-900 border-neutral-800 text-white focus:border-sky-500'
+                      }`}
                     />
                   </div>
 
                   <div>
-                    <label className="text-[10px] text-slate-400 block mb-1">End Date</label>
+                    <label className={`text-[10px] block mb-1 font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>End Date</label>
                     <input
                       type="date"
                       value={customEndDate}
                       onChange={(e) => setCustomEndDate(e.target.value)}
-                      className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500"
+                      className={`w-full rounded-lg px-2.5 py-1.5 text-xs focus:outline-none transition border ${
+                        isLight ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-lime-500' : 'bg-neutral-900 border-neutral-800 text-white focus:border-sky-500'
+                      }`}
                     />
                   </div>
                 </div>
@@ -321,7 +332,9 @@ export const CustomersView: React.FC = () => {
                       setShowDatePicker(false);
                       setCurrentPage(1);
                     }}
-                    className="flex-1 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold transition"
+                    className={`flex-1 py-1.5 rounded-lg text-white text-xs font-bold transition cursor-pointer ${
+                      isLight ? 'bg-lime-600 hover:bg-lime-700' : 'bg-sky-600 hover:bg-sky-500'
+                    }`}
                   >
                     Apply Range
                   </button>
@@ -335,14 +348,20 @@ export const CustomersView: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowCurrencyDropdown(!showCurrencyDropdown)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/90 border border-neutral-800 hover:border-neutral-700 text-xs font-semibold text-white transition cursor-pointer shadow-sm"
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer shadow-xs ${
+                isLight 
+                  ? 'bg-slate-100 border-slate-300 text-slate-800 hover:bg-slate-200' 
+                  : 'bg-black/90 border-neutral-800 hover:border-neutral-700 text-white'
+              }`}
             >
               <span>{currentCurrencyInfo.symbol} {currentCurrencyInfo.label}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              <ChevronDown className={`w-3.5 h-3.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
             </button>
 
             {showCurrencyDropdown && (
-              <div className="absolute left-0 mt-1.5 w-52 rounded-xl bg-neutral-950 border border-neutral-800 shadow-2xl z-30 p-1 space-y-0.5 animate-in fade-in">
+              <div className={`absolute left-0 mt-1.5 w-52 rounded-xl border shadow-2xl z-30 p-1 space-y-0.5 animate-in fade-in ${
+                isLight ? 'bg-white border-slate-200 text-slate-900 shadow-slate-300/50' : 'bg-neutral-950 border-neutral-800 text-white'
+              }`}>
                 {currencyOptions.map((opt) => (
                   <button
                     key={opt.code}
@@ -351,14 +370,14 @@ export const CustomersView: React.FC = () => {
                       setCurrency(opt.code);
                       setShowCurrencyDropdown(false);
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition text-left ${
+                    className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition text-left cursor-pointer ${
                       currency === opt.code 
-                        ? 'bg-sky-600 text-white font-semibold' 
-                        : 'text-slate-300 hover:bg-neutral-900 hover:text-white'
+                        ? (isLight ? 'bg-lime-50 text-lime-900 font-bold border border-lime-200' : 'bg-sky-600 text-white font-semibold')
+                        : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-neutral-900 hover:text-white')
                     }`}
                   >
                     <span>{opt.symbol} {opt.label}</span>
-                    {currency === opt.code && <Check className="w-3.5 h-3.5" />}
+                    {currency === opt.code && <Check className={`w-3.5 h-3.5 ${isLight ? 'text-lime-700' : 'text-white'}`} />}
                   </button>
                 ))}
               </div>

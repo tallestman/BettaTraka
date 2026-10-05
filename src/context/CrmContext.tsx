@@ -57,12 +57,13 @@ import {
   INITIAL_ORDER_FORMS
 } from '../data/initialData';
 
-export type ActivePersona = 'admin' | 'rep' | 'distributor' | 'inventory' | 'media_buyer' | 'public_form' | 'marketing';
+export type ActivePersona = 'admin' | 'manager' | 'accountant' | 'rep' | 'distributor' | 'inventory' | 'media_buyer' | 'public_form' | 'marketing';
 
 interface CrmContextType {
   // Navigation & Personas
   persona: ActivePersona;
   setPersona: (p: ActivePersona) => void;
+  logout: () => void;
   adminActiveTab: string;
   setAdminActiveTab: (tab: string) => void;
   repActiveTab: string;
@@ -349,6 +350,10 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const defaultMb = INITIAL_USERS.find(u => u.role === 'Media Buyer');
         if (defaultMb) list.push(defaultMb);
       }
+      if (!list.some(u => u.role === 'Accountant')) {
+        const defaultAcct = INITIAL_USERS.find(u => u.role === 'Accountant');
+        if (defaultAcct) list.push(defaultAcct);
+      }
       return list;
     } catch {
       return INITIAL_USERS;
@@ -440,7 +445,18 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [roundRobin, setRoundRobin] = useState<RoundRobinState>(() => {
     try {
       const saved = localStorage.getItem(`${STORAGE_KEY}_round_robin`);
-      return saved ? JSON.parse(saved) : INITIAL_ROUND_ROBIN;
+      const base: RoundRobinState = saved ? JSON.parse(saved) : INITIAL_ROUND_ROBIN;
+      // Enforce: Round Robin only contains and goes to Sales Reps
+      const salesRepIds = new Set(INITIAL_USERS.filter(u => u.role === 'Sales Representative').map(u => u.id));
+      const cleanOrderPool = (base.orderPool || []).filter(r => salesRepIds.has(r.repId));
+      const cleanCartPool = (base.cartPool || []).filter(r => salesRepIds.has(r.repId));
+      return {
+        ...base,
+        orderPool: cleanOrderPool.length > 0 ? cleanOrderPool : INITIAL_ROUND_ROBIN.orderPool,
+        cartPool: cleanCartPool.length > 0 ? cleanCartPool : INITIAL_ROUND_ROBIN.cartPool,
+        assignOrdersToMeAdmin: false,
+        assignCartsToMeAdmin: false
+      };
     } catch {
       return INITIAL_ROUND_ROBIN;
     }
@@ -737,26 +753,91 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [settings, users, products, agents, agentStock, distributorStock, orders, abandonedCarts, stockMovements, salesTeams, expenses, remittances, customers, roundRobin, chatMessages, notifications, formConfig, orderForms]);
 
-  // Round-Robin Assignment helper
+  // Synchronize round-robin pool to ensure ONLY Sales Representatives are members
+  useEffect(() => {
+    const salesReps = users.filter(u => u.role === 'Sales Representative');
+    const salesRepIds = new Set(salesReps.map(u => u.id));
+
+    setRoundRobin(prev => {
+      let changed = false;
+      const filteredOrderPool = prev.orderPool.filter(r => salesRepIds.has(r.repId));
+      const filteredCartPool = prev.cartPool.filter(r => salesRepIds.has(r.repId));
+
+      if (filteredOrderPool.length !== prev.orderPool.length || filteredCartPool.length !== prev.cartPool.length) {
+        changed = true;
+      }
+
+      salesReps.forEach(rep => {
+        if (!filteredOrderPool.some(r => r.repId === rep.id)) {
+          filteredOrderPool.push({
+            repId: rep.id,
+            repName: rep.name,
+            weight: 1,
+            isAvailable: rep.status === 'Active',
+            isIncluded: true,
+            assignedOrderCount: 0
+          });
+          changed = true;
+        }
+        if (!filteredCartPool.some(r => r.repId === rep.id)) {
+          filteredCartPool.push({
+            repId: rep.id,
+            repName: rep.name,
+            weight: 1,
+            isAvailable: rep.status === 'Active',
+            isIncluded: true,
+            assignedOrderCount: 0
+          });
+          changed = true;
+        }
+      });
+
+      if (!changed && !prev.assignOrdersToMeAdmin && !prev.assignCartsToMeAdmin) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        orderPool: filteredOrderPool,
+        cartPool: filteredCartPool,
+        assignOrdersToMeAdmin: false,
+        assignCartsToMeAdmin: false
+      };
+    });
+  }, [users]);
+
+  // Round-Robin Assignment helper - strictly restricted to active Sales Representatives only
   const getNextAssignedRep = (poolType: 'order' | 'cart', customerPhone?: string): { repId: string; repName: string } => {
-    // 1. Returning customer check
+    // Only users with role === 'Sales Representative' and status === 'Active'
+    const activeSalesReps = users.filter(u => u.role === 'Sales Representative' && u.status === 'Active');
+    const allSalesReps = users.filter(u => u.role === 'Sales Representative');
+    const defaultSalesFallback = activeSalesReps[0] || allSalesReps[0];
+
+    // 1. Returning customer check: ONLY route to previous rep if that rep is strictly a Sales Representative and Active
     if (customerPhone && roundRobin.routeReturningCustomersToPreviousRep) {
       const prevOrder = orders.find(o => o.customerPhone === customerPhone && o.salesRepId);
       if (prevOrder && prevOrder.salesRepId) {
-        const eligibleRep = users.find(u => u.id === prevOrder.salesRepId && u.status === 'Active');
+        const eligibleRep = users.find(u => u.id === prevOrder.salesRepId && u.role === 'Sales Representative' && u.status === 'Active');
         if (eligibleRep) {
           return { repId: eligibleRep.id, repName: eligibleRep.name };
         }
       }
     }
 
-    // 2. Pool selection
-    const pool = poolType === 'order' ? [...roundRobin.orderPool] : [...roundRobin.cartPool];
-    const eligibleReps = pool.filter(r => r.isIncluded && r.isAvailable);
+    // 2. Pool selection: filter strictly to genuine active Sales Representatives
+    const rawPool = poolType === 'order' ? [...roundRobin.orderPool] : [...roundRobin.cartPool];
+    const eligibleReps = rawPool.filter(r => {
+      if (!r.isIncluded || !r.isAvailable) return false;
+      const user = users.find(u => u.id === r.repId);
+      return user && user.role === 'Sales Representative' && user.status === 'Active';
+    });
 
     if (eligibleReps.length === 0) {
-      // Fallback to current user or first admin
-      return { repId: users[0].id, repName: users[0].name };
+      // Fallback MUST ONLY be a Sales Representative, NEVER Admin, Manager, or Owner
+      if (defaultSalesFallback) {
+        return { repId: defaultSalesFallback.id, repName: defaultSalesFallback.name };
+      }
+      return { repId: '', repName: 'Unassigned Sales Rep' };
     }
 
     // Weighted index selection
@@ -1621,6 +1702,7 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateUser = (id: string, updates: Partial<User>) => {
     setUsers(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u));
+    setCurrentUser(prev => (prev && prev.id === id ? { ...prev, ...updates } : prev));
   };
 
   const deleteUser = (id: string) => {
@@ -2032,11 +2114,22 @@ export const CrmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setPayrollRuns(prev => prev.map(p => p.id === payrollId ? { ...p, status: 'Paid' } : p));
   };
 
+  const logout = () => {
+    setPersona('marketing');
+    setIsMobileSidebarOpen(false);
+    addNotification({
+      title: 'Signed Out',
+      message: 'You have been successfully logged out of your session.',
+      type: 'info'
+    });
+  };
+
   return (
     <CrmContext.Provider
       value={{
         persona,
         setPersona,
+        logout,
         adminActiveTab,
         setAdminActiveTab,
         repActiveTab,

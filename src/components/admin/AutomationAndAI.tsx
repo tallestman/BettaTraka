@@ -35,13 +35,15 @@ export const RoundRobinView: React.FC = () => {
     skipRoundRobinRep, 
     resetRoundRobinSequence, 
     updateSettings, 
-    settings 
+    settings,
+    users
   } = useCrm();
 
   const [poolType, setPoolType] = useState<'order' | 'cart'>('order');
-  const pool = poolType === 'order' ? roundRobin.orderPool : roundRobin.cartPool;
+  const salesRepUserIds = new Set(users.filter(u => u.role === 'Sales Representative').map(u => u.id));
+  const pool = (poolType === 'order' ? roundRobin.orderPool : roundRobin.cartPool).filter(r => salesRepUserIds.has(r.repId));
   const nextIndex = poolType === 'order' ? roundRobin.nextRepIndexOrder : roundRobin.nextRepIndexCart;
-  const nextRep = pool[nextIndex % pool.length];
+  const nextRep = pool[nextIndex % Math.max(1, pool.length)];
 
   return (
     <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto">
@@ -52,7 +54,7 @@ export const RoundRobinView: React.FC = () => {
             Automated Round-Robin Rotation
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Fair weighted lead distribution with separate pools for incoming orders and abandoned cart recoveries.
+            Fair weighted lead distribution strictly restricted to verified Sales Representatives.
           </p>
         </div>
 
@@ -88,8 +90,8 @@ export const RoundRobinView: React.FC = () => {
             {nextRep ? nextRep.repName.charAt(0) : '?'}
           </div>
           <div>
-            <p className="text-xs text-emerald-400 font-mono font-medium">NEXT AGENT IN LINE</p>
-            <p className="text-base font-bold text-white">{nextRep ? nextRep.repName : 'None Available'}</p>
+            <p className="text-xs text-emerald-400 font-mono font-medium">NEXT SALES REP IN LINE</p>
+            <p className="text-base font-bold text-white">{nextRep ? nextRep.repName : 'No Active Sales Reps'}</p>
           </div>
         </div>
 
@@ -127,18 +129,18 @@ export const RoundRobinView: React.FC = () => {
             />
           </label>
 
-          <label className="flex items-center justify-between p-3 rounded-lg bg-slate-950/60 border border-slate-800/80 cursor-pointer">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-950/20 border border-emerald-800/40">
             <div>
-              <p className="font-medium text-white">Include Admin in Rotation</p>
-              <p className="text-[11px] text-slate-400">Admin account also receives active customer orders</p>
+              <p className="font-medium text-emerald-400 flex items-center gap-1.5">
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Strict Sales Reps Only Policy</span>
+              </p>
+              <p className="text-[11px] text-slate-400">Round Robin orders are strictly restricted to active Sales Representatives only</p>
             </div>
-            <input
-              type="checkbox"
-              checked={roundRobin.assignOrdersToMeAdmin}
-              onChange={(e) => updateSettings({ name: settings.name })}
-              className="accent-emerald-500 w-4 h-4 rounded cursor-pointer"
-            />
-          </label>
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+              ENFORCED
+            </span>
+          </div>
         </div>
       </div>
 

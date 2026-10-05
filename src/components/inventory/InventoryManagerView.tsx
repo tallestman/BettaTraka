@@ -55,6 +55,7 @@ export const InventoryManagerView: React.FC = () => {
     distributorStock,
     assignStockToDistributor,
     returnStockFromDistributor,
+    assignOrderDistributor,
     stockMovements, 
     currency,
     assignStockToAgent,
@@ -64,20 +65,24 @@ export const InventoryManagerView: React.FC = () => {
     transferStockAgentToAgent,
     orders,
     setPersona,
+    logout,
     addNotification,
     isSidebarCollapsed,
     toggleSidebarCollapse,
     isMobileSidebarOpen,
     setIsMobileSidebarOpen,
-    toggleMobileSidebar
+    toggleMobileSidebar,
+    themeMode
   } = useCrm();
+
+  const isLight = themeMode === 'light';
 
   // Tab navigation
   const [invTab, setInvTab] = useState<'inventory' | 'agent-stock' | 'distributor-stock' | 'scheduled-dispatch' | 'reorder-triggers' | 'movements'>('inventory');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [orderToSchedule, setOrderToSchedule] = useState<Order | null>(null);
-  const [dispatchFilter, setDispatchFilter] = useState<'all' | 'today' | 'tomorrow' | 'scheduled' | 'needs_schedule'>('all');
+  const [dispatchFilter, setDispatchFilter] = useState<'all' | 'today' | 'tomorrow' | 'scheduled' | 'needs_schedule' | 'distributor_orders'>('all');
   const [dispatchSearch, setDispatchSearch] = useState('');
 
   // Agent Hub Stock View Switcher
@@ -147,14 +152,7 @@ export const InventoryManagerView: React.FC = () => {
 
   const handleLogout = () => {
     setShowLogoutConfirm(false);
-    setPersona('marketing');
-    if (addNotification) {
-      addNotification({
-        title: 'Signed Out',
-        message: 'You have been logged out of your session.',
-        type: 'info'
-      });
-    }
+    logout();
   };
 
   // Categories
@@ -446,18 +444,20 @@ export const InventoryManagerView: React.FC = () => {
     { id: 'distributor-stock', label: 'Distributor Hub Stock', icon: Boxes, badge: `${distributors.length} Hubs` },
     { 
       id: 'scheduled-dispatch', 
-      label: 'Scheduled Deliveries & Dispatch', 
+      label: 'Scheduled Dispatch', 
       icon: CalendarClock, 
       badge: orders.filter(o => o.status === 'SCHEDULED' || o.scheduledDate).length 
     },
     { id: 'reorder-triggers', label: 'Reorder Triggers & Advisory', icon: AlertTriangle, alertBadge: reorderAlerts.length },
-    { id: 'movements', label: 'Stock Movement Audit', icon: FileSpreadsheet, badge: stockMovements.length }
+    { id: 'movements', label: 'Stock Movement Audit', icon: FileSpreadsheet, badge: stockMovements.length },
+    { id: 'log-out', label: 'Log Out', icon: LogOut, isLogOut: true }
   ];
 
   // Render Expanded Inventory Sidebar
   const renderExpandedContent = (isMobile = false) => (
     <div className="w-full flex-shrink-0 bg-[#090d16] border-r border-slate-800/80 flex flex-col h-full select-none justify-between p-3">
-      <div className="space-y-1">
+      {/* Scrollable middle container */}
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-0.5 custom-scrollbar">
         {/* Header Card & Collapse Button */}
         <div className="pb-3 border-b border-slate-800 mb-2">
           <div className="flex items-center justify-between">
@@ -552,11 +552,17 @@ export const InventoryManagerView: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => {
-                  setInvTab(item.id as any);
+                  if (item.isLogOut) {
+                    setShowLogoutConfirm(true);
+                  } else {
+                    setInvTab(item.id as any);
+                  }
                   if (isMobile) setIsMobileSidebarOpen(false);
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-                  isActive 
+                  item.isLogOut
+                    ? 'text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 mt-2 border border-rose-500/20'
+                    : isActive 
                     ? 'bg-lime-500 text-black font-extrabold shadow-sm' 
                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
                 }`}
@@ -580,8 +586,8 @@ export const InventoryManagerView: React.FC = () => {
         </div>
       </div>
 
-      {/* Bottom Inventory Metrics & Log Out */}
-      <div className="pt-3 border-t border-slate-800 space-y-2 mt-4">
+      {/* Bottom Inventory Metrics */}
+      <div className="pt-3 border-t border-slate-800 space-y-2 mt-2">
         <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5 text-[11px]">
           <div className="flex justify-between text-slate-400">
             <span>Warehouse Reserve:</span>
@@ -596,15 +602,6 @@ export const InventoryManagerView: React.FC = () => {
             <span className="font-mono text-lime-400 font-bold">{totalInventoryUnits.toLocaleString()} units</span>
           </div>
         </div>
-
-        <button
-          type="button"
-          onClick={() => setShowLogoutConfirm(true)}
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/30 text-xs font-semibold transition cursor-pointer"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          <span>Log Out</span>
-        </button>
       </div>
     </div>
   );
@@ -662,23 +659,13 @@ export const InventoryManagerView: React.FC = () => {
           })}
         </div>
       </div>
-
-      {/* Mini Logout at Bottom */}
-      <div className="pt-2 border-t border-slate-800/80 w-full flex flex-col items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setShowLogoutConfirm(true)}
-          className="p-2 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 transition cursor-pointer"
-          title="Log Out"
-        >
-          <LogOut className="w-4 h-4" />
-        </button>
-      </div>
     </div>
   );
 
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-3.5rem)] bg-slate-950 text-slate-100 overflow-hidden">
+    <div className={`flex flex-col md:flex-row h-[calc(100vh-3.5rem)] select-none overflow-hidden ${
+      isLight ? 'bg-[#f8fafc] text-slate-900' : 'bg-slate-950 text-slate-100'
+    }`}>
       
       {/* 1. Mobile Drawer (Overlay when opened on small devices) */}
       {isMobileSidebarOpen && (
@@ -695,38 +682,62 @@ export const InventoryManagerView: React.FC = () => {
 
       {/* 2. Desktop Persistent Sidebar (Collapsible to 68px) */}
       <aside 
-        className={`hidden md:flex flex-shrink-0 bg-slate-900 border-r border-slate-800 flex-col h-full select-none transition-all duration-300 ease-in-out ${
-          isSidebarCollapsed ? 'w-[68px]' : 'w-64'
-        }`}
+        className={`hidden md:flex flex-shrink-0 border-r flex-col h-full select-none transition-all duration-300 ease-in-out ${
+          isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-slate-800'
+        } ${isSidebarCollapsed ? 'w-[68px]' : 'w-64'}`}
       >
         {isSidebarCollapsed ? renderCollapsedContent() : renderExpandedContent(false)}
       </aside>
 
-      {/* 3. Mobile Top Bar for Inventory (Visible only on mobile devices) */}
-      <div className="md:hidden flex items-center justify-between p-3 border-b border-slate-800 bg-[#090d16] shrink-0">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={toggleMobileSidebar}
-            className="p-1.5 rounded-lg border border-slate-800 text-lime-400 hover:bg-slate-900 transition cursor-pointer"
-            aria-label="Open Inventory Navigation"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <span className="text-xs font-bold text-white">
-            Inventory: {invNavItems.find(i => i.id === invTab)?.label}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-lime-400 animate-pulse" />
-          <span className="text-[10px] text-lime-400 font-mono font-bold">
-            {totalInventoryUnits.toLocaleString()} units
-          </span>
-        </div>
-      </div>
+      {/* Main Content Area with Persistent Header Section */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Consistent Inventory Header Section */}
+        <header className={`h-14 border-b px-3 sm:px-6 flex items-center justify-between shrink-0 z-20 ${
+          isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#090d16] border-slate-800'
+        }`}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <button
+              type="button"
+              onClick={toggleMobileSidebar}
+              className="md:hidden p-1.5 rounded-lg border border-slate-800 text-lime-400 hover:bg-slate-900 transition cursor-pointer shrink-0"
+              aria-label="Open Inventory Navigation"
+              title="Open Navigation"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold uppercase tracking-wider bg-lime-950 text-lime-400 border border-lime-800/60 shrink-0">
+                Inventory Hub
+              </span>
+              <span className="text-slate-600 hidden sm:inline">•</span>
+              <span className="text-xs sm:text-sm font-bold text-white truncate">
+                {invNavItems.find(i => i.id === invTab)?.label}
+              </span>
+            </div>
+          </div>
 
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
+          {/* Right Header: Stock Metrics & Log Out Button */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[11px] font-mono">
+              <span className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse hidden xs:inline-block" />
+              <span className="text-slate-400 hidden sm:inline">Total Stock:</span>
+              <span className="font-bold text-lime-400">{totalInventoryUnits.toLocaleString()} <span className="hidden xs:inline">units</span></span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowLogoutConfirm(true)}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/30 hover:border-rose-500/50 text-xs font-semibold transition cursor-pointer"
+              title="Log Out of Inventory Session"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Log Out</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
         
         {/* ==================================================================== */}
         {/* TAB 1: Central Warehouse Inventory */}
@@ -1732,7 +1743,8 @@ export const InventoryManagerView: React.FC = () => {
                 { id: 'today', label: 'Today (Oct 01)' },
                 { id: 'tomorrow', label: 'Tomorrow (Oct 02)' },
                 { id: 'scheduled', label: 'All Scheduled' },
-                { id: 'needs_schedule', label: 'Needs Delivery Date' }
+                { id: 'needs_schedule', label: 'Needs Delivery Date' },
+                { id: 'distributor_orders', label: 'Distributor Hub Orders' }
               ].map(f => (
                 <button
                   key={f.id}
@@ -1761,7 +1773,7 @@ export const InventoryManagerView: React.FC = () => {
                       <th className="py-3 px-4">Items Required</th>
                       <th className="py-3 px-4">Status</th>
                       <th className="py-3 px-4">Committed Delivery Date</th>
-                      <th className="py-3 px-4">Assigned Agent / Hub</th>
+                      <th className="py-3 px-4">Assigned Distributor Hub</th>
                       <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -1780,6 +1792,9 @@ export const InventoryManagerView: React.FC = () => {
                         }
                         if (dispatchFilter === 'needs_schedule') {
                           return (o.status === 'CONFIRMED' || o.status === 'NEW') && !o.scheduledDate;
+                        }
+                        if (dispatchFilter === 'distributor_orders') {
+                          return !!o.distributorId;
                         }
                         return true;
                       })
@@ -1832,13 +1847,28 @@ export const InventoryManagerView: React.FC = () => {
                               </span>
                             )}
                           </td>
-                          <td className="py-3 px-4 text-slate-300">
-                            {o.agentName ? (
-                              <span className="font-medium text-white">{o.agentName}</span>
-                            ) : o.distributorName ? (
-                              <span className="text-lime-400 font-mono text-[11px]">Hub: {o.distributorName}</span>
-                            ) : (
-                              <span className="text-slate-500 italic">Unassigned</span>
+                          <td className="py-3 px-4">
+                            <select
+                              value={o.distributorId || ''}
+                              onChange={(e) => assignOrderDistributor(o.id, e.target.value)}
+                              className={`px-2.5 py-1.5 rounded-lg border text-xs font-mono cursor-pointer focus:outline-none transition ${
+                                o.distributorId
+                                  ? 'bg-lime-950/80 border-lime-500/60 text-lime-400 font-bold'
+                                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                              }`}
+                              title="Assign order to Regional Distributor Hub"
+                            >
+                              <option value="">Central Warehouse Direct</option>
+                              {distributors.map(d => (
+                                <option key={d.id} value={d.id}>
+                                  {d.name.split(' ')[0]} Hub
+                                </option>
+                              ))}
+                            </select>
+                            {o.agentName && (
+                              <span className="text-[10px] text-slate-400 font-mono block mt-0.5">
+                                Agent: {o.agentName}
+                              </span>
                             )}
                           </td>
                           <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
@@ -1862,6 +1892,7 @@ export const InventoryManagerView: React.FC = () => {
         )}
 
       </main>
+      </div>
 
       {/* ==================================================================== */}
       {/* MODAL 1: ADD WAREHOUSE STOCK (RESTOCK INFLOW) */}
@@ -2836,3 +2867,5 @@ export const InventoryManagerView: React.FC = () => {
     </div>
   );
 };
+
+export const InventoryDashboardView = InventoryManagerView;

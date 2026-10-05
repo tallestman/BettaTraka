@@ -55,8 +55,11 @@ export const InventoryView: React.FC = () => {
     setCurrency,
     orders,
     createOrderForm,
-    setSelectedFormId
+    setSelectedFormId,
+    themeMode
   } = useCrm();
+
+  const isLight = themeMode === 'light';
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -393,13 +396,17 @@ export const InventoryView: React.FC = () => {
   };
 
   return (
-    <div className="p-3 sm:p-5 lg:p-8 space-y-6 max-w-[1440px] mx-auto text-slate-100 animate-in fade-in">
-      {/* 1. HEADER (BettaTraka Style: Sky Blue Title + Description) */}
+    <div className={`p-3 sm:p-5 lg:p-8 space-y-6 max-w-[1440px] mx-auto animate-in fade-in ${
+      isLight ? 'text-slate-900' : 'text-slate-100'
+    }`}>
+      {/* 1. HEADER (BettaTraka Style: Title + Description) */}
       <div className="space-y-1 pb-1">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#38bdf8]">
+        <h1 className={`text-xl sm:text-2xl font-bold tracking-tight ${
+          isLight ? 'text-slate-900' : 'text-white'
+        }`}>
           Inventory Dashboard
         </h1>
-        <p className="text-xs text-slate-400">
+        <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
           Centralized management for global balance and localized agent distribution.
         </p>
       </div>
@@ -413,31 +420,43 @@ export const InventoryView: React.FC = () => {
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
-              className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 text-white text-xs font-medium rounded-xl pl-3 pr-8 py-2 appearance-none focus:outline-none focus:border-sky-500 cursor-pointer shadow-sm"
+              className={`w-full sm:w-auto text-xs font-medium rounded-xl pl-3 pr-8 py-2 appearance-none focus:outline-none focus:border-emerald-500 cursor-pointer shadow-xs border ${
+                isLight 
+                  ? 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50' 
+                  : 'bg-slate-900 border-slate-800 text-white'
+              }`}
             >
               {currencyOptions.map((opt) => (
-                <option key={opt.code} value={opt.code} className="bg-neutral-950 text-white">
+                <option key={opt.code} value={opt.code} className={isLight ? 'bg-white text-slate-900' : 'bg-slate-950 text-white'}>
                   {opt.symbol} {opt.label}
                 </option>
               ))}
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-3 pointer-events-none" />
+            <ChevronDown className={`w-3.5 h-3.5 absolute right-2.5 top-3 pointer-events-none ${
+              isLight ? 'text-slate-500' : 'text-slate-400'
+            }`} />
           </div>
 
           {/* Search Bar */}
           <div className="relative flex-1">
-            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5 pointer-events-none" />
+            <Search className={`w-3.5 h-3.5 absolute left-3 top-2.5 pointer-events-none ${
+              isLight ? 'text-slate-400' : 'text-slate-500'
+            }`} />
             <input
               type="text"
               placeholder="Search SKU or Product..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl pl-8 pr-7 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 transition"
+              className={`w-full rounded-xl pl-8 pr-7 py-2 text-xs focus:outline-none transition border ${
+                isLight 
+                  ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-emerald-500' 
+                  : 'bg-slate-900 border-slate-800 text-white placeholder-slate-500 focus:border-emerald-500'
+              }`}
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-2.5 text-slate-500 hover:text-white"
+                className={`absolute right-2.5 top-2.5 ${isLight ? 'text-slate-400 hover:text-slate-700' : 'text-slate-500 hover:text-white'}`}
                 title="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
@@ -446,7 +465,7 @@ export const InventoryView: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Side: + Add Stock, + Add Product, Triggers, Stock History, Update Stock */}
+        {/* Right Side: + Add Stock, + Assign to Distributor, + Add Product, Triggers, Stock History, Update Stock */}
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* + Add Stock (Emerald) */}
           <button
@@ -468,17 +487,21 @@ export const InventoryView: React.FC = () => {
               setDistributorUnits(50);
               setShowAssignDistributorModal(true);
             }}
-            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-lime-600 hover:bg-lime-500 text-black font-extrabold text-xs shadow transition active:scale-95 cursor-pointer whitespace-nowrap flex-1 sm:flex-initial"
+            className={`flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap flex-1 sm:flex-initial border ${
+              isLight 
+                ? 'bg-lime-50 hover:bg-lime-100 text-lime-900 border-lime-300' 
+                : 'bg-lime-600 hover:bg-lime-500 text-black border-lime-500'
+            }`}
             title="Allocate Central Warehouse stock to Regional Distributor Hub"
           >
             <Warehouse className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Assign to Distributor</span>
           </button>
 
-          {/* + Add Product (Bright Sky Blue) */}
+          {/* + Add Product */}
           <button
             onClick={handleOpenAddModal}
-            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0088ff] hover:bg-[#0077ee] text-white text-xs font-semibold shadow transition active:scale-95 cursor-pointer whitespace-nowrap flex-1 sm:flex-initial"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap flex-1 sm:flex-initial"
           >
             <Package className="w-3.5 h-3.5" />
             <span>Add Product</span>
@@ -496,16 +519,24 @@ export const InventoryView: React.FC = () => {
                 setTriggerSafetyStock(target.safetyStock || 50);
               }
             }}
-            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-700/80 text-amber-300 hover:text-amber-200 text-xs font-medium transition cursor-pointer whitespace-nowrap flex-1 sm:flex-initial"
+            className={`flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium transition cursor-pointer whitespace-nowrap flex-1 sm:flex-initial border ${
+              isLight 
+                ? 'bg-white hover:bg-slate-50 border-slate-300 text-amber-800' 
+                : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-amber-300 hover:text-amber-200'
+            }`}
           >
-            <Sliders className="w-3.5 h-3.5 text-amber-400" />
+            <Sliders className="w-3.5 h-3.5 text-amber-500" />
             <span>Reorder Triggers</span>
           </button>
 
           {/* Stock History */}
           <button
             onClick={() => setShowStockHistoryModal(true)}
-            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-700/80 text-slate-200 hover:text-white text-xs font-medium transition cursor-pointer whitespace-nowrap flex-1 sm:flex-initial"
+            className={`flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium transition cursor-pointer whitespace-nowrap flex-1 sm:flex-initial border ${
+              isLight 
+                ? 'bg-white hover:bg-slate-50 border-slate-300 text-slate-700' 
+                : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-200 hover:text-white'
+            }`}
           >
             <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
             <span>Stock History</span>
@@ -514,7 +545,11 @@ export const InventoryView: React.FC = () => {
           {/* Update Stock / Allocation */}
           <button
             onClick={() => setShowUpdateStockModal(true)}
-            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-700/80 text-slate-200 hover:text-white text-xs font-medium transition cursor-pointer whitespace-nowrap flex-1 sm:flex-initial"
+            className={`flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium transition cursor-pointer whitespace-nowrap flex-1 sm:flex-initial border ${
+              isLight 
+                ? 'bg-white hover:bg-slate-50 border-slate-300 text-slate-700' 
+                : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-200 hover:text-white'
+            }`}
           >
             <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
             <span>Update Stock</span>
@@ -525,54 +560,78 @@ export const InventoryView: React.FC = () => {
       {/* 3. FOUR STATS CARDS (BettaTraka KPI Cards - Zero Overlap & Responsive) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 sm:gap-4">
         {/* Card 1: Total Inventory Value */}
-        <div className="rounded-2xl border border-neutral-800/90 bg-[#090d14]/90 p-4 sm:p-5 space-y-2 transition hover:border-neutral-700 min-w-0 overflow-hidden shadow-sm">
+        <div className={`rounded-2xl border p-4 sm:p-5 space-y-2 transition min-w-0 overflow-hidden shadow-xs ${
+          isLight 
+            ? 'bg-white border-slate-200 text-slate-900' 
+            : 'border-slate-800 bg-[#090d16] text-white hover:border-slate-700'
+        }`}>
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-slate-400 truncate">Total Inventory Value</p>
-            <DollarSign className="w-4 h-4 text-emerald-400 opacity-80 flex-shrink-0" />
+            <p className={`text-xs font-medium truncate ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Total Inventory Value</p>
+            <DollarSign className="w-4 h-4 text-emerald-500 opacity-80 flex-shrink-0" />
           </div>
           <p 
-            className="text-xl sm:text-2xl font-bold font-mono text-white tracking-tight truncate"
+            className={`text-xl sm:text-2xl font-bold font-mono tracking-tight truncate ${
+              isLight ? 'text-slate-900' : 'text-white'
+            }`}
             title={`${currentCurrencyOpt.symbol}${totalInventoryValueConverted.toLocaleString()}`}
           >
             {currentCurrencyOpt.symbol}{totalInventoryValueConverted.toLocaleString()}
           </p>
-          <p className="text-[11px] text-slate-500 truncate">Warehouse + Agent stock</p>
+          <p className={`text-[11px] truncate ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>Warehouse + Agent stock</p>
         </div>
 
         {/* Card 2: Total Units in Stock */}
-        <div className="rounded-2xl border border-neutral-800/90 bg-[#090d14]/90 p-4 sm:p-5 space-y-2 transition hover:border-neutral-700 min-w-0 overflow-hidden shadow-sm">
+        <div className={`rounded-2xl border p-4 sm:p-5 space-y-2 transition min-w-0 overflow-hidden shadow-xs ${
+          isLight 
+            ? 'bg-white border-slate-200 text-slate-900' 
+            : 'border-slate-800 bg-[#090d16] text-white hover:border-slate-700'
+        }`}>
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-slate-400 truncate">Total Units in Stock</p>
-            <Box className="w-4 h-4 text-sky-400 opacity-80 flex-shrink-0" />
+            <p className={`text-xs font-medium truncate ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Total Units in Stock</p>
+            <Box className="w-4 h-4 text-sky-500 opacity-80 flex-shrink-0" />
           </div>
-          <p className="text-xl sm:text-2xl font-bold font-mono text-white tracking-tight truncate">
+          <p className={`text-xl sm:text-2xl font-bold font-mono tracking-tight truncate ${
+            isLight ? 'text-slate-900' : 'text-white'
+          }`}>
             {totalUnits.toLocaleString()}
           </p>
-          <p className="text-[11px] text-slate-500 truncate">Warehouse + Agent stock</p>
+          <p className={`text-[11px] truncate ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>Warehouse + Agent stock</p>
         </div>
 
         {/* Card 3: Active Agents */}
-        <div className="rounded-2xl border border-neutral-800/90 bg-[#090d14]/90 p-4 sm:p-5 space-y-2 transition hover:border-neutral-700 min-w-0 overflow-hidden shadow-sm">
+        <div className={`rounded-2xl border p-4 sm:p-5 space-y-2 transition min-w-0 overflow-hidden shadow-xs ${
+          isLight 
+            ? 'bg-white border-slate-200 text-slate-900' 
+            : 'border-slate-800 bg-[#090d16] text-white hover:border-slate-700'
+        }`}>
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-slate-400 truncate">Active Agents</p>
-            <Users className="w-4 h-4 text-cyan-400 opacity-80 flex-shrink-0" />
+            <p className={`text-xs font-medium truncate ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Active Agents</p>
+            <Users className="w-4 h-4 text-cyan-500 opacity-80 flex-shrink-0" />
           </div>
-          <p className="text-xl sm:text-2xl font-bold font-mono text-white tracking-tight truncate">
+          <p className={`text-xl sm:text-2xl font-bold font-mono tracking-tight truncate ${
+            isLight ? 'text-slate-900' : 'text-white'
+          }`}>
             {activeAgentsCount}
           </p>
-          <p className="text-[11px] text-slate-500 truncate">Currently active</p>
+          <p className={`text-[11px] truncate ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>Currently active</p>
         </div>
 
         {/* Card 4: Distribution Rate */}
-        <div className="rounded-2xl border border-neutral-800/90 bg-[#090d14]/90 p-4 sm:p-5 space-y-2 transition hover:border-neutral-700 min-w-0 overflow-hidden shadow-sm">
+        <div className={`rounded-2xl border p-4 sm:p-5 space-y-2 transition min-w-0 overflow-hidden shadow-xs ${
+          isLight 
+            ? 'bg-white border-slate-200 text-slate-900' 
+            : 'border-slate-800 bg-[#090d16] text-white hover:border-slate-700'
+        }`}>
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-slate-400 truncate">Distribution Rate</p>
-            <TrendingUp className="w-4 h-4 text-amber-400 opacity-80 flex-shrink-0" />
+            <p className={`text-xs font-medium truncate ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Distribution Rate</p>
+            <TrendingUp className="w-4 h-4 text-amber-500 opacity-80 flex-shrink-0" />
           </div>
-          <p className="text-xl sm:text-2xl font-bold font-mono text-white tracking-tight truncate">
+          <p className={`text-xl sm:text-2xl font-bold font-mono tracking-tight truncate ${
+            isLight ? 'text-slate-900' : 'text-white'
+          }`}>
             {distributionRate}%
           </p>
-          <p className="text-[11px] text-slate-500 truncate">Of inventory with agents</p>
+          <p className={`text-[11px] truncate ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>Of inventory with agents</p>
         </div>
       </div>
 
@@ -580,12 +639,16 @@ export const InventoryView: React.FC = () => {
       <div className="space-y-3 pt-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Box className="w-4 h-4 text-sky-400 flex-shrink-0" />
-            <h2 className="font-bold text-white text-sm">Global Inventory</h2>
+            <Box className={`w-4 h-4 flex-shrink-0 ${isLight ? 'text-sky-600' : 'text-sky-400'}`} />
+            <h2 className={`font-bold text-sm ${isLight ? 'text-slate-900' : 'text-white'}`}>Global Inventory</h2>
           </div>
           <button
             onClick={handleExportCsv}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-neutral-800 bg-neutral-900/80 hover:bg-neutral-800 text-slate-300 hover:text-white text-xs transition cursor-pointer"
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs transition cursor-pointer shadow-xs ${
+              isLight 
+                ? 'border-slate-300 bg-white hover:bg-slate-50 text-slate-700' 
+                : 'border-slate-800 bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white'
+            }`}
             title="Export CSV"
           >
             <Download className="w-3.5 h-3.5" />
@@ -593,11 +656,15 @@ export const InventoryView: React.FC = () => {
           </button>
         </div>
 
-        <div className="rounded-2xl border border-neutral-800/90 bg-[#090d14]/90 overflow-hidden shadow-lg">
+        <div className={`rounded-2xl border overflow-hidden shadow-xs ${
+          isLight ? 'bg-white border-slate-200' : 'border-slate-800 bg-[#090d16]'
+        }`}>
           <div className="overflow-x-auto scrollbar-thin">
             <table className="w-full min-w-[1100px] text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-neutral-800/80 bg-black/40 text-slate-300 text-[11px] font-semibold">
+                <tr className={`border-b text-[11px] font-semibold ${
+                  isLight ? 'border-slate-200 bg-slate-50 text-slate-700' : 'border-slate-800 bg-slate-950/80 text-slate-300'
+                }`}>
                   <th className="py-3.5 px-4 w-[260px] min-w-[240px]">Product Details</th>
                   <th className="py-3.5 px-4 w-[120px] min-w-[100px] whitespace-nowrap">SKU</th>
                   <th className="py-3.5 px-4 w-[110px] min-w-[100px] whitespace-nowrap">Unit Cost</th>
@@ -608,7 +675,7 @@ export const InventoryView: React.FC = () => {
                   <th className="py-3.5 px-4 w-[320px] min-w-[310px] text-right whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-800/60">
+              <tbody className={`divide-y ${isLight ? 'divide-slate-200' : 'divide-slate-800/60'}`}>
                 {filteredProducts.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="py-12 text-center text-slate-500 text-xs">
@@ -633,18 +700,22 @@ export const InventoryView: React.FC = () => {
                     const sellingPriceConverted = convertAmount(p.sellingPrice, currency);
 
                     return (
-                      <tr key={p.id} className="hover:bg-neutral-900/50 transition-colors group">
+                      <tr key={p.id} className={`transition-colors group ${
+                        isLight ? 'hover:bg-slate-50/80' : 'hover:bg-slate-900/50'
+                      }`}>
                         {/* Product Details */}
                         <td className="py-3.5 px-4 w-[260px] min-w-[240px]">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-center text-slate-400 flex-shrink-0">
+                            <div className={`w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0 ${
+                              isLight ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-slate-900 border-slate-800 text-slate-400'
+                            }`}>
                               <Box className="w-4 h-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="font-bold text-white text-xs truncate" title={p.name}>
+                              <p className={`font-bold text-xs truncate ${isLight ? 'text-slate-900' : 'text-white'}`} title={p.name}>
                                 {p.name}
                               </p>
-                              <p className="text-[10px] text-slate-500 truncate" title={p.description || p.category}>
+                              <p className={`text-[10px] truncate ${isLight ? 'text-slate-500' : 'text-slate-400'}`} title={p.description || p.category}>
                                 {p.description || p.category}
                               </p>
                             </div>
@@ -652,33 +723,33 @@ export const InventoryView: React.FC = () => {
                         </td>
 
                         {/* SKU */}
-                        <td className="py-3.5 px-4 font-mono text-slate-300 text-xs whitespace-nowrap">
+                        <td className={`py-3.5 px-4 font-mono text-xs whitespace-nowrap ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                           {p.sku}
                         </td>
 
                         {/* Unit Cost */}
-                        <td className="py-3.5 px-4 font-mono font-medium text-white text-xs whitespace-nowrap">
+                        <td className={`py-3.5 px-4 font-mono font-medium text-xs whitespace-nowrap ${isLight ? 'text-slate-900' : 'text-white'}`}>
                           {currentCurrencyOpt.symbol}{unitCostConverted.toLocaleString()}
                         </td>
 
                         {/* Selling Price */}
-                        <td className="py-3.5 px-4 font-mono font-medium text-emerald-400 font-bold text-xs whitespace-nowrap">
+                        <td className="py-3.5 px-4 font-mono font-bold text-emerald-500 text-xs whitespace-nowrap">
                           {currentCurrencyOpt.symbol}{sellingPriceConverted.toLocaleString()}
                         </td>
 
                         {/* Global Balance */}
-                        <td className="py-3.5 px-4 font-mono font-bold text-white text-center text-xs whitespace-nowrap">
+                        <td className={`py-3.5 px-4 font-mono font-bold text-center text-xs whitespace-nowrap ${isLight ? 'text-slate-900' : 'text-white'}`}>
                           {globalBal}
                         </td>
 
                         {/* Agent Balance */}
-                        <td className="py-3.5 px-4 font-mono text-slate-300 text-center text-xs whitespace-nowrap">
+                        <td className={`py-3.5 px-4 font-mono text-center text-xs whitespace-nowrap ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                           {agentUnitsForProd}
                         </td>
 
                         {/* Units Sold */}
                         <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                          <p className="font-mono font-bold text-white text-xs">{soldCount}</p>
+                          <p className={`font-mono font-bold text-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>{soldCount}</p>
                           <p className="text-[10px] text-slate-500">units</p>
                         </td>
 
@@ -707,7 +778,11 @@ export const InventoryView: React.FC = () => {
                                 setTriggerLeadTime(p.leadTimeDays || 14);
                                 setTriggerSafetyStock(p.safetyStock || 50);
                               }}
-                              className="p-1.5 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-700/80 text-amber-400 hover:text-amber-300 transition cursor-pointer"
+                              className={`p-1.5 rounded border transition cursor-pointer ${
+                                isLight 
+                                  ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-amber-600' 
+                                  : 'bg-slate-900 hover:bg-slate-800 border-slate-700/80 text-amber-400 hover:text-amber-300'
+                              }`}
                               title="Configure Reorder Trigger"
                             >
                               <Sliders className="w-3.5 h-3.5" />
@@ -716,7 +791,11 @@ export const InventoryView: React.FC = () => {
                             {/* Details Button */}
                             <button
                               onClick={() => setSelectedProductForDetails(p)}
-                              className="px-2.5 py-1 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-700/80 text-white text-xs font-medium transition cursor-pointer whitespace-nowrap"
+                              className={`px-2.5 py-1 rounded border text-xs font-medium transition cursor-pointer whitespace-nowrap ${
+                                isLight 
+                                  ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-800' 
+                                  : 'bg-slate-900 hover:bg-slate-800 border-slate-700/80 text-white'
+                              }`}
                             >
                               Details
                             </button>
@@ -724,7 +803,11 @@ export const InventoryView: React.FC = () => {
                             {/* Edit Pencil Button */}
                             <button
                               onClick={() => handleOpenEdit(p)}
-                              className="p-1.5 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-700/80 text-slate-300 hover:text-white transition cursor-pointer"
+                              className={`p-1.5 rounded border transition cursor-pointer ${
+                                isLight 
+                                  ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700 hover:text-slate-900' 
+                                  : 'bg-slate-900 hover:bg-slate-800 border-slate-700/80 text-slate-300 hover:text-white'
+                              }`}
                               title="Edit Product"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
@@ -733,7 +816,11 @@ export const InventoryView: React.FC = () => {
                             {/* $ Pricing Button */}
                             <button
                               onClick={() => setSelectedProductForPricing(p)}
-                              className="flex items-center gap-1 px-2.5 py-1 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-700/80 text-white text-xs font-medium transition cursor-pointer whitespace-nowrap"
+                              className={`flex items-center gap-1 px-2.5 py-1 rounded border text-xs font-medium transition cursor-pointer whitespace-nowrap ${
+                                isLight 
+                                  ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-800' 
+                                  : 'bg-slate-900 hover:bg-slate-800 border-slate-700/80 text-white'
+                              }`}
                             >
                               <DollarSign className="w-3 h-3 text-emerald-400 flex-shrink-0" />
                               <span>Pricing</span>
@@ -742,7 +829,11 @@ export const InventoryView: React.FC = () => {
                             {/* Packages Button */}
                             <button
                               onClick={() => openPackageModal(p)}
-                              className="flex items-center gap-1 px-2.5 py-1 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-700/80 text-white text-xs font-medium transition cursor-pointer whitespace-nowrap"
+                              className={`flex items-center gap-1 px-2.5 py-1 rounded border text-xs font-medium transition cursor-pointer whitespace-nowrap ${
+                                isLight 
+                                  ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-800' 
+                                  : 'bg-slate-900 hover:bg-slate-800 border-slate-700/80 text-white'
+                              }`}
                             >
                               <Layers className="w-3 h-3 text-sky-400 flex-shrink-0" />
                               <span>Packages</span>
@@ -772,15 +863,19 @@ export const InventoryView: React.FC = () => {
       <div className="space-y-3 pt-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-sky-400 flex-shrink-0" />
-            <h2 className="font-bold text-white text-sm">Agent Regional Stock & Allocation</h2>
+            <Users className={`w-4 h-4 flex-shrink-0 ${isLight ? 'text-sky-600' : 'text-sky-400'}`} />
+            <h2 className={`font-bold text-sm ${isLight ? 'text-slate-900' : 'text-white'}`}>Agent Regional Stock & Allocation</h2>
           </div>
 
-          <div className="flex items-center bg-neutral-900 border border-neutral-800 rounded-xl p-1 text-xs">
+          <div className={`flex items-center border rounded-xl p-1 text-xs ${
+            isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900 border-slate-800'
+          }`}>
             <button
               onClick={() => setAgentStockViewMode('cards')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition cursor-pointer ${
-                agentStockViewMode === 'cards' ? 'bg-[#0088ff] text-white font-bold shadow' : 'text-slate-400 hover:text-white'
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition cursor-pointer font-medium ${
+                agentStockViewMode === 'cards' 
+                  ? 'bg-emerald-600 text-white font-bold shadow-xs' 
+                  : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
               }`}
             >
               <List className="w-3.5 h-3.5" />
@@ -788,8 +883,10 @@ export const InventoryView: React.FC = () => {
             </button>
             <button
               onClick={() => setAgentStockViewMode('matrix')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition cursor-pointer ${
-                agentStockViewMode === 'matrix' ? 'bg-[#0088ff] text-white font-bold shadow' : 'text-slate-400 hover:text-white'
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition cursor-pointer font-medium ${
+                agentStockViewMode === 'matrix' 
+                  ? 'bg-emerald-600 text-white font-bold shadow-xs' 
+                  : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
               }`}
             >
               <Grid className="w-3.5 h-3.5" />
@@ -799,35 +896,41 @@ export const InventoryView: React.FC = () => {
         </div>
 
         {agentStockViewMode === 'matrix' ? (
-          <div className="rounded-2xl border border-neutral-800 bg-[#090d14]/90 overflow-hidden shadow-lg">
+          <div className={`rounded-2xl border overflow-hidden shadow-xs ${
+            isLight ? 'bg-white border-slate-200' : 'border-slate-800 bg-[#090d16]'
+          }`}>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-neutral-800 bg-neutral-950/80 text-[11px] font-mono text-slate-400 uppercase">
-                    <th className="py-3 px-4 font-semibold border-r border-neutral-800">Product SKU & Title</th>
-                    <th className="py-3 px-3 font-semibold text-center border-r border-neutral-800 text-amber-400">Warehouse Stock</th>
+                  <tr className={`border-b text-[11px] font-mono uppercase ${
+                    isLight 
+                      ? 'border-slate-200 bg-slate-50 text-slate-600' 
+                      : 'border-slate-800 bg-slate-950/80 text-slate-400'
+                  }`}>
+                    <th className={`py-3 px-4 font-semibold border-r ${isLight ? 'border-slate-200' : 'border-slate-800'}`}>Product SKU & Title</th>
+                    <th className={`py-3 px-3 font-semibold text-center border-r text-amber-500 ${isLight ? 'border-slate-200' : 'border-slate-800'}`}>Warehouse Stock</th>
                     {agents.map(ag => (
-                      <th key={ag.id} className="py-3 px-3 font-semibold text-center border-r border-neutral-800 min-w-[110px]">
-                        <div className="text-white font-bold truncate max-w-[100px] mx-auto">{ag.name}</div>
-                        <div className="text-[10px] text-cyan-400 font-mono font-normal">{ag.primaryZone}</div>
+                      <th key={ag.id} className={`py-3 px-3 font-semibold text-center border-r min-w-[110px] ${isLight ? 'border-slate-200' : 'border-slate-800'}`}>
+                        <div className={`font-bold truncate max-w-[100px] mx-auto ${isLight ? 'text-slate-900' : 'text-white'}`}>{ag.name}</div>
+                        <div className={`text-[10px] font-mono font-normal ${isLight ? 'text-sky-700' : 'text-cyan-400'}`}>{ag.primaryZone}</div>
                       </th>
                     ))}
-                    <th className="py-3 px-4 font-semibold text-center text-emerald-400">Total in Field</th>
+                    <th className="py-3 px-4 font-semibold text-center text-emerald-500">Total in Field</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-800">
+                <tbody className={`divide-y ${isLight ? 'divide-slate-200' : 'divide-slate-800'}`}>
                   {products.map(p => {
                     const totalInField = agentStock
                       .filter(s => s.productId === p.id)
                       .reduce((sum, s) => sum + s.unitsHeld, 0);
 
                     return (
-                      <tr key={p.id} className="hover:bg-neutral-900/40">
-                        <td className="py-3 px-4 border-r border-neutral-800">
-                          <span className="font-semibold text-white block truncate max-w-[180px]">{p.name}</span>
-                          <span className="text-[10px] text-slate-400 font-mono">{p.sku}</span>
+                      <tr key={p.id} className={isLight ? 'hover:bg-slate-50/80' : 'hover:bg-slate-900/40'}>
+                        <td className={`py-3 px-4 border-r ${isLight ? 'border-slate-200' : 'border-slate-800'}`}>
+                          <span className={`font-semibold block truncate max-w-[180px] ${isLight ? 'text-slate-900' : 'text-white'}`}>{p.name}</span>
+                          <span className={`text-[10px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{p.sku}</span>
                         </td>
-                        <td className="py-3 px-3 text-center font-mono font-bold text-amber-400 border-r border-neutral-800">
+                        <td className={`py-3 px-3 text-center font-mono font-bold text-amber-500 border-r ${isLight ? 'border-slate-200' : 'border-slate-800'}`}>
                           {p.stockWarehouse} units
                         </td>
                         {agents.map(ag => {
@@ -836,7 +939,7 @@ export const InventoryView: React.FC = () => {
                           const isEditing = matrixEditCell?.agentId === ag.id && matrixEditCell?.productId === p.id;
 
                           return (
-                            <td key={ag.id} className="py-2 px-2 text-center border-r border-neutral-800">
+                            <td key={ag.id} className={`py-2 px-2 text-center border-r ${isLight ? 'border-slate-200' : 'border-slate-800'}`}>
                               {isEditing ? (
                                 <div className="flex items-center justify-center gap-1">
                                   <input
@@ -845,20 +948,26 @@ export const InventoryView: React.FC = () => {
                                     autoFocus
                                     value={matrixInputValue}
                                     onChange={(e) => setMatrixInputValue(Math.max(0, Number(e.target.value)))}
-                                    className="w-14 bg-neutral-950 border border-sky-500 rounded px-1.5 py-1 text-center font-mono text-sky-400 text-xs font-bold focus:outline-none"
+                                    className={`w-14 border rounded px-1.5 py-1 text-center font-mono text-xs font-bold focus:outline-none ${
+                                      isLight 
+                                        ? 'bg-white border-emerald-500 text-emerald-800' 
+                                        : 'bg-slate-950 border-emerald-500 text-emerald-400'
+                                    }`}
                                   />
                                   <button
                                     onClick={() => {
                                       setAgentStockLevel(ag.id, p.id, matrixInputValue, 'Matrix edit');
                                       setMatrixEditCell(null);
                                     }}
-                                    className="p-1 rounded bg-[#0088ff] text-white hover:bg-[#0077ee]"
+                                    className="p-1 rounded bg-emerald-600 text-white hover:bg-emerald-500"
                                   >
                                     <Check className="w-3 h-3 stroke-[3]" />
                                   </button>
                                   <button
                                     onClick={() => setMatrixEditCell(null)}
-                                    className="p-1 rounded bg-neutral-800 text-slate-400 hover:text-white"
+                                    className={`p-1 rounded ${
+                                      isLight ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' : 'bg-slate-800 text-slate-400 hover:text-white'
+                                    }`}
                                   >
                                     <X className="w-3 h-3" />
                                   </button>
@@ -869,19 +978,21 @@ export const InventoryView: React.FC = () => {
                                     setMatrixEditCell({ agentId: ag.id, productId: p.id });
                                     setMatrixInputValue(units);
                                   }}
-                                  className="group cursor-pointer py-1 px-2 rounded hover:bg-neutral-800 flex items-center justify-center gap-1 transition"
+                                  className={`group cursor-pointer py-1 px-2 rounded flex items-center justify-center gap-1 transition ${
+                                    isLight ? 'hover:bg-slate-100' : 'hover:bg-slate-800'
+                                  }`}
                                   title="Click to edit stock level"
                                 >
-                                  <span className={`font-mono font-bold ${units > 0 ? 'text-white' : 'text-slate-600'}`}>
+                                  <span className={`font-mono font-bold ${units > 0 ? (isLight ? 'text-slate-900' : 'text-white') : 'text-slate-400'}`}>
                                     {units}
                                   </span>
-                                  <Edit3 className="w-3 h-3 text-slate-500 opacity-0 group-hover:opacity-100 transition" />
+                                  <Edit3 className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition" />
                                 </div>
                               )}
                             </td>
                           );
                         })}
-                        <td className="py-3 px-4 text-center font-mono font-bold text-emerald-400">
+                        <td className="py-3 px-4 text-center font-mono font-bold text-emerald-500">
                           {totalInField} units
                         </td>
                       </tr>
@@ -894,24 +1005,30 @@ export const InventoryView: React.FC = () => {
         ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {/* Company Main Warehouse Card */}
-          <div className="rounded-2xl border border-neutral-800/90 bg-[#090d14]/90 p-5 space-y-4 shadow-lg min-w-0">
-            {/* Header: Name, Zone and Status Badge - Guaranteed Zero Overlap */}
+          <div className={`rounded-2xl border p-5 space-y-4 shadow-xs min-w-0 ${
+            isLight ? 'bg-white border-slate-200' : 'border-slate-800 bg-[#090d16]'
+          }`}>
+            {/* Header: Name, Zone and Status Badge */}
             <div className="flex items-start justify-between gap-2.5 min-w-0">
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-10 h-10 rounded-full bg-cyan-950/80 border border-cyan-800/80 text-cyan-400 font-bold text-xs flex items-center justify-center flex-shrink-0">
+                <div className={`w-10 h-10 rounded-full border font-bold text-xs flex items-center justify-center flex-shrink-0 ${
+                  isLight ? 'bg-sky-100 border-sky-300 text-sky-800' : 'bg-cyan-950/80 border-cyan-800/80 text-cyan-400'
+                }`}>
                   CW
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-bold text-white text-sm truncate" title="Company Warehouse">
+                  <h3 className={`font-bold text-sm truncate ${isLight ? 'text-slate-900' : 'text-white'}`} title="Company Warehouse">
                     Company Warehouse
                   </h3>
-                  <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5 truncate">
-                    <MapPin className="w-3 h-3 text-slate-500 flex-shrink-0" />
+                  <p className={`text-[11px] flex items-center gap-1 mt-0.5 truncate ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <MapPin className="w-3 h-3 text-slate-400 flex-shrink-0" />
                     <span className="truncate">Warehouse (Central Storage)</span>
                   </p>
                 </div>
               </div>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800 flex-shrink-0 whitespace-nowrap">
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border flex-shrink-0 whitespace-nowrap ${
+                isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-950 text-emerald-400 border-emerald-800'
+              }`}>
                 Active
               </span>
             </div>
@@ -919,37 +1036,39 @@ export const InventoryView: React.FC = () => {
             {/* Stock Capacity Progress Bar */}
             <div className="space-y-1.5 pt-1">
               <div className="flex items-center justify-between text-[11px] gap-2">
-                <span className="text-slate-400 flex-shrink-0">Stock Capacity</span>
-                <span className="font-mono text-slate-300 font-medium flex-shrink-0">
+                <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>Stock Capacity</span>
+                <span className={`font-mono font-medium flex-shrink-0 ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
                   {totalWarehouseUnits} / 2500 units ({Math.min(100, Math.round((totalWarehouseUnits / 2500) * 100))}%)
                 </span>
               </div>
-              <div className="w-full h-1.5 bg-neutral-900 rounded-full overflow-hidden">
+              <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-slate-100' : 'bg-slate-800'}`}>
                 <div 
-                  className="h-full bg-cyan-500 transition-all duration-300"
+                  className="h-full bg-emerald-500 transition-all duration-300"
                   style={{ width: `${Math.min(100, Math.round((totalWarehouseUnits / 2500) * 100))}%` }}
                 />
               </div>
             </div>
 
             {/* Assigned Stock / Breakdown */}
-            <div className="py-2 border-t border-neutral-800/60 min-h-[50px] flex items-center justify-center">
+            <div className={`py-2 border-t min-h-[50px] flex items-center justify-center ${
+              isLight ? 'border-slate-200' : 'border-slate-800/60'
+            }`}>
               {totalWarehouseUnits === 0 ? (
-                <span className="text-xs text-slate-500">No stock assigned</span>
+                <span className="text-xs text-slate-400">No stock assigned</span>
               ) : (
                 <div className="w-full space-y-1">
                   {products.slice(0, 3).map(p => (
                     <div key={p.id} className="flex items-center justify-between gap-2 text-[11px] py-0.5">
-                      <span className="text-slate-300 truncate flex-1 min-w-0" title={p.name}>
+                      <span className={`truncate flex-1 min-w-0 ${isLight ? 'text-slate-700' : 'text-slate-300'}`} title={p.name}>
                         {p.name}
                       </span>
-                      <span className="font-mono font-bold text-emerald-400 flex-shrink-0">
+                      <span className="font-mono font-bold text-emerald-500 flex-shrink-0">
                         {p.stockWarehouse} units
                       </span>
                     </div>
                   ))}
                   {products.length > 3 && (
-                    <p className="text-[10px] text-slate-500 text-center pt-0.5">
+                    <p className={`text-[10px] text-center pt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                       + {products.length - 3} more product lines in storage
                     </p>
                   )}
@@ -964,13 +1083,17 @@ export const InventoryView: React.FC = () => {
                   setShowUpdateStockModal(true);
                   setUpdateStockTab('warehouse');
                 }}
-                className="flex-1 py-2 rounded-xl bg-[#0088ff] hover:bg-[#0077ee] text-white text-xs font-semibold shadow transition active:scale-95 text-center cursor-pointer whitespace-nowrap"
+                className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow transition active:scale-95 text-center cursor-pointer whitespace-nowrap"
               >
                 Restock Warehouse
               </button>
               <button
                 onClick={() => setShowStockHistoryModal(true)}
-                className="flex-1 py-2 rounded-xl border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-slate-200 text-xs font-semibold transition text-center cursor-pointer whitespace-nowrap"
+                className={`flex-1 py-2 rounded-xl border text-xs font-semibold transition text-center cursor-pointer whitespace-nowrap ${
+                  isLight 
+                    ? 'border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-800' 
+                    : 'border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200'
+                }`}
               >
                 View Details
               </button>
@@ -986,27 +1109,31 @@ export const InventoryView: React.FC = () => {
             const initials = agent.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
             return (
-              <div key={agent.id} className="rounded-2xl border border-neutral-800/90 bg-[#090d14]/90 p-5 space-y-4 shadow-lg min-w-0">
-                {/* Header: Agent Name, Zone and Status Badge - Guaranteed Zero Overlap */}
+              <div key={agent.id} className={`rounded-2xl border p-5 space-y-4 shadow-xs min-w-0 ${
+                isLight ? 'bg-white border-slate-200' : 'border-slate-800 bg-[#090d16]'
+              }`}>
+                {/* Header: Agent Name, Zone and Status Badge */}
                 <div className="flex items-start justify-between gap-2.5 min-w-0">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-cyan-950/80 border border-cyan-800/80 text-cyan-400 font-bold text-xs flex items-center justify-center flex-shrink-0">
+                    <div className={`w-10 h-10 rounded-full border font-bold text-xs flex items-center justify-center flex-shrink-0 ${
+                      isLight ? 'bg-sky-100 border-sky-300 text-sky-800' : 'bg-cyan-950/80 border-cyan-800/80 text-cyan-400'
+                    }`}>
                       {initials}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-bold text-white text-sm truncate" title={agent.name}>
+                      <h3 className={`font-bold text-sm truncate ${isLight ? 'text-slate-900' : 'text-white'}`} title={agent.name}>
                         {agent.name}
                       </h3>
-                      <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5 truncate">
-                        <MapPin className="w-3 h-3 text-slate-500 flex-shrink-0" />
+                      <p className={`text-[11px] flex items-center gap-1 mt-0.5 truncate ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                        <MapPin className="w-3 h-3 text-slate-400 flex-shrink-0" />
                         <span className="truncate">{agent.primaryZone || 'Regional Hub'}</span>
                       </p>
                     </div>
                   </div>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border flex-shrink-0 whitespace-nowrap ${
                     agent.status !== 'Off Duty' 
-                      ? 'bg-emerald-950 text-emerald-400 border-emerald-800' 
-                      : 'bg-neutral-900 text-slate-400 border-neutral-800'
+                      ? isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-950 text-emerald-400 border-emerald-800'
+                      : isLight ? 'bg-slate-100 text-slate-600 border-slate-300' : 'bg-slate-800 text-slate-400 border-slate-700'
                   }`}>
                     {agent.status}
                   </span>
@@ -1015,33 +1142,35 @@ export const InventoryView: React.FC = () => {
                 {/* Stock Capacity Progress Bar */}
                 <div className="space-y-1.5 pt-1">
                   <div className="flex items-center justify-between text-[11px] gap-2">
-                    <span className="text-slate-400 flex-shrink-0">Stock Capacity</span>
-                    <span className="font-mono text-slate-300 font-medium flex-shrink-0">
+                    <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>Stock Capacity</span>
+                    <span className={`font-mono font-medium flex-shrink-0 ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
                       {totalUnitsHeld} / {maxCapacity} units ({capacityPct}%)
                     </span>
                   </div>
-                  <div className="w-full h-1.5 bg-neutral-900 rounded-full overflow-hidden">
+                  <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-slate-100' : 'bg-slate-800'}`}>
                     <div 
-                      className="h-full bg-cyan-500 transition-all duration-300"
+                      className="h-full bg-emerald-500 transition-all duration-300"
                       style={{ width: `${capacityPct}%` }}
                     />
                   </div>
                 </div>
 
                 {/* Assigned Stock / Breakdown */}
-                <div className="py-2 border-t border-neutral-800/60 min-h-[50px] flex items-center justify-center">
+                <div className={`py-2 border-t min-h-[50px] flex items-center justify-center ${
+                  isLight ? 'border-slate-200' : 'border-slate-800/60'
+                }`}>
                   {agentStockItems.length === 0 || totalUnitsHeld === 0 ? (
-                    <span className="text-xs text-slate-500">No stock assigned</span>
+                    <span className="text-xs text-slate-400">No stock assigned</span>
                   ) : (
                     <div className="w-full space-y-1">
                       {agentStockItems.map(item => {
                         const prod = products.find(p => p.id === item.productId);
                         return (
                           <div key={`${item.agentId}-${item.productId}`} className="flex items-center justify-between gap-2 text-[11px] py-0.5">
-                            <span className="text-slate-300 truncate flex-1 min-w-0" title={prod?.name || 'Product'}>
+                            <span className={`truncate flex-1 min-w-0 ${isLight ? 'text-slate-700' : 'text-slate-300'}`} title={prod?.name || 'Product'}>
                               {prod?.name || 'Product'}
                             </span>
-                            <span className="font-mono font-bold text-sky-400 flex-shrink-0">
+                            <span className="font-mono font-bold text-emerald-500 flex-shrink-0">
                               {item.unitsHeld} units
                             </span>
                           </div>
@@ -1058,7 +1187,7 @@ export const InventoryView: React.FC = () => {
                       setAssignTargetAgentId(agent.id);
                       setShowAssignModal({ agentId: agent.id });
                     }}
-                    className="flex-1 py-2 rounded-xl bg-[#0088ff] hover:bg-[#0077ee] text-white text-xs font-semibold shadow transition active:scale-95 text-center cursor-pointer whitespace-nowrap"
+                    className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow transition active:scale-95 text-center cursor-pointer whitespace-nowrap"
                   >
                     Assign Stock
                   </button>
@@ -1066,7 +1195,11 @@ export const InventoryView: React.FC = () => {
                     onClick={() => {
                       alert(`Agent: ${agent.name}\nPhone: ${agent.phone}\nZone: ${agent.primaryZone}\nDelivery Success Rate: ${agent.successRate}%\nTotal Units Held: ${totalUnitsHeld}`);
                     }}
-                    className="flex-1 py-2 rounded-xl border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-slate-200 text-xs font-semibold transition text-center cursor-pointer whitespace-nowrap"
+                    className={`flex-1 py-2 rounded-xl border text-xs font-semibold transition text-center cursor-pointer whitespace-nowrap ${
+                      isLight 
+                        ? 'border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-800' 
+                        : 'border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200'
+                    }`}
                   >
                     View Details
                   </button>
@@ -1085,8 +1218,8 @@ export const InventoryView: React.FC = () => {
       {/* 1. ADD PRODUCT MODAL */}
       {showAddProductModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-neutral-950 border border-neutral-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <h3 className="font-bold text-white text-base flex items-center gap-2">
                 <Box className="w-4 h-4 text-sky-400" />
                 Add New Inventory Product
@@ -1108,7 +1241,7 @@ export const InventoryView: React.FC = () => {
                   placeholder="e.g. Celebrity Glow Clarifying Serum"
                   value={newProdName}
                   onChange={(e) => setNewProdName(e.target.value)}
-                  className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 text-white focus:border-sky-500 focus:outline-none"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white focus:border-sky-500 focus:outline-none"
                 />
               </div>
 
@@ -1121,7 +1254,7 @@ export const InventoryView: React.FC = () => {
                     placeholder="CEL-GLO-527"
                     value={newProdSku}
                     onChange={(e) => setNewProdSku(e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 font-mono text-white focus:border-sky-500 focus:outline-none"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 font-mono text-white focus:border-sky-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -1129,7 +1262,7 @@ export const InventoryView: React.FC = () => {
                   <select
                     value={newProdCategory}
                     onChange={(e) => setNewProdCategory(e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 text-white focus:border-sky-500 focus:outline-none"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white focus:border-sky-500 focus:outline-none"
                   >
                     <option value="Beauty & Skincare">Beauty & Skincare</option>
                     <option value="Health & Wellness">Health & Wellness</option>
@@ -1148,7 +1281,7 @@ export const InventoryView: React.FC = () => {
                     min="0"
                     value={newProdCost}
                     onChange={(e) => setNewProdCost(Number(e.target.value))}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 font-mono text-white"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 font-mono text-white"
                   />
                 </div>
                 <div>
@@ -1158,7 +1291,7 @@ export const InventoryView: React.FC = () => {
                     min="0"
                     value={newProdPrice}
                     onChange={(e) => setNewProdPrice(Number(e.target.value))}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 font-mono text-emerald-400 font-bold"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 font-mono text-emerald-400 font-bold"
                   />
                 </div>
                 <div>
@@ -1168,7 +1301,7 @@ export const InventoryView: React.FC = () => {
                     min="0"
                     value={newProdStock}
                     onChange={(e) => setNewProdStock(Number(e.target.value))}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 font-mono text-white"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 font-mono text-white"
                   />
                 </div>
               </div>
@@ -1180,21 +1313,21 @@ export const InventoryView: React.FC = () => {
                   placeholder="e.g. 100% organic spot treatment oil"
                   value={newProdDesc}
                   onChange={(e) => setNewProdDesc(e.target.value)}
-                  className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 text-white focus:border-sky-500 focus:outline-none"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white focus:border-sky-500 focus:outline-none"
                 />
               </div>
 
-              <div className="pt-3 border-t border-neutral-800 flex justify-end gap-2">
+              <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowAddProductModal(false)}
-                  className="px-4 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-slate-300 font-medium"
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#0088ff] hover:bg-[#0077ee] text-white font-bold transition shadow"
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow"
                 >
                   Create Product
                 </button>
@@ -1207,8 +1340,8 @@ export const InventoryView: React.FC = () => {
       {/* 2. EDIT PRODUCT MODAL */}
       {selectedProductForEdit && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-neutral-950 border border-neutral-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <h3 className="font-bold text-white text-base flex items-center gap-2">
                 <Edit3 className="w-4 h-4 text-sky-400" />
                 Edit Product: {selectedProductForEdit.name}
@@ -1229,7 +1362,7 @@ export const InventoryView: React.FC = () => {
                   required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 text-white focus:border-sky-500 focus:outline-none"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white focus:border-sky-500 focus:outline-none"
                 />
               </div>
 
@@ -1241,7 +1374,7 @@ export const InventoryView: React.FC = () => {
                     required
                     value={editSku}
                     onChange={(e) => setEditSku(e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 font-mono text-white"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 font-mono text-white"
                   />
                 </div>
                 <div>
@@ -1250,7 +1383,7 @@ export const InventoryView: React.FC = () => {
                     type="text"
                     value={editCategory}
                     onChange={(e) => setEditCategory(e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 text-white"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white"
                   />
                 </div>
               </div>
@@ -1263,7 +1396,7 @@ export const InventoryView: React.FC = () => {
                     min="0"
                     value={editCost}
                     onChange={(e) => setEditCost(Number(e.target.value))}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 font-mono text-white"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 font-mono text-white"
                   />
                 </div>
                 <div>
@@ -1273,7 +1406,7 @@ export const InventoryView: React.FC = () => {
                     min="0"
                     value={editPrice}
                     onChange={(e) => setEditPrice(Number(e.target.value))}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 font-mono text-emerald-400 font-bold"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 font-mono text-emerald-400 font-bold"
                   />
                 </div>
                 <div>
@@ -1283,7 +1416,7 @@ export const InventoryView: React.FC = () => {
                     min="0"
                     value={editStock}
                     onChange={(e) => setEditStock(Number(e.target.value))}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 font-mono text-white"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 font-mono text-white"
                   />
                 </div>
               </div>
@@ -1294,21 +1427,21 @@ export const InventoryView: React.FC = () => {
                   rows={2}
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
-                  className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 text-white focus:outline-none"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none"
                 />
               </div>
 
-              <div className="pt-3 border-t border-neutral-800 flex justify-end gap-2">
+              <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setSelectedProductForEdit(null)}
-                  className="px-4 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-slate-300 font-medium"
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#0088ff] hover:bg-[#0077ee] text-white font-bold transition shadow"
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow"
                 >
                   Save Changes
                 </button>
@@ -1321,8 +1454,8 @@ export const InventoryView: React.FC = () => {
       {/* 3. STOCK HISTORY MODAL */}
       {showStockHistoryModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-neutral-950 border border-neutral-800 rounded-2xl max-w-3xl w-full p-6 space-y-4 shadow-2xl max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-800 flex-shrink-0">
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl max-w-3xl w-full p-6 space-y-4 shadow-2xl max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800 flex-shrink-0">
               <h3 className="font-bold text-white text-base flex items-center gap-2">
                 <RotateCcw className="w-4 h-4 text-sky-400" />
                 Stock Movement & Audit Log
@@ -1341,7 +1474,7 @@ export const InventoryView: React.FC = () => {
                   No stock movements recorded yet.
                 </div>
               ) : (
-                <div className="divide-y divide-neutral-800/80">
+                <div className="divide-y divide-slate-800/80">
                   {stockMovements.map((m) => {
                     const isPositive = m.type === 'Restock' || m.type === 'Warehouse to Agent';
                     return (
@@ -1369,10 +1502,10 @@ export const InventoryView: React.FC = () => {
               )}
             </div>
 
-            <div className="pt-3 border-t border-neutral-800 flex justify-end flex-shrink-0">
+            <div className="pt-3 border-t border-slate-800 flex justify-end flex-shrink-0">
               <button
                 onClick={() => setShowStockHistoryModal(false)}
-                className="px-4 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-slate-200 text-xs font-semibold"
+                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold"
               >
                 Close Log
               </button>
@@ -1384,8 +1517,8 @@ export const InventoryView: React.FC = () => {
       {/* 4. UPDATE STOCK / ASSIGN STOCK MODAL */}
       {(showUpdateStockModal || showAssignModal) && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-neutral-950 border border-neutral-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <h3 className="font-bold text-white text-base flex items-center gap-2">
                 <RefreshCw className="w-4 h-4 text-sky-400" />
                 Update Stock & Allocation
@@ -1402,11 +1535,11 @@ export const InventoryView: React.FC = () => {
             </div>
 
             {/* Toggle Tabs: Restock Warehouse vs Transfer to Agent */}
-            <div className="flex p-1 rounded-xl bg-neutral-900 border border-neutral-800 text-xs">
+            <div className="flex p-1 rounded-xl bg-slate-900 border border-slate-800 text-xs">
               <button
                 onClick={() => setUpdateStockTab('warehouse')}
                 className={`flex-1 py-1.5 font-semibold rounded-lg transition ${
-                  updateStockTab === 'warehouse' ? 'bg-[#0088ff] text-white shadow' : 'text-slate-400 hover:text-white'
+                  updateStockTab === 'warehouse' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 Restock Warehouse
@@ -1414,7 +1547,7 @@ export const InventoryView: React.FC = () => {
               <button
                 onClick={() => setUpdateStockTab('agent')}
                 className={`flex-1 py-1.5 font-semibold rounded-lg transition ${
-                  updateStockTab === 'agent' ? 'bg-[#0088ff] text-white shadow' : 'text-slate-400 hover:text-white'
+                  updateStockTab === 'agent' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 Transfer to Agent
@@ -1428,7 +1561,7 @@ export const InventoryView: React.FC = () => {
                   <select
                     value={restockProductId}
                     onChange={(e) => setRestockProductId(e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 text-white"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white"
                   >
                     {products.map(p => (
                       <option key={p.id} value={p.id}>
@@ -1445,14 +1578,14 @@ export const InventoryView: React.FC = () => {
                     min="1"
                     value={restockUnits}
                     onChange={(e) => setRestockUnits(Number(e.target.value))}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 font-mono text-emerald-400 font-bold"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 font-mono text-emerald-400 font-bold"
                   />
                 </div>
 
                 <div className="pt-2">
                   <button
                     onClick={handleRestockWarehouse}
-                    className="w-full py-2.5 rounded-xl bg-[#0088ff] hover:bg-[#0077ee] text-white font-bold text-xs shadow transition active:scale-95 cursor-pointer"
+                    className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition active:scale-95 cursor-pointer"
                   >
                     Confirm Warehouse Restock
                   </button>
@@ -1465,7 +1598,7 @@ export const InventoryView: React.FC = () => {
                   <select
                     value={assignTargetAgentId}
                     onChange={(e) => setAssignTargetAgentId(e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 text-white"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white"
                   >
                     {agents.map(a => (
                       <option key={a.id} value={a.id}>
@@ -1480,7 +1613,7 @@ export const InventoryView: React.FC = () => {
                   <select
                     value={assignTargetProductId}
                     onChange={(e) => setAssignTargetProductId(e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 text-white"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white"
                   >
                     {products.map(p => (
                       <option key={p.id} value={p.id}>
@@ -1497,14 +1630,14 @@ export const InventoryView: React.FC = () => {
                     min="1"
                     value={assignUnits}
                     onChange={(e) => setAssignUnits(Number(e.target.value))}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 font-mono text-sky-400 font-bold"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 font-mono text-sky-400 font-bold"
                   />
                 </div>
 
                 <div className="pt-2">
                   <button
                     onClick={handleAssignStockSubmit}
-                    className="w-full py-2.5 rounded-xl bg-[#0088ff] hover:bg-[#0077ee] text-white font-bold text-xs shadow transition active:scale-95 cursor-pointer"
+                    className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition active:scale-95 cursor-pointer"
                   >
                     Transfer Units to Agent
                   </button>
@@ -1518,8 +1651,8 @@ export const InventoryView: React.FC = () => {
       {/* 5. PRODUCT DETAILS MODAL */}
       {selectedProductForDetails && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-neutral-950 border border-neutral-800 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <h3 className="font-bold text-white text-base flex items-center gap-2">
                 <Box className="w-4 h-4 text-sky-400" />
                 Product Details: {selectedProductForDetails.name}
@@ -1533,7 +1666,7 @@ export const InventoryView: React.FC = () => {
             </div>
 
             <div className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-neutral-900 border border-neutral-800">
+              <div className="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-slate-900 border border-slate-800">
                 <div>
                   <p className="text-slate-400">SKU</p>
                   <p className="font-mono font-bold text-white text-sm">{selectedProductForDetails.sku}</p>
@@ -1559,7 +1692,7 @@ export const InventoryView: React.FC = () => {
               {/* Stock Distribution Breakdown */}
               <div className="space-y-2">
                 <span className="font-semibold text-white">Stock Allocation Breakdown</span>
-                <div className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 space-y-2">
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-slate-300">Company Warehouse</span>
                     <span className="font-mono font-bold text-emerald-400">
@@ -1584,7 +1717,7 @@ export const InventoryView: React.FC = () => {
                 <span className="font-semibold text-white">Configured Package Tiers ({selectedProductForDetails.packages.length})</span>
                 <div className="space-y-1.5">
                   {selectedProductForDetails.packages.map(pkg => (
-                    <div key={pkg.id} className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-between">
+                    <div key={pkg.id} className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between">
                       <div>
                         <p className="font-semibold text-white">{pkg.name}</p>
                         <p className="text-[10px] text-slate-400">{pkg.description}</p>
@@ -1597,10 +1730,10 @@ export const InventoryView: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-neutral-800 flex justify-end">
+              <div className="pt-2 border-t border-slate-800 flex justify-end">
                 <button
                   onClick={() => setSelectedProductForDetails(null)}
-                  className="px-4 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-slate-200 text-xs font-semibold"
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold"
                 >
                   Close Details
                 </button>
@@ -1613,8 +1746,8 @@ export const InventoryView: React.FC = () => {
       {/* 6. PRICING MODAL */}
       {selectedProductForPricing && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-neutral-950 border border-neutral-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <h3 className="font-bold text-white text-base flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-emerald-400" />
                 Multi-Currency Landed Pricing: {selectedProductForPricing.name}
@@ -1634,7 +1767,7 @@ export const InventoryView: React.FC = () => {
 
               <div className="space-y-2">
                 {selectedProductForPricing.pricing.map((pTier) => (
-                  <div key={pTier.currency} className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-between">
+                  <div key={pTier.currency} className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
                     <div>
                       <p className="font-bold text-white">{pTier.currency} Corridor</p>
                       <p className="text-[10px] text-slate-400 font-mono">
@@ -1653,10 +1786,10 @@ export const InventoryView: React.FC = () => {
                 ))}
               </div>
 
-              <div className="pt-3 border-t border-neutral-800 flex justify-end">
+              <div className="pt-3 border-t border-slate-800 flex justify-end">
                 <button
                   onClick={() => setSelectedProductForPricing(null)}
-                  className="px-4 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-slate-200 text-xs font-semibold"
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold"
                 >
                   Done
                 </button>
@@ -1669,8 +1802,8 @@ export const InventoryView: React.FC = () => {
       {/* 7. PACKAGES MODAL */}
       {selectedProductForPackages && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-neutral-950 border border-neutral-800 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <h3 className="font-bold text-white text-base flex items-center gap-2">
                 <Layers className="w-4 h-4 text-sky-400" />
                 Package Bundles & Free Gifts: {selectedProductForPackages.name}
@@ -1688,7 +1821,7 @@ export const InventoryView: React.FC = () => {
               <span className="font-semibold text-white">Active Checkout Packages ({selectedProductForPackages.packages.length})</span>
               <div className="space-y-2">
                 {selectedProductForPackages.packages.map(pkg => (
-                  <div key={pkg.id} className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-between gap-3">
+                  <div key={pkg.id} className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="font-bold text-white">{pkg.name}</p>
@@ -1723,7 +1856,7 @@ export const InventoryView: React.FC = () => {
             </div>
 
             {/* Add New Package Builder */}
-            <form onSubmit={handleCreatePackage} className="p-4 rounded-xl bg-black border border-neutral-800 space-y-3 text-xs">
+            <form onSubmit={handleCreatePackage} className="p-4 rounded-xl bg-black border border-slate-800 space-y-3 text-xs">
               <span className="font-bold text-white flex items-center gap-1.5 text-xs">
                 <Plus className="w-3.5 h-3.5 text-sky-400" />
                 Add New Package Deal
@@ -1743,7 +1876,7 @@ export const InventoryView: React.FC = () => {
                     required
                     value={newPkgName}
                     onChange={(e) => setNewPkgName(e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-2 text-white"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white"
                   />
                 </div>
                 <div>
@@ -1753,7 +1886,7 @@ export const InventoryView: React.FC = () => {
                     min="1"
                     value={newPkgQty}
                     onChange={(e) => setNewPkgQty(Number(e.target.value))}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-2 font-mono text-white"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 font-mono text-white"
                   />
                 </div>
               </div>
@@ -1766,7 +1899,7 @@ export const InventoryView: React.FC = () => {
                     min="0"
                     value={newPkgPrice}
                     onChange={(e) => setNewPkgPrice(Number(e.target.value))}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-2 font-mono text-emerald-400 font-bold"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 font-mono text-emerald-400 font-bold"
                   />
                 </div>
                 <div>
@@ -1775,7 +1908,7 @@ export const InventoryView: React.FC = () => {
                     type="text"
                     value={newPkgBadge}
                     onChange={(e) => setNewPkgBadge(e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-2 text-white"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white"
                   />
                 </div>
               </div>
@@ -1786,7 +1919,7 @@ export const InventoryView: React.FC = () => {
                   type="text"
                   value={newPkgDesc}
                   onChange={(e) => setNewPkgDesc(e.target.value)}
-                  className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-2 text-white"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white"
                 />
               </div>
 
@@ -1803,7 +1936,7 @@ export const InventoryView: React.FC = () => {
               </div>
 
               {newPkgHasGift && (
-                <div className="p-3 rounded-lg bg-neutral-950 border border-neutral-800 space-y-2">
+                <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
                   <div>
                     <label className="text-slate-400 block mb-1">Bonus Product from Inventory</label>
                     <select
@@ -1816,7 +1949,7 @@ export const InventoryView: React.FC = () => {
                           setNewPkgGiftValue(p.sellingPrice);
                         }
                       }}
-                      className="w-full bg-neutral-900 border border-neutral-700 rounded p-1.5 text-white"
+                      className="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-white"
                     >
                       {products.map(p => (
                         <option key={p.id} value={p.id}>{p.name} (₦{p.sellingPrice.toLocaleString()})</option>
@@ -1840,8 +1973,8 @@ export const InventoryView: React.FC = () => {
       {/* 8. REORDER TRIGGER CONFIGURATION MODAL */}
       {selectedProductForTrigger && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-neutral-950 border border-neutral-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl text-xs">
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl text-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-amber-400" />
                 <h3 className="font-bold text-white text-base">Configure Reorder Trigger: {selectedProductForTrigger.name}</h3>
@@ -1860,7 +1993,7 @@ export const InventoryView: React.FC = () => {
               </p>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 space-y-1">
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
                   <label className="text-amber-400 font-semibold block">Reorder Trigger Threshold *</label>
                   <div className="flex items-center gap-1.5">
                     <input
@@ -1869,14 +2002,14 @@ export const InventoryView: React.FC = () => {
                       required
                       value={triggerThreshold}
                       onChange={(e) => setTriggerThreshold(Number(e.target.value))}
-                      className="w-full bg-neutral-950 border border-neutral-700 rounded-lg p-2 font-mono text-white text-xs"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 font-mono text-white text-xs"
                     />
                     <span className="text-slate-400">units</span>
                   </div>
                   <span className="text-[10px] text-slate-500 block">Alert triggers when stock ≤ this</span>
                 </div>
 
-                <div className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 space-y-1">
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
                   <label className="text-emerald-400 font-semibold block">Recommended PO Batch *</label>
                   <div className="flex items-center gap-1.5">
                     <input
@@ -1885,7 +2018,7 @@ export const InventoryView: React.FC = () => {
                       required
                       value={triggerReorderQty}
                       onChange={(e) => setTriggerReorderQty(Number(e.target.value))}
-                      className="w-full bg-neutral-950 border border-neutral-700 rounded-lg p-2 font-mono text-white text-xs"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 font-mono text-white text-xs"
                     />
                     <span className="text-slate-400">units</span>
                   </div>
@@ -1901,7 +2034,7 @@ export const InventoryView: React.FC = () => {
                     min="1"
                     value={triggerLeadTime}
                     onChange={(e) => setTriggerLeadTime(Number(e.target.value))}
-                    className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-2 font-mono text-white text-xs"
+                    className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 font-mono text-white text-xs"
                   />
                 </div>
                 <div>
@@ -1911,16 +2044,16 @@ export const InventoryView: React.FC = () => {
                     min="0"
                     value={triggerSafetyStock}
                     onChange={(e) => setTriggerSafetyStock(Number(e.target.value))}
-                    className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-2 font-mono text-white text-xs"
+                    className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 font-mono text-white text-xs"
                   />
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-neutral-800 flex justify-end gap-2">
+              <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setSelectedProductForTrigger(null)}
-                  className="px-4 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-slate-300 font-medium"
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium"
                 >
                   Cancel
                 </button>
@@ -1939,8 +2072,8 @@ export const InventoryView: React.FC = () => {
       {/* Assign Stock to Distributor Modal */}
       {showAssignDistributorModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl bg-neutral-900 border border-neutral-700 p-6 space-y-4 shadow-2xl text-slate-100">
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
+          <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-700 p-6 space-y-4 shadow-2xl text-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <Warehouse className="w-4 h-4 text-lime-400" />
                 <span>Assign Stock to Distributor</span>
@@ -1973,7 +2106,7 @@ export const InventoryView: React.FC = () => {
                 <select
                   value={distributorAssignId}
                   onChange={(e) => setDistributorAssignId(e.target.value)}
-                  className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500"
                 >
                   {distributors.map(d => (
                     <option key={d.id} value={d.id}>
@@ -1988,7 +2121,7 @@ export const InventoryView: React.FC = () => {
                 <select
                   value={distributorProductId}
                   onChange={(e) => setDistributorProductId(e.target.value)}
-                  className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500"
                 >
                   {products.map(p => (
                     <option key={p.id} value={p.id}>
@@ -2005,7 +2138,7 @@ export const InventoryView: React.FC = () => {
                   min="1"
                   value={distributorUnits}
                   onChange={(e) => setDistributorUnits(Math.max(1, Number(e.target.value)))}
-                  className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500 font-mono text-sm"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500 font-mono text-sm"
                 />
               </div>
 
@@ -2016,15 +2149,15 @@ export const InventoryView: React.FC = () => {
                   value={distributorNote}
                   onChange={(e) => setDistributorNote(e.target.value)}
                   placeholder="e.g. Dispatched via interstate logistics transit batch #WB-9901..."
-                  className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2 text-white focus:outline-none focus:border-lime-500"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-white focus:outline-none focus:border-lime-500"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-neutral-800">
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={() => setShowAssignDistributorModal(false)}
-                  className="px-4 py-2 rounded-xl bg-neutral-800 text-slate-300 hover:bg-neutral-700 font-semibold"
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold"
                 >
                   Cancel
                 </button>

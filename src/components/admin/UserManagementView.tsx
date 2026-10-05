@@ -18,8 +18,28 @@ import {
   Key, 
   LayoutGrid, 
   CheckCircle2, 
-  AlertCircle
+  AlertCircle,
+  CheckCheck,
+  Ban,
+  ShieldAlert,
+  ShieldCheck,
+  Sliders,
+  Sparkles,
+  Filter
 } from 'lucide-react';
+import { UserPermissionsModal } from './UserPermissionsModal';
+import { 
+  countGrantedPermissions, 
+  normalizeUserPermissions, 
+  getAllPermissionsGranted, 
+  getNoPermissionsGranted, 
+  getDefaultPermissionsForRole,
+  TOTAL_PERMISSIONS_COUNT 
+} from '../../utils/permissions';
+
+export const getGrantedPermissionsCount = (u: User): { granted: number; total: number } => {
+  return countGrantedPermissions(normalizeUserPermissions(u));
+};
 
 export const UserManagementView: React.FC = () => {
   const { 
@@ -28,8 +48,13 @@ export const UserManagementView: React.FC = () => {
     updateUser, 
     deleteUser, 
     salesTeams, 
+    currentUser,
+    persona,
+    themeMode,
     addNotification 
   } = useCrm();
+
+  const isManager = currentUser?.role === 'Manager' || persona === 'manager';
 
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,6 +70,7 @@ export const UserManagementView: React.FC = () => {
   const [permissionsUser, setPermissionsUser] = useState<User | null>(null);
   const [showDefaultPermissionsModal, setShowDefaultPermissionsModal] = useState(false);
   const [activeMenuUserId, setActiveMenuUserId] = useState<string | null>(null);
+  const [showBatchPresetMenu, setShowBatchPresetMenu] = useState(false);
 
   // Default permissions state
   const [defaultManagerPerms, setDefaultManagerPerms] = useState<ManagerPermissions>({
@@ -167,6 +193,53 @@ export const UserManagementView: React.FC = () => {
     );
   };
 
+  // Batch Permissions Handlers
+  const handleBatchGrantAll = () => {
+    if (selectedUserIds.length === 0) return;
+    const allPerms = getAllPermissionsGranted();
+    selectedUserIds.forEach(id => {
+      updateUser(id, { permissions: allPerms });
+    });
+    if (addNotification) {
+      addNotification({
+        title: 'Batch Permissions Granted',
+        message: `Granted all permissions to ${selectedUserIds.length} user(s).`,
+        type: 'success'
+      });
+    }
+  };
+
+  const handleBatchRevokeAll = () => {
+    if (selectedUserIds.length === 0) return;
+    const noPerms = getNoPermissionsGranted();
+    selectedUserIds.forEach(id => {
+      updateUser(id, { permissions: noPerms });
+    });
+    if (addNotification) {
+      addNotification({
+        title: 'Batch Permissions Revoked',
+        message: `Revoked all permissions from ${selectedUserIds.length} user(s).`,
+        type: 'info'
+      });
+    }
+  };
+
+  const handleBatchApplyPreset = (presetRole: UserRole) => {
+    if (selectedUserIds.length === 0) return;
+    const presetPerms = getDefaultPermissionsForRole(presetRole);
+    selectedUserIds.forEach(id => {
+      updateUser(id, { permissions: presetPerms });
+    });
+    setShowBatchPresetMenu(false);
+    if (addNotification) {
+      addNotification({
+        title: 'Role Preset Applied',
+        message: `Applied ${presetRole} baseline permissions to ${selectedUserIds.length} user(s).`,
+        type: 'success'
+      });
+    }
+  };
+
   // Toggle user active status (iOS switch)
   const handleToggleUserStatus = (user: User) => {
     const newStatus = user.status === 'Active' ? 'Inactive' : 'Active';
@@ -249,6 +322,26 @@ export const UserManagementView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Manager Role Assignment Guidance Notice */}
+      {isManager && (
+        <div className="p-3.5 rounded-xl border border-sky-800/60 bg-sky-950/40 text-sky-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs animate-in fade-in">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
+              <Shield className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-bold text-white">Manager User Management Access</p>
+              <p className="text-[11px] text-slate-300">
+                You can create team accounts and assign roles (Sales Rep, Distributor, Manager, Inventory Manager, Media Buyer). Assigning Administrator and Accountant roles is restricted to System Administrators.
+              </p>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 whitespace-nowrap self-start sm:self-auto">
+            Delegated Role Assignment
+          </span>
+        </div>
+      )}
 
       {/* 2. Default Permissions Banner Card */}
       <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
@@ -541,6 +634,84 @@ export const UserManagementView: React.FC = () => {
         </div>
       </div>
 
+      {/* Batch Permissions Bar for Selected Users */}
+      {selectedUserIds.length > 0 && !isManager && (
+        <div className="p-3.5 bg-emerald-950/80 border border-emerald-500/40 rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs shadow-lg animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-2.5">
+            <span className="w-6 h-6 rounded-full bg-emerald-500 text-slate-950 font-bold flex items-center justify-center text-xs shadow-sm">
+              {selectedUserIds.length}
+            </span>
+            <div>
+              <p className="text-white font-semibold">
+                {selectedUserIds.length} User{selectedUserIds.length > 1 ? 's' : ''} Selected
+              </p>
+              <p className="text-[11px] text-emerald-300/80">
+                Configure, grant, or revoke permissions across all selected accounts.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleBatchGrantAll}
+              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm text-xs"
+              title="Grant all 29 permissions to selected users"
+            >
+              <CheckCheck className="w-3.5 h-3.5" />
+              <span>Grant All Permissions</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleBatchRevokeAll}
+              className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm text-xs"
+              title="Revoke all permissions from selected users"
+            >
+              <Ban className="w-3.5 h-3.5" />
+              <span>Revoke All Permissions</span>
+            </button>
+
+            {/* Presets dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowBatchPresetMenu(prev => !prev)}
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-semibold flex items-center gap-1.5 border border-slate-700 transition cursor-pointer text-xs"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Apply Role Preset</span>
+                <ChevronDown className="w-3 h-3 text-slate-400" />
+              </button>
+              {showBatchPresetMenu && (
+                <div className="absolute right-0 bottom-full mb-1 z-50 w-52 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-1 text-left text-xs divide-y divide-slate-800/60">
+                  <div className="px-3 py-1 text-[10px] font-mono text-slate-400 uppercase">Select Role Template</div>
+                  <div className="py-1">
+                    <button type="button" onClick={() => handleBatchApplyPreset('Admin')} className="w-full px-3 py-1.5 text-left text-slate-200 hover:bg-slate-800 flex items-center justify-between">
+                      <span>Full Admin</span>
+                      <span className="text-[10px] text-emerald-400 font-mono">100%</span>
+                    </button>
+                    <button type="button" onClick={() => handleBatchApplyPreset('Manager')} className="w-full px-3 py-1.5 text-left text-slate-200 hover:bg-slate-800">Operations Manager</button>
+                    <button type="button" onClick={() => handleBatchApplyPreset('Accountant')} className="w-full px-3 py-1.5 text-left text-slate-200 hover:bg-slate-800">Accountant / Auditor</button>
+                    <button type="button" onClick={() => handleBatchApplyPreset('Sales Representative')} className="w-full px-3 py-1.5 text-left text-slate-200 hover:bg-slate-800">Sales Representative</button>
+                    <button type="button" onClick={() => handleBatchApplyPreset('Distributor')} className="w-full px-3 py-1.5 text-left text-slate-200 hover:bg-slate-800">Regional Distributor</button>
+                    <button type="button" onClick={() => handleBatchApplyPreset('Inventory Manager')} className="w-full px-3 py-1.5 text-left text-slate-200 hover:bg-slate-800">Inventory Manager</button>
+                    <button type="button" onClick={() => handleBatchApplyPreset('Media Buyer')} className="w-full px-3 py-1.5 text-left text-slate-200 hover:bg-slate-800">Media Buyer</button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setSelectedUserIds([])}
+              className="px-2.5 py-1.5 text-slate-400 hover:text-white transition cursor-pointer text-xs"
+            >
+              Clear Selection
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 6. Users Table */}
       <div className="rounded-xl border border-slate-800 bg-slate-900/40 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
@@ -557,6 +728,7 @@ export const UserManagementView: React.FC = () => {
                 </th>
                 <th className="py-3 px-4 font-medium">Name & Email</th>
                 <th className="py-3 px-4 font-medium">Role</th>
+                <th className="py-3 px-4 font-medium">Permissions</th>
                 <th className="py-3 px-4 font-medium">Status</th>
                 <th className="py-3 px-4 font-medium">Created</th>
                 <th className="py-3 px-4 font-medium text-right">Actions</th>
@@ -565,7 +737,7 @@ export const UserManagementView: React.FC = () => {
             <tbody className="divide-y divide-slate-800/60">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-500">
+                  <td colSpan={7} className="py-12 text-center text-slate-500">
                     No users found matching the selected criteria.
                   </td>
                 </tr>
@@ -627,6 +799,32 @@ export const UserManagementView: React.FC = () => {
                         </span>
                       </td>
 
+                      {/* Permissions Status & Edit Button */}
+                      <td className="py-3 px-4">
+                        {(() => {
+                          const { granted, total } = getGrantedPermissionsCount(u);
+                          const isFull = granted === total;
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => setPermissionsUser(u)}
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-mono font-medium transition cursor-pointer ${
+                                isFull 
+                                  ? 'bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-400 border-emerald-800/60'
+                                  : granted === 0
+                                  ? 'bg-rose-950/60 hover:bg-rose-900/80 text-rose-400 border-rose-800/60'
+                                  : 'bg-slate-900 hover:bg-slate-800 text-sky-400 border-sky-800/60'
+                              }`}
+                              title={`Click to configure permissions for ${u.name}`}
+                            >
+                              <Shield className="w-3 h-3 flex-shrink-0" />
+                              <span>{granted}/{total} Granted</span>
+                              <Sliders className="w-2.5 h-2.5 ml-0.5 text-slate-400 opacity-70" />
+                            </button>
+                          );
+                        })()}
+                      </td>
+
                       {/* Status Toggle Switch */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
@@ -656,16 +854,28 @@ export const UserManagementView: React.FC = () => {
 
                       {/* Actions Menu */}
                       <td className="py-3 px-4 text-right relative">
-                        <button
-                          onClick={() => setActiveMenuUserId(activeMenuUserId === u.id ? null : u.id)}
-                          className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
-                        >
-                          <MoreHorizontal className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          {!(isManager && (u.role === 'Admin' || u.role === 'Accountant' || u.role === 'Owner')) && (
+                            <button
+                              type="button"
+                              onClick={() => setPermissionsUser(u)}
+                              className="p-1.5 text-emerald-400 hover:text-white rounded-lg hover:bg-emerald-950/60 border border-emerald-500/20 transition cursor-pointer"
+                              title={`Configure permissions for ${u.name}`}
+                            >
+                              <Shield className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setActiveMenuUserId(activeMenuUserId === u.id ? null : u.id)}
+                            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                        </div>
 
                         {/* Dropdown Action Menu */}
                         {activeMenuUserId === u.id && (
-                          <div className="absolute right-4 mt-1 z-50 w-44 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-1 text-left text-xs">
+                          <div className="absolute right-4 mt-1 z-50 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-1 text-left text-xs">
                             <button
                               onClick={() => {
                                 setEditingUser(u);
@@ -674,32 +884,39 @@ export const UserManagementView: React.FC = () => {
                               className="w-full px-3 py-2 flex items-center gap-2 text-slate-300 hover:bg-slate-800 hover:text-white"
                             >
                               <Edit3 className="w-3.5 h-3.5 text-slate-400" />
-                              <span>Edit Details</span>
+                              <span>{isManager && (u.role === 'Admin' || u.role === 'Accountant' || u.role === 'Owner') ? 'View / Edit Info' : 'Edit Details & Role'}</span>
                             </button>
 
-                            <button
-                              onClick={() => {
-                                setPermissionsUser(u);
-                                setActiveMenuUserId(null);
-                              }}
-                              className="w-full px-3 py-2 flex items-center gap-2 text-slate-300 hover:bg-slate-800 hover:text-white"
-                            >
-                              <Shield className="w-3.5 h-3.5 text-emerald-400" />
-                              <span>Permissions</span>
-                            </button>
+                            {/* Permissions Modal trigger: Admin only for Admin/Accountant/Owner accounts */}
+                            {!(isManager && (u.role === 'Admin' || u.role === 'Accountant' || u.role === 'Owner')) && (
+                              <button
+                                onClick={() => {
+                                  setPermissionsUser(u);
+                                  setActiveMenuUserId(null);
+                                }}
+                                className="w-full px-3 py-2 flex items-center gap-2 text-slate-300 hover:bg-slate-800 hover:text-white"
+                              >
+                                <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Permissions</span>
+                              </button>
+                            )}
 
-                            <button
-                              onClick={() => {
-                                handleToggleUserStatus(u);
-                                setActiveMenuUserId(null);
-                              }}
-                              className="w-full px-3 py-2 flex items-center gap-2 text-slate-300 hover:bg-slate-800 hover:text-white"
-                            >
-                              <Key className="w-3.5 h-3.5 text-amber-400" />
-                              <span>{isActive ? 'Deactivate' : 'Activate'}</span>
-                            </button>
+                            {/* Toggle status: not allowed for Manager on Admin/Accountant/Owner */}
+                            {!(isManager && (u.role === 'Admin' || u.role === 'Accountant' || u.role === 'Owner')) && (
+                              <button
+                                onClick={() => {
+                                  handleToggleUserStatus(u);
+                                  setActiveMenuUserId(null);
+                                }}
+                                className="w-full px-3 py-2 flex items-center gap-2 text-slate-300 hover:bg-slate-800 hover:text-white"
+                              >
+                                <Key className="w-3.5 h-3.5 text-amber-400" />
+                                <span>{isActive ? 'Deactivate' : 'Activate'}</span>
+                              </button>
+                            )}
 
-                            {u.role !== 'Owner' && (
+                            {/* Delete User: Only allowed if not Owner and not Admin/Accountant when in Manager mode */}
+                            {u.role !== 'Owner' && !(isManager && (u.role === 'Admin' || u.role === 'Accountant')) && (
                               <button
                                 onClick={() => {
                                   if (confirm(`Are you sure you want to delete ${u.name}?`)) {
@@ -755,6 +972,7 @@ export const UserManagementView: React.FC = () => {
       {showAddUserModal && (
         <AddUserModal
           onClose={() => setShowAddUserModal(false)}
+          isManager={isManager}
           onAdd={(newUser) => {
             addUser(newUser);
             setShowAddUserModal(false);
@@ -774,7 +992,12 @@ export const UserManagementView: React.FC = () => {
       {editingUser && (
         <EditUserModal
           user={editingUser}
+          isManager={isManager}
           onClose={() => setEditingUser(null)}
+          onOpenPermissions={(u) => {
+            setEditingUser(null);
+            setPermissionsUser(u);
+          }}
           onSave={(updates) => {
             updateUser(editingUser.id, updates);
             setEditingUser(null);
@@ -815,6 +1038,7 @@ export const UserManagementView: React.FC = () => {
       {permissionsUser && (
         <UserPermissionsModal
           user={permissionsUser}
+          isManager={isManager}
           onClose={() => setPermissionsUser(null)}
           onSave={(perms) => {
             updateUser(permissionsUser.id, { permissions: perms });
@@ -841,9 +1065,10 @@ interface AddUserModalProps {
   onClose: () => void;
   onAdd: (user: Omit<User, 'id' | 'createdAt'>) => void;
   salesTeams: any[];
+  isManager?: boolean;
 }
 
-const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onAdd, salesTeams }) => {
+const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onAdd, salesTeams, isManager }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('+234 ');
@@ -854,9 +1079,19 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onAdd, salesTeams 
   const [fixedSalary, setFixedSalary] = useState<number>(75000);
   const [commissionPerOrder, setCommissionPerOrder] = useState<number>(1500);
 
+  // Manager cannot assign Admin or Accountant roles
+  const selectableRoles: UserRole[] = isManager
+    ? ['Sales Representative', 'Distributor', 'Manager', 'Inventory Manager', 'Media Buyer']
+    : ['Sales Representative', 'Distributor', 'Manager', 'Inventory Manager', 'Accountant', 'Media Buyer', 'Admin'];
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim()) return;
+
+    // Safety guard: Managers cannot assign Admin or Accountant
+    if (isManager && (role === 'Admin' || role === 'Accountant' || (role as string) === 'Owner')) {
+      return;
+    }
 
     onAdd({
       name: name.trim(),
@@ -929,17 +1164,19 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onAdd, salesTeams 
                 onChange={(e) => setRole(e.target.value as UserRole)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none"
               >
-                <option value="Sales Representative">Sales Representative</option>
-                <option value="Distributor">Distributor</option>
-                <option value="Manager">Manager</option>
-                <option value="Inventory Manager">Inventory Manager</option>
-                <option value="Accountant">Accountant</option>
-                <option value="Media Buyer">Media Buyer</option>
-                <option value="Admin">Admin</option>
+                {selectableRoles.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
               </select>
-              <p className="text-[10px] text-slate-400 mt-1">
-                Note: Team Leads are Sales Representatives designated in the Sales Teams section.
-              </p>
+              {isManager ? (
+                <p className="text-[10px] text-amber-400 mt-1 font-medium">
+                  Manager mode: You can assign roles except Administrator and Accountant.
+                </p>
+              ) : (
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Note: Team Leads are Sales Representatives designated in the Sales Teams section.
+                </p>
+              )}
             </div>
 
             <div>
@@ -1014,9 +1251,11 @@ interface EditUserModalProps {
   onClose: () => void;
   onSave: (updates: Partial<User>) => void;
   salesTeams: any[];
+  isManager?: boolean;
+  onOpenPermissions?: (u: User) => void;
 }
 
-const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSave, salesTeams }) => {
+const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSave, salesTeams, isManager, onOpenPermissions }) => {
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [phone, setPhone] = useState(user.phone);
@@ -1024,13 +1263,28 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSave, sa
   const [status, setStatus] = useState<'Active' | 'Paused' | 'Inactive'>(user.status);
   const [teamId, setTeamId] = useState<string>(user.teamId || '');
 
+  const isProtectedRole = user.role === 'Admin' || user.role === 'Accountant' || user.role === 'Owner';
+  const roleDisabled = isManager ? isProtectedRole : user.role === 'Owner';
+
+  const selectableRoles: UserRole[] = isManager
+    ? (isProtectedRole
+        ? [user.role]
+        : ['Sales Representative', 'Distributor', 'Manager', 'Inventory Manager', 'Media Buyer'])
+    : ['Owner', 'Admin', 'Distributor', 'Sales Representative', 'Manager', 'Inventory Manager', 'Accountant', 'Media Buyer'];
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Guard: Manager cannot escalate anyone to Admin, Accountant, or Owner
+    if (isManager && !isProtectedRole && (role === 'Admin' || role === 'Accountant' || (role as string) === 'Owner')) {
+      return;
+    }
+
     onSave({
       name: name.trim(),
       email: email.trim(),
       phone: phone.trim(),
-      role,
+      role: isProtectedRole && isManager ? user.role : role,
       status,
       teamId: teamId || undefined
     });
@@ -1089,21 +1343,26 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSave, sa
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as UserRole)}
-                disabled={user.role === 'Owner'}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none disabled:opacity-50"
+                disabled={roleDisabled}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <option value="Owner">Owner</option>
-                <option value="Admin">Admin</option>
-                <option value="Distributor">Distributor</option>
-                <option value="Sales Representative">Sales Representative</option>
-                <option value="Manager">Manager</option>
-                <option value="Inventory Manager">Inventory Manager</option>
-                <option value="Accountant">Accountant</option>
-                <option value="Media Buyer">Media Buyer</option>
+                {selectableRoles.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
               </select>
-              <p className="text-[10px] text-slate-400 mt-1">
-                Note: Team Leads are Sales Representatives designated in the Sales Teams section.
-              </p>
+              {isManager && isProtectedRole ? (
+                <p className="text-[10px] text-amber-400 mt-1 font-medium">
+                  {user.role} accounts are protected and can only be altered by System Administrators.
+                </p>
+              ) : isManager ? (
+                <p className="text-[10px] text-emerald-400 mt-1 font-medium">
+                  Manager mode: You can assign any operational role except Administrator and Accountant.
+                </p>
+              ) : (
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Note: Team Leads are Sales Representatives designated in the Sales Teams section.
+                </p>
+              )}
             </div>
 
             <div>
@@ -1134,20 +1393,36 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSave, sa
             </select>
           </div>
 
-          <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold shadow-sm"
-            >
-              Save Changes
-            </button>
+          <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-2 flex-wrap">
+            {onOpenPermissions && !(isManager && isProtectedRole) ? (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenPermissions(user);
+                }}
+                className="px-3 py-1.5 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-400 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                title={`Configure custom module access for ${user.name}`}
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span>Configure Permissions</span>
+              </button>
+            ) : <div />}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-medium cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold shadow-sm cursor-pointer"
+              >
+                Save Changes
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -1298,6 +1573,56 @@ const DefaultPermissionsModal: React.FC<DefaultPermissionsModalProps> = ({
                   ))}
                 </div>
               </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono uppercase text-sky-400 font-bold text-[11px]">
+                    4. System, AI & Advanced Integrations (Admin Delegation)
+                  </span>
+                  <span className="text-[10px] text-slate-400">Locked by default for Manager</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-slate-300">
+                  <label className="flex items-center gap-2 cursor-pointer hover:text-white p-1 rounded hover:bg-slate-900">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(mgr.admin?.tokenReporting)}
+                      onChange={() => toggleMgrPerm('admin', 'tokenReporting')}
+                      className="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0"
+                    />
+                    <span className="font-medium text-white">Token Reporting</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer hover:text-white p-1 rounded hover:bg-slate-900">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(mgr.admin?.aiAgent)}
+                      onChange={() => toggleMgrPerm('admin', 'aiAgent')}
+                      className="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0"
+                    />
+                    <span className="font-medium text-white">AI Voice Agent</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer hover:text-white p-1 rounded hover:bg-slate-900">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(mgr.admin?.aiSandbox)}
+                      onChange={() => toggleMgrPerm('admin', 'aiSandbox')}
+                      className="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0"
+                    />
+                    <span className="font-medium text-white">AI Sandbox</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer hover:text-white p-1 rounded hover:bg-slate-900">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(mgr.admin?.integrations)}
+                      onChange={() => toggleMgrPerm('admin', 'integrations')}
+                      className="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0"
+                    />
+                    <span className="font-medium text-white">Integrations</span>
+                  </label>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -1342,113 +1667,3 @@ const DefaultPermissionsModal: React.FC<DefaultPermissionsModalProps> = ({
   );
 };
 
-// -------------------------------------------------------------
-// USER PERMISSIONS OVERRIDE MODAL
-// -------------------------------------------------------------
-interface UserPermissionsModalProps {
-  user: User;
-  onClose: () => void;
-  onSave: (perms: ManagerPermissions) => void;
-}
-
-const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({ user, onClose, onSave }) => {
-  const [perms, setPerms] = useState<ManagerPermissions>(
-    user.permissions || {
-      sales: { orders: true, salesReps: true, teamPerformance: true, customers: true, deliveries: true },
-      operations: { deliveryAgents: true, inventory: true, roundRobin: false },
-      finance: { expenses: false, reports: false, orderReports: true, remittances: true, mediaBuyers: false, payroll: false },
-      admin: { users: false, notifications: true, orderFormBuilder: false, adTracker: true, aiAgent: false, subscription: false, settings: false }
-    }
-  );
-
-  const toggle = (category: keyof ManagerPermissions, key: string) => {
-    setPerms(prev => ({
-      ...prev,
-      [category]: {
-        ...prev[category],
-        [key]: !((prev[category] as any)[key])
-      }
-    }));
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-800 rounded-xl w-full max-w-xl shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-950/60">
-          <div>
-            <h2 className="text-base font-bold text-white">Custom Permissions: {user.name}</h2>
-            <p className="text-xs text-slate-400">Override role defaults with user-specific page access.</p>
-          </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-5 max-h-[60vh] overflow-y-auto space-y-4 text-xs">
-          <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-            <span className="font-mono uppercase text-emerald-400 font-bold text-[10px]">Sales & CRM</span>
-            <div className="grid grid-cols-2 gap-2 text-slate-300">
-              {Object.entries(perms.sales).map(([k, val]) => (
-                <label key={k} className="flex items-center gap-2 cursor-pointer hover:text-white">
-                  <input
-                    type="checkbox"
-                    checked={val}
-                    onChange={() => toggle('sales', k)}
-                    className="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0"
-                  />
-                  <span className="capitalize">{k.replace(/([A-Z])/g, ' $1')}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-            <span className="font-mono uppercase text-cyan-400 font-bold text-[10px]">Operations & Stock</span>
-            <div className="grid grid-cols-2 gap-2 text-slate-300">
-              {Object.entries(perms.operations).map(([k, val]) => (
-                <label key={k} className="flex items-center gap-2 cursor-pointer hover:text-white">
-                  <input
-                    type="checkbox"
-                    checked={val}
-                    onChange={() => toggle('operations', k)}
-                    className="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0"
-                  />
-                  <span className="capitalize">{k.replace(/([A-Z])/g, ' $1')}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-            <span className="font-mono uppercase text-amber-400 font-bold text-[10px]">Finance & Accounting</span>
-            <div className="grid grid-cols-2 gap-2 text-slate-300">
-              {Object.entries(perms.finance).map(([k, val]) => (
-                <label key={k} className="flex items-center gap-2 cursor-pointer hover:text-white">
-                  <input
-                    type="checkbox"
-                    checked={val}
-                    onChange={() => toggle('finance', k)}
-                    className="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0"
-                  />
-                  <span className="capitalize">{k.replace(/([A-Z])/g, ' $1')}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 border-t border-slate-800 bg-slate-950 flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-medium">
-            Cancel
-          </button>
-          <button
-            onClick={() => onSave(perms)}
-            className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow-sm"
-          >
-            Save User Permissions
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};

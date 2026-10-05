@@ -24,7 +24,8 @@ import {
   CreditCard,
   Percent,
   Layers,
-  BarChart3
+  BarChart3,
+  Eye
 } from 'lucide-react';
 
 type DatePeriod = 'today' | 'week' | 'month' | 'year' | 'all' | 'custom';
@@ -41,8 +42,12 @@ export const FinancialReportsView: React.FC = () => {
     remittances, 
     currency, 
     setCurrency, 
+    currentUser,
+    persona,
     addNotification 
   } = useCrm();
+
+  const isAccountant = currentUser?.role === 'Accountant' || persona === 'accountant';
 
   // Navigation and Filter States (Matching BettaTraka Screenshot financial.png)
   const [activeTab, setActiveTab] = useState<FinancialTab>('overview');
@@ -397,6 +402,26 @@ export const FinancialReportsView: React.FC = () => {
         </p>
       </div>
 
+      {/* Accountant Audit Notice Banner */}
+      {isAccountant && (
+        <div className="p-4 rounded-xl border border-sky-800/60 bg-sky-950/40 text-sky-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
+              <Eye className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-bold text-white">Accountant Audit Clearance: Financial Statements & P&L Ledgers</p>
+              <p className="text-[11px] text-slate-300">
+                Full analytical access to Income Statements, Operating Margins, Cost per Delivery, and Product Profitability. Audit report generation & CSV exports enabled.
+              </p>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 whitespace-nowrap self-start sm:self-auto">
+            Audit Clearance
+          </span>
+        </div>
+      )}
+
       {/* =========================================================
           2. FILTER & CURRENCY CONTROLS ROW (Matching financial.png)
           Currency Dropdown | Date Period Pills | Date Range
@@ -458,7 +483,7 @@ export const FinancialReportsView: React.FC = () => {
                 }}
                 className={`px-3.5 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-white text-black shadow-sm'
+                    ? 'bg-emerald-600 text-white font-bold shadow-sm'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >

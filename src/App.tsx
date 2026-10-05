@@ -36,11 +36,72 @@ import { InventoryManagerView } from './components/inventory/InventoryManagerVie
 import { MediaBuyerDashboardView } from './components/mediabuyer/MediaBuyerDashboardView';
 import { PublicOrderForm } from './components/public/PublicOrderForm';
 import { MarketingSite } from './components/marketing/MarketingSite';
+import { ManagerDashboardView } from './components/manager/ManagerDashboardView';
+import { AccountantDashboardView } from './components/accountant/AccountantDashboardView';
+import { AccountantSettingsView } from './components/accountant/AccountantSettingsView';
+import { hasUserAccessToTab } from './utils/permissions';
+import { Lock } from 'lucide-react';
+
+const TAB_TITLES: Record<string, string> = {
+  'orders': 'Orders Management',
+  'abandoned-carts': 'Abandoned Carts',
+  'scheduled': 'Scheduled Deliveries',
+  'deliveries': 'Deliveries',
+  'inventory': 'Inventory Management',
+  'sales-reps': 'Sales Reps',
+  'sales-teams': 'Sales Teams',
+  'team-performance': 'Team Performance',
+  'distributors': 'Distributors',
+  'agents': 'Delivery Agents',
+  'payroll': 'Payroll',
+  'customers': 'Customers CRM',
+  'expenses': 'Expenses',
+  'financial-reports': 'Finance & Accounting',
+  'order-reports': 'Order Reports',
+  'ad-tracking': 'Ad Tracking',
+  'media-buyers': 'Media Buyers',
+  'round-robin': 'Round-Robin Lead Engine',
+  'embed-forms': 'Embed Form Generator',
+  'remittances': 'Remittances & Escrow',
+  'ai-agent': 'AI Voice Agent',
+  'ai-sandbox': 'AI Sandbox',
+  'tokens': 'Token Reporting',
+  'users': 'User Management & Permissions',
+  'team-chat': 'Team Chat',
+  'notifications': 'Notifications',
+  'integrations': 'Integrations',
+  'settings': 'System Settings'
+};
+
+const PermissionRestrictedGate: React.FC<{ sectionName: string }> = ({ sectionName }) => (
+  <div className="p-6 sm:p-12 max-w-lg mx-auto my-16 text-center space-y-4 rounded-2xl border border-rose-500/40 bg-slate-900/90 shadow-2xl animate-in fade-in">
+    <div className="w-16 h-16 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-400 mx-auto flex items-center justify-center">
+      <Lock className="w-8 h-8" />
+    </div>
+    <div className="space-y-1.5">
+      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-rose-400 bg-rose-950/80 px-2.5 py-0.5 rounded border border-rose-800/60">
+        Access Permission Required
+      </span>
+      <h2 className="text-xl font-bold text-white mt-2">{sectionName} Access Restricted</h2>
+      <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+        Your user account has not been granted permission to access {sectionName}. A System Administrator can configure, grant, or update this permission for your profile in User Management.
+      </p>
+    </div>
+  </div>
+);
 
 function MainLayout() {
-  const { persona, adminActiveTab, themeMode } = useCrm();
+  const { persona, adminActiveTab, themeMode, currentUser } = useCrm();
 
-  const themeClasses = themeMode === 'light' ? 'bg-white text-black' : 'bg-black text-white';
+  const isManager = persona === 'manager' || currentUser?.role === 'Manager';
+  const isAccountant = persona === 'accountant' || currentUser?.role === 'Accountant';
+  const permissions = currentUser?.permissions?.admin;
+  const hasAiAgent = !isManager || Boolean(permissions?.aiAgent);
+  const hasAiSandbox = !isManager || Boolean(permissions?.aiSandbox);
+  const hasTokenReporting = !isManager || Boolean(permissions?.tokenReporting);
+  const hasIntegrations = !isManager || Boolean(permissions?.integrations);
+
+  const themeClasses = themeMode === 'light' ? 'bg-slate-50 text-slate-900' : 'bg-black text-white';
 
   if (persona === 'marketing') {
     return (
@@ -102,36 +163,49 @@ function MainLayout() {
       <TopBar />
       <div className="flex flex-1 overflow-hidden">
         <AdminSidebar />
-        <main className={`flex-1 overflow-y-auto ${themeMode === 'light' ? 'bg-[#f8fafc] text-black' : 'bg-black text-white'}`}>
-          {adminActiveTab === 'dashboard' && <DashboardHome />}
-          {adminActiveTab === 'orders' && <OrdersView />}
-          {adminActiveTab === 'abandoned-carts' && <AbandonedCartsView />}
-          {adminActiveTab === 'scheduled' && <ScheduledDeliveriesView />}
-          {adminActiveTab === 'deliveries' && <DeliveriesView />}
-          {adminActiveTab === 'inventory' && <InventoryView />}
-          {adminActiveTab === 'sales-reps' && <SalesRepsView />}
-          {adminActiveTab === 'sales-teams' && <SalesTeamsView />}
-          {adminActiveTab === 'team-performance' && <TeamPerformanceView />}
-          {adminActiveTab === 'distributors' && <DistributorsView />}
-          {adminActiveTab === 'agents' && <DeliveryAgentsView />}
-          {adminActiveTab === 'payroll' && <PayrollView />}
-          {adminActiveTab === 'customers' && <CustomersView />}
-          {adminActiveTab === 'expenses' && <ExpensesView />}
-          {adminActiveTab === 'financial-reports' && <FinancialReportsView />}
-          {adminActiveTab === 'order-reports' && <OrderReportsView />}
-          {adminActiveTab === 'ad-tracking' && <AdTrackingView />}
-          {adminActiveTab === 'media-buyers' && <MediaBuyersView />}
-          {adminActiveTab === 'round-robin' && <RoundRobinView />}
-          {adminActiveTab === 'embed-forms' && <EmbedFormGeneratorView />}
-          {adminActiveTab === 'remittances' && <RemittancesView />}
-          {(adminActiveTab === 'ai-agent' || adminActiveTab === 'ai-sandbox' || adminActiveTab === 'tokens') && <AIAgentAndTokensView />}
-          {adminActiveTab === 'users' && <UserManagementView />}
-          {adminActiveTab === 'team-chat' && <TeamChatView />}
-          {adminActiveTab === 'notifications' && <NotificationsView />}
-          {adminActiveTab === 'integrations' && <IntegrationsView />}
-          {adminActiveTab === 'settings' && <SettingsView />}
-          {(adminActiveTab === 'support' || adminActiveTab === 'academy') && (
-            <SettingsAndSupportView />
+        <main className={`flex-1 overflow-y-auto ${themeMode === 'light' ? 'bg-slate-50 text-slate-900' : 'bg-black text-white'}`}>
+          {!hasUserAccessToTab(currentUser, adminActiveTab) && 
+           adminActiveTab !== 'dashboard' && 
+           adminActiveTab !== 'support' && 
+           adminActiveTab !== 'academy' ? (
+            <PermissionRestrictedGate sectionName={TAB_TITLES[adminActiveTab] || adminActiveTab} />
+          ) : (
+            <>
+              {adminActiveTab === 'dashboard' && (
+                isAccountant ? <AccountantDashboardView /> : isManager ? <ManagerDashboardView /> : <DashboardHome />
+              )}
+              {adminActiveTab === 'orders' && <OrdersView />}
+              {adminActiveTab === 'abandoned-carts' && <AbandonedCartsView />}
+              {adminActiveTab === 'scheduled' && <ScheduledDeliveriesView />}
+              {adminActiveTab === 'deliveries' && <DeliveriesView />}
+              {adminActiveTab === 'inventory' && <InventoryView />}
+              {adminActiveTab === 'sales-reps' && <SalesRepsView />}
+              {adminActiveTab === 'sales-teams' && <SalesTeamsView />}
+              {adminActiveTab === 'team-performance' && <TeamPerformanceView />}
+              {adminActiveTab === 'distributors' && <DistributorsView />}
+              {adminActiveTab === 'agents' && <DeliveryAgentsView />}
+              {adminActiveTab === 'payroll' && <PayrollView />}
+              {adminActiveTab === 'customers' && <CustomersView />}
+              {adminActiveTab === 'expenses' && <ExpensesView />}
+              {adminActiveTab === 'financial-reports' && <FinancialReportsView />}
+              {adminActiveTab === 'order-reports' && <OrderReportsView />}
+              {adminActiveTab === 'ad-tracking' && <AdTrackingView />}
+              {adminActiveTab === 'media-buyers' && <MediaBuyersView />}
+              {adminActiveTab === 'round-robin' && <RoundRobinView />}
+              {adminActiveTab === 'embed-forms' && <EmbedFormGeneratorView />}
+              {adminActiveTab === 'remittances' && <RemittancesView />}
+              {adminActiveTab === 'ai-agent' && <AIAgentAndTokensView />}
+              {adminActiveTab === 'ai-sandbox' && <AIAgentAndTokensView />}
+              {adminActiveTab === 'tokens' && <AIAgentAndTokensView />}
+              {adminActiveTab === 'users' && <UserManagementView />}
+              {adminActiveTab === 'team-chat' && <TeamChatView />}
+              {adminActiveTab === 'notifications' && <NotificationsView />}
+              {adminActiveTab === 'integrations' && <IntegrationsView />}
+              {adminActiveTab === 'settings' && (
+                isAccountant ? <AccountantSettingsView /> : <SettingsView />
+              )}
+              {(adminActiveTab === 'support' || adminActiveTab === 'academy') && <SettingsAndSupportView />}
+            </>
           )}
         </main>
       </div>

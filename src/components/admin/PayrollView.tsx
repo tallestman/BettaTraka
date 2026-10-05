@@ -31,7 +31,8 @@ import {
   Plus,
   ArrowUpRight,
   ShieldCheck,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Lock
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -48,8 +49,14 @@ export const PayrollView: React.FC = () => {
     currency,
     setCurrency,
     salesTeams,
+    currentUser,
+    persona,
     addNotification 
   } = useCrm();
+
+  const isManager = currentUser?.role === 'Manager' || persona === 'manager';
+  const isAccountant = currentUser?.role === 'Accountant' || persona === 'accountant';
+  const isReadOnly = isManager || isAccountant;
 
   // Navigation & Sub-Tabs
   const [activeTab, setActiveTab] = useState<'rates' | 'history' | 'rules'>('rates');
@@ -330,9 +337,9 @@ export const PayrollView: React.FC = () => {
                     setDatePeriod(period);
                     setShowDatePicker(false);
                   }}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-white text-black shadow-sm font-bold'
+                      ? 'bg-emerald-600 text-white shadow-sm font-bold'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -346,9 +353,9 @@ export const PayrollView: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setShowDatePicker(!showDatePicker)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs border transition ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs border transition cursor-pointer ${
                 datePeriod === 'custom'
-                  ? 'bg-white text-black font-semibold border-white'
+                  ? 'bg-emerald-600 text-white font-bold border-emerald-600'
                   : 'bg-[#131926] text-slate-300 hover:text-white border-slate-800'
               }`}
             >
@@ -446,18 +453,51 @@ export const PayrollView: React.FC = () => {
           </button>
 
           {/* Run Payroll CTA */}
-          <button
-            onClick={() => {
-              setPreviewRunGenerated(false);
-              setShowRunPayrollModal(true);
-            }}
-            className="flex items-center gap-1.5 px-4 py-1.5 bg-sky-500 hover:bg-sky-400 text-white font-semibold rounded-lg text-xs transition shadow-sm"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Run Payroll</span>
-          </button>
+          {isReadOnly ? (
+            <button
+              disabled
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded-lg text-xs font-medium cursor-not-allowed opacity-80"
+              title={isAccountant ? "Accountant Mode: Payroll payout execution is restricted to Administrators" : "Manager Mode: Payroll payout execution is restricted to Administrators"}
+            >
+              <Lock className="w-3.5 h-3.5 text-slate-500" />
+              <span>Run Payroll (Admin Only)</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setPreviewRunGenerated(false);
+                setShowRunPayrollModal(true);
+              }}
+              className="flex items-center gap-1.5 px-4 py-1.5 bg-sky-500 hover:bg-sky-400 text-white font-semibold rounded-lg text-xs transition shadow-sm cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Run Payroll</span>
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Read-Only Mode Notice Banner */}
+      {isReadOnly && (
+        <div className="p-3.5 rounded-xl border border-sky-800/60 bg-sky-950/40 text-sky-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs animate-in fade-in">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
+              <Eye className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-bold text-white">{isAccountant ? 'Accountant Mode: View-Only Payroll Ledger' : 'Manager Mode: View-Only Payroll Access'}</p>
+              <p className="text-[11px] text-slate-300">
+                {isAccountant
+                  ? 'You can audit staff commissions, base salaries, delivery bonuses, and historical payout records for bookkeeping. Modifying pay rates and executing payroll runs are restricted to Administrators.'
+                  : 'You can audit staff commissions, delivery bonuses, and payout history. Setting or configuring pay rates and running payout batches is restricted to Administrators.'}
+              </p>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 rounded-lg bg-sky-900/60 border border-sky-700/60 text-sky-300 font-mono text-[10px] font-bold shrink-0 self-start sm:self-auto">
+            Read-Only
+          </span>
+        </div>
+      )}
 
       {/* Currency conversion notice badge */}
       <div className="flex items-center gap-2 text-[11px] text-slate-500">
@@ -828,15 +868,26 @@ export const PayrollView: React.FC = () => {
                           {/* Actions: Set Rate (Requested in pay1.png, pay2.png, pay3.png) */}
                           <td className="py-3.5 px-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
-                              {/* Set Rate Button - Primary Action */}
-                              <button
-                                onClick={() => setSetRateUser(u)}
-                                className="px-3 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 text-xs font-semibold flex items-center gap-1 transition"
-                                title="Click to open the Set Rate menu"
-                              >
-                                <Sliders className="w-3 h-3" />
-                                <span>Set Rate</span>
-                              </button>
+                              {/* Set Rate / View Rate Button */}
+                              {isReadOnly ? (
+                                <button
+                                  onClick={() => setSetRateUser(u)}
+                                  className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-medium flex items-center gap-1 transition cursor-pointer"
+                                  title={`View compensation rate details (Read-only for ${isAccountant ? 'Accountant' : 'Manager'})`}
+                                >
+                                  <Eye className="w-3 h-3" />
+                                  <span>View Rate</span>
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => setSetRateUser(u)}
+                                  className="px-3 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                                  title="Click to open the Set Rate menu"
+                                >
+                                  <Sliders className="w-3 h-3" />
+                                  <span>Set Rate</span>
+                                </button>
+                              )}
 
                               {/* Audit Breakdown */}
                               <button
@@ -1045,8 +1096,10 @@ export const PayrollView: React.FC = () => {
       {setRateUser && (
         <SetRateModal
           user={setRateUser}
+          isReadOnly={isReadOnly}
           onClose={() => setSetRateUser(null)}
           onSave={(updates, applyToTeam) => {
+            if (isReadOnly) return;
             updateUser(setRateUser.id, updates);
             if (applyToTeam && setRateUser.teamId) {
               const teamMembers = users.filter(u => u.teamId === setRateUser.teamId && u.id !== setRateUser.id);
@@ -1099,13 +1152,14 @@ export const PayrollView: React.FC = () => {
 // -------------------------------------------------------------
 interface SetRateModalProps {
   user: User;
+  isReadOnly?: boolean;
   onClose: () => void;
   onSave: (updates: Partial<User>, applyToTeam: boolean) => void;
   currency: CurrencyCode;
   salesTeams: any[];
 }
 
-const SetRateModal: React.FC<SetRateModalProps> = ({ user, onClose, onSave, currency, salesTeams }) => {
+const SetRateModal: React.FC<SetRateModalProps> = ({ user, isReadOnly, onClose, onSave, currency, salesTeams }) => {
   const [activeMenuTab, setActiveMenuTab] = useState<'model' | 'simulator' | 'bank'>('model');
 
   // Form states initialized with current user values
@@ -1745,19 +1799,30 @@ const SetRateModal: React.FC<SetRateModalProps> = ({ user, onClose, onSave, curr
           )}
 
           <div className="flex items-center gap-2 self-end sm:self-auto">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              className="px-5 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md"
-            >
-              <Check className="w-3.5 h-3.5" />
-              <span>Save & Apply Rate</span>
-            </button>
+            {isReadOnly ? (
+              <button
+                onClick={onClose}
+                className="px-5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition"
+              >
+                Close (Read-Only)
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="px-5 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Save & Apply Rate</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
