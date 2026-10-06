@@ -404,16 +404,20 @@ export const ManagerDashboardView: React.FC = () => {
                         {o.status}
                       </span>
                       {o.distributorName && (
-                        <span className="text-[10px] text-lime-400 bg-lime-950/60 border border-lime-800/60 px-1.5 py-0.2 rounded font-mono">
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono border ${
+                          isLight 
+                            ? 'text-emerald-800 bg-emerald-100 border-emerald-300' 
+                            : 'text-emerald-400 bg-emerald-950/60 border-emerald-800/60'
+                        }`}>
                           Hub: {o.distributorName.split(' ')[0]}
                         </span>
                       )}
                     </div>
-                    <p className="font-semibold text-xs text-white">
+                    <p className={`font-semibold text-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>
                       {o.customerName} · <span className="font-mono text-slate-400">{o.customerPhone}</span>
                     </p>
                     <p className="text-[11px] text-slate-400">
-                      {o.deliveryCity}, {o.deliveryState} · <span className="text-white font-bold">{formatCurrency(convertAmount(o.totalAmount, currency), currency)}</span>
+                      {o.deliveryCity}, {o.deliveryState} · <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{formatCurrency(convertAmount(o.totalAmount, currency), currency)}</span>
                     </p>
                   </div>
 
@@ -519,10 +523,12 @@ export const ManagerDashboardView: React.FC = () => {
       <div className={`rounded-2xl border p-5 space-y-4 ${
         isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#090d16] border-slate-800'
       }`}>
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
+        <div className={`flex items-center justify-between pb-3 border-b ${
+          isLight ? 'border-slate-200' : 'border-slate-800/80'
+        }`}>
           <div>
             <h2 className="font-bold text-sm flex items-center gap-2">
-              <Boxes className="w-4 h-4 text-lime-400" />
+              <Boxes className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
               <span>Regional Fulfillment Hubs & Distributor Stock</span>
             </h2>
             <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -533,7 +539,7 @@ export const ManagerDashboardView: React.FC = () => {
             type="button"
             onClick={() => setAdminActiveTab('distributors')}
             className={`text-xs font-semibold cursor-pointer hover:underline ${
-              isLight ? 'text-lime-700' : 'text-lime-400'
+              isLight ? 'text-emerald-600' : 'text-emerald-400'
             }`}
           >
             Manage Distributors
@@ -553,17 +559,23 @@ export const ManagerDashboardView: React.FC = () => {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-white">{dist.name}</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-lime-950 text-lime-400 border border-lime-800/60 font-bold">
+                  <span className={`font-bold text-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>{dist.name}</span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                    isLight 
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
+                      : 'bg-emerald-950 text-emerald-400 border-emerald-800/60'
+                  }`}>
                     {dist.status}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400">
-                  Contact: <span className="font-mono text-slate-300">{dist.phone}</span>
+                <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Contact: <span className={`font-mono ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>{dist.phone}</span>
                 </p>
-                <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 text-xs">
-                  <span className="text-slate-400">{hubOrders.length} orders allocated</span>
-                  <span className="font-bold text-lime-400 font-mono">{hubDelivered} delivered</span>
+                <div className={`flex items-center justify-between pt-2 border-t text-xs ${
+                  isLight ? 'border-slate-200' : 'border-slate-800/60'
+                }`}>
+                  <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>{hubOrders.length} orders allocated</span>
+                  <span className={`font-bold font-mono ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`}>{hubDelivered} delivered</span>
                 </div>
               </div>
             );

@@ -1273,8 +1273,8 @@ export const SalesRepView: React.FC = () => {
                   className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
                     leaderboardTimeframe === 'month'
                       ? isLight
-                        ? 'bg-lime-600 text-white shadow-xs'
-                        : 'bg-lime-500 text-black font-extrabold shadow-md shadow-lime-950/40'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-sm'
                       : isLight
                         ? 'text-slate-600 hover:text-slate-900'
                         : 'text-slate-400 hover:text-white'
@@ -1288,8 +1288,8 @@ export const SalesRepView: React.FC = () => {
                   className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
                     leaderboardTimeframe === 'week'
                       ? isLight
-                        ? 'bg-lime-600 text-white shadow-xs'
-                        : 'bg-lime-500 text-black font-extrabold shadow-md shadow-lime-950/40'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-sm'
                       : isLight
                         ? 'text-slate-600 hover:text-slate-900'
                         : 'text-slate-400 hover:text-white'
@@ -1303,8 +1303,8 @@ export const SalesRepView: React.FC = () => {
                   className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
                     leaderboardTimeframe === 'all'
                       ? isLight
-                        ? 'bg-lime-600 text-white shadow-xs'
-                        : 'bg-lime-500 text-black font-extrabold shadow-md shadow-lime-950/40'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-sm'
                       : isLight
                         ? 'text-slate-600 hover:text-slate-900'
                         : 'text-slate-400 hover:text-white'
@@ -1318,8 +1318,8 @@ export const SalesRepView: React.FC = () => {
             {/* Monthly Grand Prize Challenge Card */}
             <div className={`p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm ${
               isLight 
-                ? 'border-amber-300 bg-gradient-to-r from-amber-50 via-amber-100/40 to-white' 
-                : 'border-amber-500/30 bg-gradient-to-r from-amber-950/40 via-slate-900 to-[#090d16]'
+                ? 'border-amber-200 bg-gradient-to-r from-amber-50/80 via-white to-amber-50/40 shadow-xs' 
+                : 'border-amber-500/30 bg-gradient-to-r from-amber-950/30 via-slate-900 to-[#090d16]'
             }`}>
               <div className="flex items-center gap-3.5">
                 <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0 shadow-inner ${
@@ -1352,13 +1352,13 @@ export const SalesRepView: React.FC = () => {
 
               {/* Personal Standing Pill */}
               <div className={`p-3 rounded-xl border text-right shrink-0 ${
-                isLight ? 'bg-white border-amber-200 shadow-xs' : 'bg-slate-950 border-slate-800'
+                isLight ? 'bg-white border-amber-200 shadow-xs' : 'bg-slate-900/90 border-slate-800'
               }`}>
                 <span className={`text-[10px] font-mono uppercase block ${
                   isLight ? 'text-slate-500' : 'text-slate-400'
                 }`}>Your Current Rank</span>
                 <span className={`text-xl font-black font-mono ${
-                  isLight ? 'text-lime-700' : 'text-lime-400'
+                  isLight ? 'text-amber-700' : 'text-amber-400'
                 }`}>
                   Rank #{myRank} <span className={`text-xs font-sans ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>of {repRankings.length} reps</span>
                 </span>
@@ -1383,8 +1383,8 @@ export const SalesRepView: React.FC = () => {
                     className={`rounded-2xl border p-4 space-y-3 relative overflow-hidden transition ${
                       rep.isCurrent 
                         ? isLight
-                          ? 'border-lime-500 bg-lime-50/70 shadow-md shadow-lime-900/10'
-                          : 'border-lime-500 bg-lime-950/20 shadow-lime-950/50 shadow-lg' 
+                          ? 'border-emerald-500 bg-emerald-50/70 shadow-md shadow-emerald-900/10'
+                          : 'border-emerald-500/50 bg-emerald-950/20 shadow-emerald-950/50 shadow-lg' 
                         : isFirst
                         ? isLight
                           ? 'border-amber-300 bg-amber-50/40 shadow-xs'
@@ -1415,8 +1415,8 @@ export const SalesRepView: React.FC = () => {
                       {rep.isCurrent && (
                         <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold animate-pulse ${
                           isLight 
-                            ? 'bg-lime-100 text-lime-800 border border-lime-300' 
-                            : 'bg-lime-950 text-lime-400 border border-lime-800'
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
+                            : 'bg-emerald-950 text-emerald-400 border border-emerald-800'
                         }`}>
                           YOU
                         </span>
@@ -1432,7 +1432,7 @@ export const SalesRepView: React.FC = () => {
                       </div>
                       <div>
                         <span className={`text-[10px] block ${isLight ? 'text-slate-500' : 'text-slate-500'}`}>Success Rate</span>
-                        <span className={`text-base font-bold ${isLight ? 'text-lime-700' : 'text-lime-400'}`}>{rep.conversion}%</span>
+                        <span className={`text-base font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>{rep.conversion}%</span>
                       </div>
                     </div>
 
@@ -1480,8 +1480,8 @@ export const SalesRepView: React.FC = () => {
                           className={`transition ${
                             rep.isCurrent 
                               ? isLight
-                                ? 'bg-lime-50/80 hover:bg-lime-50 border-l-4 border-l-lime-500 font-semibold'
-                                : 'bg-lime-950/30 hover:bg-lime-950/40 border-l-4 border-l-lime-500' 
+                                ? 'bg-emerald-50/80 hover:bg-emerald-50 border-l-4 border-l-emerald-500 font-semibold'
+                                : 'bg-emerald-950/30 hover:bg-emerald-950/40 border-l-4 border-l-emerald-500' 
                               : isLight
                                 ? 'hover:bg-slate-50 text-slate-800'
                                 : 'hover:bg-slate-900/60 text-slate-300'
@@ -1502,7 +1502,7 @@ export const SalesRepView: React.FC = () => {
                             {rep.name}
                             {rep.isCurrent && (
                               <span className={`ml-2 text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${
-                                isLight ? 'bg-lime-100 text-lime-800' : 'bg-lime-950 text-lime-400'
+                                isLight ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-950 text-emerald-400'
                               }`}>
                                 YOU
                               </span>
@@ -1511,11 +1511,11 @@ export const SalesRepView: React.FC = () => {
                           <td className={`py-3 px-4 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>{rep.team}</td>
                           <td className={`py-3 px-4 text-center font-mono ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>{rep.assignedCount}</td>
                           <td className={`py-3 px-4 text-center font-mono font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{rep.deliveredCount}</td>
-                          <td className={`py-3 px-4 text-center font-mono font-bold ${isLight ? 'text-lime-700' : 'text-lime-400'}`}>{rep.conversion}%</td>
+                          <td className={`py-3 px-4 text-center font-mono font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>{rep.conversion}%</td>
                           <td className={`py-3 px-4 text-right font-mono font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
                             {formatCurrency(convertAmount(rep.revenue, currency), currency)}
                           </td>
-                          <td className={`py-3 px-4 text-right font-mono font-bold ${isLight ? 'text-lime-700' : 'text-lime-400'}`}>
+                          <td className={`py-3 px-4 text-right font-mono font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
                             {formatCurrency(convertAmount(rep.commissions, currency), currency)}
                           </td>
                         </tr>

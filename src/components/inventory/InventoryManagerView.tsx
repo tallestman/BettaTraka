@@ -467,8 +467,8 @@ export const InventoryManagerView: React.FC = () => {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-white text-xs leading-none truncate">{currentUser?.name || 'Inventory Manager'}</p>
-                <p className="text-[10px] text-lime-400 font-mono flex items-center gap-1 mt-1 truncate">
-                  <span className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse"></span>
+                <p className="text-[10px] text-emerald-400 font-mono flex items-center gap-1 mt-1 truncate">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                   <span>Stock &amp; Logistics Hub</span>
                 </p>
               </div>
@@ -509,7 +509,7 @@ export const InventoryManagerView: React.FC = () => {
               setRestockUnitCost(first?.unitCost || 0);
               setIsGenericAddStockOpen(true);
             }}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-lime-500 hover:bg-lime-400 text-black font-extrabold text-xs transition shadow-sm cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow-sm cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>+ Add Warehouse Stock</span>
@@ -536,9 +536,9 @@ export const InventoryManagerView: React.FC = () => {
               setDistributorAssignUnits(50);
               setShowAssignDistributorModal(true);
             }}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-lime-400 hover:text-lime-300 font-bold text-xs border border-lime-500/40 transition cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 font-bold text-xs border border-emerald-500/40 transition cursor-pointer"
           >
-            <Boxes className="w-3.5 h-3.5 text-lime-400" />
+            <Boxes className="w-3.5 h-3.5 text-emerald-400" />
             <span>+ Assign to Distributor</span>
           </button>
         </div>
@@ -563,7 +563,7 @@ export const InventoryManagerView: React.FC = () => {
                   item.isLogOut
                     ? 'text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 mt-2 border border-rose-500/20'
                     : isActive 
-                    ? 'bg-lime-500 text-black font-extrabold shadow-sm' 
+                    ? 'bg-emerald-600 text-white font-bold shadow-sm' 
                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
                 }`}
               >
@@ -719,9 +719,9 @@ export const InventoryManagerView: React.FC = () => {
           {/* Right Header: Stock Metrics & Log Out Button */}
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[11px] font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse hidden xs:inline-block" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse hidden xs:inline-block" />
               <span className="text-slate-400 hidden sm:inline">Total Stock:</span>
-              <span className="font-bold text-lime-400">{totalInventoryUnits.toLocaleString()} <span className="hidden xs:inline">units</span></span>
+              <span className="font-bold text-emerald-400">{totalInventoryUnits.toLocaleString()} <span className="hidden xs:inline">units</span></span>
             </div>
 
             <button
@@ -1319,7 +1319,7 @@ export const InventoryManagerView: React.FC = () => {
               <div>
                 <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
                   <span>Regional Distributor Hub Stock</span>
-                  <span className="text-xs bg-lime-950 text-lime-400 font-mono px-2.5 py-0.5 rounded-full border border-lime-800/60">
+                  <span className="text-xs bg-emerald-950 text-emerald-400 font-mono px-2.5 py-0.5 rounded-full border border-emerald-800/60">
                     {distributors.length} Regional Centers
                   </span>
                 </h1>
@@ -1335,7 +1335,7 @@ export const InventoryManagerView: React.FC = () => {
                   setDistributorAssignUnits(50);
                   setShowAssignDistributorModal(true);
                 }}
-                className="flex items-center gap-1.5 px-4 py-2 bg-lime-500 hover:bg-lime-400 text-black font-extrabold rounded-xl text-xs transition shadow-lg shadow-lime-950/40 cursor-pointer"
+                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-emerald-950/40 cursor-pointer"
               >
                 <Boxes className="w-4 h-4" />
                 <span>+ Allocate Stock to Distributor</span>
@@ -1357,7 +1357,7 @@ export const InventoryManagerView: React.FC = () => {
                     <div className="flex items-start justify-between pb-3 border-b border-slate-800">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-lime-950 border border-lime-500/40 flex items-center justify-center text-lime-400 font-bold text-xs">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-950 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-xs">
                             <Truck className="w-4 h-4" />
                           </div>
                           <div>
@@ -1367,7 +1367,7 @@ export const InventoryManagerView: React.FC = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className="font-mono text-base font-black text-lime-400">
+                        <span className="font-mono text-base font-bold text-emerald-400">
                           {totalUnits} <span className="text-xs font-normal text-slate-400">units</span>
                         </span>
                         <p className="text-[10px] text-slate-500 font-mono">
@@ -1406,7 +1406,7 @@ export const InventoryManagerView: React.FC = () => {
                           setDistributorAssignUnits(50);
                           setShowAssignDistributorModal(true);
                         }}
-                        className="px-3 py-1.5 rounded-lg bg-lime-600/20 text-lime-400 hover:bg-lime-600/30 text-xs font-bold border border-lime-500/40 cursor-pointer"
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 text-xs font-bold border border-emerald-500/40 cursor-pointer"
                       >
                         + Assign More Stock
                       </button>
@@ -2758,7 +2758,7 @@ export const InventoryManagerView: React.FC = () => {
           <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 space-y-4 shadow-2xl text-slate-100">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Boxes className="w-5 h-5 text-lime-400" />
+                <Boxes className="w-5 h-5 text-emerald-400" />
                 <span>Allocate Stock to Regional Distributor</span>
               </h3>
               <button 
@@ -2789,7 +2789,7 @@ export const InventoryManagerView: React.FC = () => {
                 <select
                   value={distributorAssignTargetId}
                   onChange={(e) => setDistributorAssignTargetId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-emerald-500"
                 >
                   {distributors.map(d => (
                     <option key={d.id} value={d.id}>
@@ -2804,7 +2804,7 @@ export const InventoryManagerView: React.FC = () => {
                 <select
                   value={distributorAssignTargetProductId}
                   onChange={(e) => setDistributorAssignTargetProductId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-emerald-500"
                 >
                   {products.map(p => (
                     <option key={p.id} value={p.id}>
@@ -2821,7 +2821,7 @@ export const InventoryManagerView: React.FC = () => {
                   min="1"
                   value={distributorAssignUnits}
                   onChange={(e) => setDistributorAssignUnits(Math.max(1, Number(e.target.value)))}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500 font-mono text-sm"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono text-sm"
                 />
               </div>
 
@@ -2832,7 +2832,7 @@ export const InventoryManagerView: React.FC = () => {
                   value={distributorAssignNote}
                   onChange={(e) => setDistributorAssignNote(e.target.value)}
                   placeholder="e.g. Sent via regional haulage carrier, Waybill #WH-DIST-209..."
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-white focus:outline-none focus:border-lime-500"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-white focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
@@ -2846,7 +2846,7 @@ export const InventoryManagerView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-lime-500 hover:bg-lime-400 text-black font-extrabold shadow"
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow"
                 >
                   Dispatch to Distributor
                 </button>

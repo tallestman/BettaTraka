@@ -479,7 +479,7 @@ export const InventoryView: React.FC = () => {
             <span>Add Stock</span>
           </button>
 
-          {/* + Assign to Distributor (Lime Green) */}
+          {/* + Assign to Distributor */}
           <button
             onClick={() => {
               setDistributorAssignId(distributors[0]?.id || '');
@@ -487,11 +487,7 @@ export const InventoryView: React.FC = () => {
               setDistributorUnits(50);
               setShowAssignDistributorModal(true);
             }}
-            className={`flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap flex-1 sm:flex-initial border ${
-              isLight 
-                ? 'bg-lime-50 hover:bg-lime-100 text-lime-900 border-lime-300' 
-                : 'bg-lime-600 hover:bg-lime-500 text-black border-lime-500'
-            }`}
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap flex-1 sm:flex-initial"
             title="Allocate Central Warehouse stock to Regional Distributor Hub"
           >
             <Warehouse className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -2075,7 +2071,7 @@ export const InventoryView: React.FC = () => {
           <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-700 p-6 space-y-4 shadow-2xl text-slate-100">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Warehouse className="w-4 h-4 text-lime-400" />
+                <Warehouse className="w-4 h-4 text-emerald-400" />
                 <span>Assign Stock to Distributor</span>
               </h3>
               <button 
@@ -2106,7 +2102,7 @@ export const InventoryView: React.FC = () => {
                 <select
                   value={distributorAssignId}
                   onChange={(e) => setDistributorAssignId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-emerald-500"
                 >
                   {distributors.map(d => (
                     <option key={d.id} value={d.id}>
@@ -2121,7 +2117,7 @@ export const InventoryView: React.FC = () => {
                 <select
                   value={distributorProductId}
                   onChange={(e) => setDistributorProductId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-emerald-500"
                 >
                   {products.map(p => (
                     <option key={p.id} value={p.id}>
@@ -2138,7 +2134,7 @@ export const InventoryView: React.FC = () => {
                   min="1"
                   value={distributorUnits}
                   onChange={(e) => setDistributorUnits(Math.max(1, Number(e.target.value)))}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-lime-500 font-mono text-sm"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono text-sm"
                 />
               </div>
 
@@ -2149,7 +2145,7 @@ export const InventoryView: React.FC = () => {
                   value={distributorNote}
                   onChange={(e) => setDistributorNote(e.target.value)}
                   placeholder="e.g. Dispatched via interstate logistics transit batch #WB-9901..."
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-white focus:outline-none focus:border-lime-500"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-white focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
@@ -2163,7 +2159,7 @@ export const InventoryView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-lime-500 hover:bg-lime-400 text-black font-extrabold shadow"
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow transition active:scale-95 cursor-pointer"
                 >
                   Allocate to Distributor
                 </button>
