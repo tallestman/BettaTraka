@@ -1,0 +1,28 @@
+# Allow only build inputs. Never send the working tree, env files or caches wholesale.
+**
+!package.json
+!package-lock.json
+!index.html
+!vite.config.ts
+!tsconfig.json
+!server.ts
+!src/
+!src/**
+!public/
+!public/**
+!server/
+!server/**
+# Re-exclude common secret material even within allowed source directories.
+**/.env*
+**/.npmrc
+**/.git
+**/node_modules
+**/*secret*
+**/*credential*
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.crt
+**/id_rsa*
+**/id_ed25519*

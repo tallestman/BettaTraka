@@ -1,35 +1,20 @@
-# Multi-stage Dockerfile for BettaTraka Self-Hosted VPS Deployment
-
-# Stage 1: Build Frontend Assets
-FROM node:22-alpine AS builder
-
+# Pin both stages to the same Node 24 LTS image and npm toolchain.
+FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS builder
 WORKDIR /app
-
-# Install build dependencies
-COPY package*.json ./
-RUN npm ci
-
-# Copy source and build static bundle
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
 COPY . .
 RUN npm run build
 
-# Stage 2: Production Server Runtime
-FROM node:22-alpine AS runner
-
+FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-
-# Install production dependencies only
-COPY package*.json ./
-RUN npm ci --omit=dev && npm install -g tsx
-
-# Copy built frontend assets and server application code
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund && npm cache clean --force
 COPY --from=builder /app/dist ./dist
 COPY server ./server
-COPY server.ts ./
-COPY tsconfig.json ./
-
+COPY server.ts tsconfig.json ./
+USER node
 EXPOSE 3000
-
-# Start server (runs migrations automatically on connected database)
-CMD ["tsx", "server.ts"]
+# Use the locked local tsx loader, with Node as PID 1.
+CMD ["node", "--import", "tsx", "server.ts"]

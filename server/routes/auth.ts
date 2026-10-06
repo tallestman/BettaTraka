@@ -257,15 +257,17 @@ authRouter.post('/login', rateLimitAuth, async (req: Request, res: Response): Pr
 // 3. POST /api/auth/logout
 authRouter.post('/logout', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
-    if (req.rawToken) {
-      const tokenHash = hashToken(req.rawToken);
-      await pool.query(
-        'UPDATE sessions SET revoked_at = CURRENT_TIMESTAMP WHERE token_hash = $1',
-        [tokenHash]
-      );
+    const result = await pool.query(
+      'UPDATE sessions SET revoked_at = CURRENT_TIMESTAMP WHERE token_hash = $1 RETURNING id',
+      [hashToken(req.rawToken!)]
+    );
+    if (result.rowCount !== 1) {
+      res.status(503).json({ error: 'Session revocation failed. Please retry logout.' });
+      return;
     }
   } catch (err) {
-    console.warn('Session revocation notice:', err);
+    res.status(503).json({ error: 'Session revocation failed. Please retry logout.' });
+    return;
   }
 
   res.clearCookie('bettatraka_token');
@@ -323,6 +325,13 @@ authRouter.post('/switch-org', authenticate, async (req: Request, res: Response)
       organizationId: target.organization_id,
       role: target.role,
     });
+
+    await pool.query(
+      `INSERT INTO sessions (user_id, organization_id, token_hash, expires_at, ip_address, user_agent)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [req.user!.id, target.organization_id, hashToken(newToken),
+        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), req.ip || null, req.headers['user-agent'] || null]
+    );
 
     res.cookie('bettatraka_token', newToken, {
       httpOnly: true,

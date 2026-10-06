@@ -62,9 +62,15 @@ export async function authenticate(
     // Check session revocation in database
     const tokenHash = hashToken(token);
     const sessionRes = await pool.query(
-      'SELECT revoked_at, expires_at FROM sessions WHERE token_hash = $1',
-      [tokenHash]
+      `SELECT revoked_at, expires_at FROM sessions
+       WHERE token_hash = $1 AND user_id = $2
+       AND organization_id IS NOT DISTINCT FROM $3::uuid`,
+      [tokenHash, payload.userId, payload.organizationId ?? null]
     );
+    if (sessionRes.rows.length === 0) {
+      res.status(401).json({ error: 'Session not found. Please log in again.' });
+      return;
+    }
     if (sessionRes.rows.length > 0) {
       const session = sessionRes.rows[0];
       if (session.revoked_at || new Date(session.expires_at) < new Date()) {
@@ -109,7 +115,8 @@ export async function authenticate(
       memberQuery += ' AND m.organization_id = $2';
       memberParams.push(targetOrgId);
     } else {
-      memberQuery += ' ORDER BY (m.role = \'Owner\') DESC, m.created_at ASC LIMIT 1';
+      next();
+      return;
     }
 
     const memberRes = await pool.query(memberQuery, memberParams);

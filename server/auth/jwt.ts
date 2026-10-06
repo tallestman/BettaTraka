@@ -26,6 +26,7 @@ export interface AuthTokenPayload {
 export function signAccessToken(payload: AuthTokenPayload): string {
   return jwt.sign(payload, getJwtSecret(), {
     expiresIn: TOKEN_EXPIRY,
+    jwtid: crypto.randomUUID(),
     algorithm: 'HS256',
   });
 }
