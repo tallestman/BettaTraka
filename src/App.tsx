@@ -39,6 +39,9 @@ import { MarketingSite } from './components/marketing/MarketingSite';
 import { ManagerDashboardView } from './components/manager/ManagerDashboardView';
 import { AccountantDashboardView } from './components/accountant/AccountantDashboardView';
 import { AccountantSettingsView } from './components/accountant/AccountantSettingsView';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthModal } from './components/auth/AuthModal';
+import { UnauthorizedAccessGate } from './components/auth/UnauthorizedAccessGate';
 import { hasUserAccessToTab } from './utils/permissions';
 import { Lock } from 'lucide-react';
 
@@ -92,16 +95,28 @@ const PermissionRestrictedGate: React.FC<{ sectionName: string }> = ({ sectionNa
 
 function MainLayout() {
   const { persona, adminActiveTab, themeMode, currentUser } = useCrm();
+  const { 
+    isAuthenticated, 
+    role: authRole, 
+    isLoading: authLoading, 
+    backendStatus, 
+    setShowLoginModal, 
+    setAuthModalMode 
+  } = useAuth();
 
-  const isManager = persona === 'manager' || currentUser?.role === 'Manager';
-  const isAccountant = persona === 'accountant' || currentUser?.role === 'Accountant';
-  const permissions = currentUser?.permissions?.admin;
-  const hasAiAgent = !isManager || Boolean(permissions?.aiAgent);
-  const hasAiSandbox = !isManager || Boolean(permissions?.aiSandbox);
-  const hasTokenReporting = !isManager || Boolean(permissions?.tokenReporting);
-  const hasIntegrations = !isManager || Boolean(permissions?.integrations);
+  const isLight = themeMode === 'light';
+  const themeClasses = isLight ? 'bg-slate-50 text-slate-900' : 'bg-black text-white';
 
-  const themeClasses = themeMode === 'light' ? 'bg-slate-50 text-slate-900' : 'bg-black text-white';
+  if (authLoading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${themeClasses}`}>
+        <div className="text-center space-y-4">
+          <div className="w-10 h-10 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs font-semibold tracking-wide text-slate-400">Loading BettaTraka Workspace...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (persona === 'marketing') {
     return (
@@ -120,6 +135,66 @@ function MainLayout() {
       </div>
     );
   }
+
+  // In production, unauthenticated users must sign in or register to access private CRM workspaces
+  const isProd = import.meta.env.PROD;
+  if (!isAuthenticated && isProd) {
+    return (
+      <div className={`min-h-screen flex flex-col ${themeClasses}`}>
+        <TopBar />
+        <UnauthorizedAccessGate
+          onSignIn={() => {
+            setAuthModalMode('login');
+            setShowLoginModal(true);
+          }}
+          onCreateWorkspace={() => {
+            setAuthModalMode('register');
+            setShowLoginModal(true);
+          }}
+          backendStatus={backendStatus}
+        />
+      </div>
+    );
+  }
+
+  // Server-enforced role gates for authenticated staff
+  if (isAuthenticated && authRole) {
+    if (authRole === 'Sales Representative' && persona !== 'rep') {
+      return (
+        <div className={`min-h-screen flex flex-col ${themeClasses}`}>
+          <TopBar />
+          <PermissionRestrictedGate sectionName="Administrative Operational Hub" />
+        </div>
+      );
+    }
+    if (authRole === 'Distributor' && persona !== 'distributor') {
+      return (
+        <div className={`min-h-screen flex flex-col ${themeClasses}`}>
+          <TopBar />
+          <PermissionRestrictedGate sectionName="Distributor Operations Hub" />
+        </div>
+      );
+    }
+    if (authRole === 'Inventory Manager' && persona !== 'inventory') {
+      return (
+        <div className={`min-h-screen flex flex-col ${themeClasses}`}>
+          <TopBar />
+          <PermissionRestrictedGate sectionName="Warehouse Inventory Operations Hub" />
+        </div>
+      );
+    }
+    if (authRole === 'Media Buyer' && persona !== 'media_buyer') {
+      return (
+        <div className={`min-h-screen flex flex-col ${themeClasses}`}>
+          <TopBar />
+          <PermissionRestrictedGate sectionName="Media Buyer Performance Hub" />
+        </div>
+      );
+    }
+  }
+
+  const isManager = persona === 'manager' || currentUser?.role === 'Manager' || authRole === 'Manager';
+  const isAccountant = persona === 'accountant' || currentUser?.role === 'Accountant' || authRole === 'Accountant';
 
   if (persona === 'rep') {
     return (
@@ -215,8 +290,11 @@ function MainLayout() {
 
 export default function App() {
   return (
-    <CrmProvider>
-      <MainLayout />
-    </CrmProvider>
+    <AuthProvider>
+      <CrmProvider>
+        <MainLayout />
+        <AuthModal />
+      </CrmProvider>
+    </AuthProvider>
   );
 }

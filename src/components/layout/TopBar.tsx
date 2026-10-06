@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useCrm, ActivePersona } from '../../context/CrmContext';
+import { useAuth } from '../../context/AuthContext';
 import { CurrencyCode } from '../../types/crm';
 import { PWAInstallButton } from '../common/PWAInstallButton';
 import { 
@@ -22,14 +23,16 @@ import {
   Truck,
   Megaphone,
   Briefcase,
-  Building2
+  Building2,
+  LogIn,
+  AlertCircle
 } from 'lucide-react';
 
 export const TopBar: React.FC = () => {
   const { 
     persona, 
     setPersona, 
-    logout,
+    logout: crmLogout,
     currency, 
     setCurrency, 
     notifications, 
@@ -47,12 +50,92 @@ export const TopBar: React.FC = () => {
     toggleSidebarCollapse
   } = useCrm();
 
+  const {
+    isAuthenticated,
+    user: authUser,
+    activeOrganization,
+    role: authRole,
+    logout: authLogout,
+    setShowLoginModal,
+    setAuthModalMode,
+    organizations,
+    switchOrganization,
+    backendStatus
+  } = useAuth();
+
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const unreadCount = notifications.filter(n => !n.isRead).length;
   const isLight = themeMode === 'light';
 
+  const effectiveName = isAuthenticated && authUser
+    ? authUser.fullName
+    : currentUser.name;
+
+  const effectiveEmail = isAuthenticated && authUser
+    ? authUser.email
+    : currentUser.email;
+
+  const effectiveRole = isAuthenticated && authRole
+    ? authRole
+    : currentUser.role;
+
+  const effectiveOrgName = isAuthenticated && activeOrganization
+    ? activeOrganization.name
+    : settings.name;
+
+  // Sync persona with authenticated role
+  React.useEffect(() => {
+    if (isAuthenticated && authRole) {
+      if (['Owner', 'Admin'].includes(authRole)) {
+        if (persona === 'marketing') setPersona('admin');
+      } else if (authRole === 'Sales Representative') {
+        if (persona !== 'public_form' && persona !== 'marketing') setPersona('rep');
+      } else if (authRole === 'Manager') {
+        if (persona !== 'public_form' && persona !== 'marketing') setPersona('manager');
+      } else if (authRole === 'Distributor') {
+        if (persona !== 'public_form' && persona !== 'marketing') setPersona('distributor');
+      } else if (authRole === 'Inventory Manager') {
+        if (persona !== 'public_form' && persona !== 'marketing') setPersona('inventory');
+      } else if (authRole === 'Accountant') {
+        if (persona !== 'public_form' && persona !== 'marketing') setPersona('accountant');
+      } else if (authRole === 'Media Buyer') {
+        if (persona !== 'public_form' && persona !== 'marketing') setPersona('media_buyer');
+      }
+    }
+  }, [isAuthenticated, authRole]);
+
   const handlePersonaChange = (newPersona: ActivePersona) => {
+    // If authenticated, restrict persona switches to authorized permissions
+    if (isAuthenticated && authRole) {
+      if (['Owner', 'Admin'].includes(authRole)) {
+        setPersona(newPersona);
+      } else if (authRole === 'Manager' && ['manager', 'marketing', 'public_form'].includes(newPersona)) {
+        setPersona(newPersona);
+      } else if (authRole === 'Sales Representative' && ['rep', 'marketing', 'public_form'].includes(newPersona)) {
+        setPersona(newPersona);
+      } else if (authRole === 'Distributor' && ['distributor', 'marketing', 'public_form'].includes(newPersona)) {
+        setPersona(newPersona);
+      } else if (authRole === 'Inventory Manager' && ['inventory', 'marketing', 'public_form'].includes(newPersona)) {
+        setPersona(newPersona);
+      } else if (authRole === 'Accountant' && ['accountant', 'marketing', 'public_form'].includes(newPersona)) {
+        setPersona(newPersona);
+      } else if (authRole === 'Media Buyer' && ['media_buyer', 'marketing', 'public_form'].includes(newPersona)) {
+        setPersona(newPersona);
+      } else {
+        // Disallowed switch
+        return;
+      }
+      return;
+    }
+
+    // In production, unauthenticated users cannot switch to staff/admin personas without logging in
+    if (import.meta.env.PROD && !isAuthenticated && newPersona !== 'marketing' && newPersona !== 'public_form') {
+      setAuthModalMode('login');
+      setShowLoginModal(true);
+      return;
+    }
+
     setPersona(newPersona);
     if (newPersona === 'rep') {
       const rep = users.find(u => u.role === 'Sales Representative') || users[1];
@@ -192,135 +275,189 @@ export const TopBar: React.FC = () => {
         </a>
       </div>
 
-      {/* Zone 2: Fast Persona Switcher (Responsive) */}
+      {/* Zone 2: Navigation & Role Access */}
       <div className={`flex items-center p-0.5 rounded-lg border overflow-x-auto scrollbar-none min-w-0 flex-shrink max-w-[36vw] xs:max-w-[46vw] sm:max-w-none ${
         isLight ? 'bg-slate-100 border-slate-200' : 'bg-black/80 border-neutral-800'
       }`}>
-        <button
-          onClick={() => handlePersonaChange('admin')}
-          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-            persona === 'admin' 
-              ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
-              : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
-          }`}
-          title="Admin Operational Hub (32 Pages)"
-        >
-          <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="hidden sm:inline">Admin View</span>
-          <span className="sm:hidden text-[11px]">Admin</span>
-        </button>
+        {/* If unauthenticated in production, only allow public pages & sign in */}
+        {!isAuthenticated && import.meta.env.PROD ? (
+          <>
+            <button
+              onClick={() => handlePersonaChange('public_form')}
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                persona === 'public_form' 
+                  ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
+                  : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
+              }`}
+            >
+              <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>Order Form</span>
+            </button>
+            <button
+              onClick={() => handlePersonaChange('marketing')}
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                persona === 'marketing' 
+                  ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
+                  : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>Marketing</span>
+            </button>
+            <button
+              onClick={() => {
+                setAuthModalMode('login');
+                setShowLoginModal(true);
+              }}
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-semibold rounded-md bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm whitespace-nowrap cursor-pointer ml-1"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In</span>
+            </button>
+          </>
+        ) : (
+          <>
+            {(!isAuthenticated || !authRole || ['Owner', 'Admin'].includes(authRole)) && (
+              <button
+                onClick={() => handlePersonaChange('admin')}
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                  persona === 'admin' 
+                    ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
+                    : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
+                }`}
+                title="Admin Operational Hub (32 Pages)"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="hidden sm:inline">Admin View</span>
+                <span className="sm:hidden text-[11px]">Admin</span>
+              </button>
+            )}
 
-        <button
-          onClick={() => handlePersonaChange('manager')}
-          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-            persona === 'manager' 
-              ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
-              : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
-          }`}
-          title="Manager Operations & Oversight Dashboard"
-        >
-          <Briefcase className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="hidden sm:inline">Manager</span>
-          <span className="sm:hidden text-[11px]">Mgr</span>
-        </button>
+            {(!isAuthenticated || !authRole || ['Owner', 'Admin', 'Manager'].includes(authRole)) && (
+              <button
+                onClick={() => handlePersonaChange('manager')}
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                  persona === 'manager' 
+                    ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
+                    : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
+                }`}
+                title="Manager Operations & Oversight Dashboard"
+              >
+                <Briefcase className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="hidden sm:inline">Manager</span>
+                <span className="sm:hidden text-[11px]">Mgr</span>
+              </button>
+            )}
 
-        <button
-          onClick={() => handlePersonaChange('accountant')}
-          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-            persona === 'accountant' 
-              ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
-              : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
-          }`}
-          title="Accountant Dashboard & Financial Ledgers"
-        >
-          <Building2 className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="hidden sm:inline">Accountant</span>
-          <span className="sm:hidden text-[11px]">Acct</span>
-        </button>
+            {(!isAuthenticated || !authRole || ['Owner', 'Admin', 'Accountant'].includes(authRole)) && (
+              <button
+                onClick={() => handlePersonaChange('accountant')}
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                  persona === 'accountant' 
+                    ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
+                    : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
+                }`}
+                title="Accountant Dashboard & Financial Ledgers"
+              >
+                <Building2 className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="hidden sm:inline">Accountant</span>
+                <span className="sm:hidden text-[11px]">Acct</span>
+              </button>
+            )}
 
-        <button
-          onClick={() => handlePersonaChange('rep')}
-          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-            persona === 'rep' 
-              ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
-              : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
-          }`}
-          title="Sales Rep Dashboard (11 Pages)"
-        >
-          <UserCheck className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="hidden sm:inline">Sales Rep</span>
-          <span className="sm:hidden text-[11px]">Rep</span>
-        </button>
+            {(!isAuthenticated || !authRole || ['Owner', 'Admin', 'Sales Representative'].includes(authRole)) && (
+              <button
+                onClick={() => handlePersonaChange('rep')}
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                  persona === 'rep' 
+                    ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
+                    : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
+                }`}
+                title="Sales Rep Dashboard (11 Pages)"
+              >
+                <UserCheck className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="hidden sm:inline">Sales Rep</span>
+                <span className="sm:hidden text-[11px]">Rep</span>
+              </button>
+            )}
 
-        <button
-          onClick={() => handlePersonaChange('distributor')}
-          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-            persona === 'distributor' 
-              ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
-              : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
-          }`}
-          title="Distributor Dashboard & Regional Inventory Hub"
-        >
-          <Truck className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="hidden sm:inline">Distributor</span>
-          <span className="sm:hidden text-[11px]">Dist</span>
-        </button>
+            {(!isAuthenticated || !authRole || ['Owner', 'Admin', 'Distributor'].includes(authRole)) && (
+              <button
+                onClick={() => handlePersonaChange('distributor')}
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                  persona === 'distributor' 
+                    ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
+                    : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
+                }`}
+                title="Distributor Dashboard & Regional Inventory Hub"
+              >
+                <Truck className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="hidden sm:inline">Distributor</span>
+                <span className="sm:hidden text-[11px]">Dist</span>
+              </button>
+            )}
 
-        <button
-          onClick={() => handlePersonaChange('inventory')}
-          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-            persona === 'inventory' 
-              ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
-              : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
-          }`}
-          title="Inventory Manager View (6 Pages)"
-        >
-          <Package className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="hidden md:inline">Inventory Mgr</span>
-          <span className="md:hidden text-[11px]">Stock</span>
-        </button>
+            {(!isAuthenticated || !authRole || ['Owner', 'Admin', 'Inventory Manager'].includes(authRole)) && (
+              <button
+                onClick={() => handlePersonaChange('inventory')}
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                  persona === 'inventory' 
+                    ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
+                    : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
+                }`}
+                title="Inventory Manager View (6 Pages)"
+              >
+                <Package className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="hidden md:inline">Inventory Mgr</span>
+                <span className="md:hidden text-[11px]">Stock</span>
+              </button>
+            )}
 
-        <button
-          onClick={() => handlePersonaChange('media_buyer')}
-          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-            persona === 'media_buyer' 
-              ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
-              : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
-          }`}
-          title="Media Buyer Performance Marketing Dashboard"
-        >
-          <Megaphone className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="hidden md:inline">Media Buyer</span>
-          <span className="md:hidden text-[11px]">Ads</span>
-        </button>
+            {(!isAuthenticated || !authRole || ['Owner', 'Admin', 'Media Buyer'].includes(authRole)) && (
+              <button
+                onClick={() => handlePersonaChange('media_buyer')}
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                  persona === 'media_buyer' 
+                    ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
+                    : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
+                }`}
+                title="Media Buyer Performance Marketing Dashboard"
+              >
+                <Megaphone className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="hidden md:inline">Media Buyer</span>
+                <span className="md:hidden text-[11px]">Ads</span>
+              </button>
+            )}
 
-        <button
-          onClick={() => handlePersonaChange('public_form')}
-          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-            persona === 'public_form' 
-              ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
-              : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
-          }`}
-          title="Public Customer Checkout Page"
-        >
-          <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="hidden md:inline">Order Form</span>
-          <span className="md:hidden text-[11px]">Form</span>
-        </button>
+            <button
+              onClick={() => handlePersonaChange('public_form')}
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                persona === 'public_form' 
+                  ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
+                  : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
+              }`}
+              title="Public Customer Checkout Page"
+            >
+              <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="hidden md:inline">Order Form</span>
+              <span className="md:hidden text-[11px]">Form</span>
+            </button>
 
-        <button
-          onClick={() => handlePersonaChange('marketing')}
-          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-            persona === 'marketing' 
-              ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
-              : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
-          }`}
-          title="Public Marketing Site & Pricing"
-        >
-          <Globe className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="hidden md:inline">Marketing</span>
-          <span className="md:hidden text-[11px]">Site</span>
-        </button>
+            <button
+              onClick={() => handlePersonaChange('marketing')}
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                persona === 'marketing' 
+                  ? (isLight ? 'bg-white text-slate-900 border border-slate-300 shadow-xs font-bold' : 'bg-emerald-600 text-white shadow-sm font-semibold')
+                  : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50' : 'text-slate-400 hover:text-slate-200')
+              }`}
+              title="Public Marketing Site & Pricing"
+            >
+              <Globe className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="hidden md:inline">Marketing</span>
+              <span className="md:hidden text-[11px]">Site</span>
+            </button>
+          </>
+        )}
       </div>
 
       {/* Zone 3: Currency, Night/Day Mode, PWA Install, Notifications & User */}
@@ -537,18 +674,18 @@ export const TopBar: React.FC = () => {
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
               isLight ? 'bg-emerald-100 text-emerald-950 border border-emerald-300' : 'bg-emerald-600 text-white'
             }`}>
-              {currentUser.name.charAt(0)}
+              {effectiveName.charAt(0)}
             </div>
             <div className="text-left hidden lg:block">
               <p className={`text-xs font-semibold leading-none truncate max-w-[110px] ${
                 isLight ? 'text-slate-900' : 'text-slate-200'
               }`}>
-                {currentUser.name}
+                {effectiveName}
               </p>
               <p className={`text-[10px] leading-tight mt-0.5 ${
                 isLight ? 'text-slate-500' : 'text-slate-400'
               }`}>
-                {currentUser.role}
+                {effectiveRole}
               </p>
             </div>
             <ChevronDown className={`w-3 h-3 hidden lg:block ${
@@ -557,68 +694,131 @@ export const TopBar: React.FC = () => {
           </button>
 
           {showUserMenu && (
-            <div className={`absolute right-0 mt-2 w-64 rounded-xl border shadow-2xl p-3 z-50 animate-in fade-in slide-in-from-top-2 ${
+            <div className={`absolute right-0 mt-2 w-72 rounded-xl border shadow-2xl p-3 z-50 animate-in fade-in slide-in-from-top-2 ${
               isLight ? 'bg-white border-slate-200 text-slate-900 shadow-slate-300/50' : 'bg-slate-900 border-slate-800 text-white'
             }`}>
               <div className={`pb-2.5 border-b text-xs ${
                 isLight ? 'border-slate-100' : 'border-slate-800'
               }`}>
-                <p className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{currentUser.name}</p>
-                <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{currentUser.email}</p>
+                <div className="flex items-center justify-between">
+                  <p className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{effectiveName}</p>
+                  <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded font-bold border ${
+                    effectiveRole === 'Owner' || effectiveRole === 'Admin'
+                      ? 'bg-emerald-950 text-emerald-400 border-emerald-800'
+                      : 'bg-slate-800 text-slate-300 border-slate-700'
+                  }`}>
+                    {effectiveRole}
+                  </span>
+                </div>
+                <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{effectiveEmail}</p>
                 <div className="mt-1 flex items-center gap-1.5">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{settings.name}</span>
+                  <span className={`text-[11px] font-medium truncate ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                    {effectiveOrgName}
+                  </span>
                 </div>
               </div>
 
-              <div className="pt-2 text-xs">
-                <p className={`text-[10px] font-mono uppercase tracking-wider px-2 py-1 ${
-                  isLight ? 'text-slate-400' : 'text-slate-500'
-                }`}>
-                  Switch Active Role Persona
-                </p>
-                {users.map((u) => (
-                  <button
-                    key={u.id}
-                    onClick={() => {
-                      setCurrentUser(u);
-                      if (u.role === 'Sales Representative') setPersona('rep');
-                      else if (u.role === 'Distributor') setPersona('distributor');
-                      else if (u.role === 'Inventory Manager') setPersona('inventory');
-                      else if (u.role === 'Media Buyer') setPersona('media_buyer');
-                      else setPersona('admin');
-                      setShowUserMenu(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-left transition cursor-pointer ${
-                      currentUser.id === u.id 
-                        ? (isLight ? 'bg-lime-50 text-lime-900 font-bold border border-lime-200' : 'text-emerald-400 font-medium bg-slate-800/50') 
-                        : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
-                    }`}
-                  >
-                    <div>
-                      <p className="text-xs">{u.name}</p>
-                      <p className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{u.role}</p>
-                    </div>
-                    {currentUser.id === u.id && <Check className={`w-3.5 h-3.5 ${isLight ? 'text-lime-700' : 'text-emerald-400'}`} />}
-                  </button>
-                ))}
-              </div>
+              {/* Real Multi-Organization Switcher if Authenticated */}
+              {isAuthenticated && organizations && organizations.length > 1 && (
+                <div className="pt-2 text-xs border-b pb-2 border-slate-800">
+                  <p className={`text-[10px] font-mono uppercase tracking-wider px-2 py-1 ${
+                    isLight ? 'text-slate-400' : 'text-slate-500'
+                  }`}>
+                    Your Workspaces
+                  </p>
+                  {organizations.map((org) => (
+                    <button
+                      key={org.id}
+                      onClick={async () => {
+                        await switchOrganization(org.id);
+                        setShowUserMenu(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-left transition cursor-pointer ${
+                        activeOrganization?.id === org.id
+                          ? (isLight ? 'bg-emerald-50 text-emerald-900 font-bold border border-emerald-200' : 'text-emerald-400 font-medium bg-slate-800/50')
+                          : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs truncate">{org.name}</p>
+                        <p className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{org.role}</p>
+                      </div>
+                      {activeOrganization?.id === org.id && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Demo Persona Switcher (Only in Unauthenticated Local Development mode) */}
+              {!isAuthenticated && !import.meta.env.PROD && (
+                <div className="pt-2 text-xs">
+                  <div className="flex items-center justify-between px-2 py-1">
+                    <p className={`text-[10px] font-mono uppercase tracking-wider ${
+                      isLight ? 'text-slate-400' : 'text-slate-500'
+                    }`}>
+                      Interactive Demo Persona
+                    </p>
+                    <span className="text-[9px] text-amber-400 font-mono">Simulated</span>
+                  </div>
+                  {users.map((u) => (
+                    <button
+                      key={u.id}
+                      onClick={() => {
+                        setCurrentUser(u);
+                        if (u.role === 'Sales Representative') setPersona('rep');
+                        else if (u.role === 'Distributor') setPersona('distributor');
+                        else if (u.role === 'Inventory Manager') setPersona('inventory');
+                        else if (u.role === 'Media Buyer') setPersona('media_buyer');
+                        else setPersona('admin');
+                        setShowUserMenu(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-left transition cursor-pointer ${
+                        currentUser.id === u.id 
+                          ? (isLight ? 'bg-lime-50 text-lime-900 font-bold border border-lime-200' : 'text-emerald-400 font-medium bg-slate-800/50') 
+                          : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
+                      }`}
+                    >
+                      <div>
+                        <p className="text-xs">{u.name}</p>
+                        <p className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{u.role}</p>
+                      </div>
+                      {currentUser.id === u.id && <Check className={`w-3.5 h-3.5 ${isLight ? 'text-lime-700' : 'text-emerald-400'}`} />}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               <div className={`pt-2 border-t mt-2 ${
                 isLight ? 'border-slate-100' : 'border-slate-800'
               }`}>
-                <button
-                  onClick={() => {
-                    setShowUserMenu(false);
-                    logout();
-                  }}
-                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded transition text-xs font-semibold cursor-pointer ${
-                    isLight ? 'text-rose-600 hover:bg-rose-50' : 'text-rose-400 hover:bg-rose-500/10'
-                  }`}
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Log Out</span>
-                </button>
+                {isAuthenticated ? (
+                  <button
+                    onClick={async () => {
+                      setShowUserMenu(false);
+                      await authLogout();
+                      crmLogout();
+                    }}
+                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded transition text-xs font-semibold cursor-pointer ${
+                      isLight ? 'text-rose-600 hover:bg-rose-50' : 'text-rose-400 hover:bg-rose-500/10'
+                    }`}
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out (Terminate Session)</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      setAuthModalMode('login');
+                      setShowLoginModal(true);
+                    }}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded transition text-xs font-semibold text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span>Sign In to VPS Backend</span>
+                  </button>
+                )}
               </div>
             </div>
           )}
