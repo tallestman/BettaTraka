@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useCrm } from '../../context/CrmContext';
+import { useAuth } from '../../context/AuthContext';
+import { useWorkspaceUI } from '../../context/WorkspaceUIContext';
 import { formatCurrency } from '../../utils/formatters';
 import { PWAInstallButton } from '../common/PWAInstallButton';
 import { 
@@ -23,30 +24,14 @@ import {
 } from 'lucide-react';
 
 export const MarketingSite: React.FC = () => {
-  const { setPersona, setAdminActiveTab, settings, updateSettings } = useCrm();
-
+  const {isAuthenticated,setShowLoginModal,setAuthModalMode}=useAuth();
+  const {setAdminActiveTab}=useWorkspaceUI();
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'quarterly' | 'biannual' | 'yearly'>('monthly');
   const [activeWalkthrough, setActiveWalkthrough] = useState<string>('profit');
-  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
-  const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
-
-  // Auth form
-  const [fullName, setFullName] = useState('');
-  const [authEmail, setAuthEmail] = useState('');
-  const [authPassword, setAuthPassword] = useState('');
-  const [agreeTerms, setAgreeTerms] = useState(true);
-
-  // Discount multipliers
   const discountMultiplier = billingPeriod === 'quarterly' ? 0.95 : billingPeriod === 'biannual' ? 0.90 : billingPeriod === 'yearly' ? 0.833 : 1.0;
-
-  const handleAuthSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!authEmail || !authPassword) return;
-    updateSettings({ name: fullName ? `${fullName}'s Store` : 'Apex E-Commerce Ltd' });
-    setShowAuthModal(false);
-    setPersona('admin');
-    setAdminActiveTab('dashboard');
-  };
+  const openWorkspace=()=>{setAdminActiveTab('orders');if(!isAuthenticated){setAuthModalMode('login');setShowLoginModal(true)}};
+  const setAuthMode=(_mode:'signup')=>setAuthModalMode('register');
+  const setShowAuthModal=(show:boolean)=>{if(isAuthenticated)openWorkspace();else setShowLoginModal(show)};
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-emerald-500 selection:text-white">
@@ -84,12 +69,11 @@ export const MarketingSite: React.FC = () => {
 
             <button
               onClick={() => {
-                setPersona('admin');
-                setAdminActiveTab('dashboard');
+                openWorkspace();
               }}
               className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 font-semibold text-sm text-slate-200 transition"
             >
-              Explore Live Interactive Demo
+              Open your workspace
             </button>
           </div>
 
@@ -583,88 +567,6 @@ export const MarketingSite: React.FC = () => {
         <p>© 2026 BettaTraka Technologies Ltd. All rights reserved.</p>
       </footer>
 
-      {/* Auth Modal */}
-      {showAuthModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl p-6 text-slate-100 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <h3 className="font-bold text-white text-base">
-                {authMode === 'signup' ? 'Create Your Workspace' : 'Sign In to BettaTraka'}
-              </h3>
-              <button onClick={() => setShowAuthModal(false)} className="text-slate-400 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleAuthSubmit} className="space-y-3 text-xs">
-              {authMode === 'signup' && (
-                <div>
-                  <label className="text-slate-400 block mb-1">Full Name</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Emmanuel Oamen"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="text-slate-400 block mb-1">Work Email</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="you@company.com"
-                  value={authEmail}
-                  onChange={(e) => setAuthEmail(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white"
-                />
-              </div>
-
-              <div>
-                <label className="text-slate-400 block mb-1">Password</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  value={authPassword}
-                  onChange={(e) => setAuthPassword(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white"
-                />
-              </div>
-
-              {authMode === 'signup' && (
-                <label className="flex items-center gap-2 text-slate-400 cursor-pointer pt-1">
-                  <input
-                    type="checkbox"
-                    checked={agreeTerms}
-                    onChange={(e) => setAgreeTerms(e.target.checked)}
-                    className="accent-emerald-500"
-                  />
-                  <span>I accept terms of service & 14-day free trial</span>
-                </label>
-              )}
-
-              <button
-                type="submit"
-                className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-bold text-white text-xs transition shadow-md mt-2"
-              >
-                {authMode === 'signup' ? 'Create Free Workspace (14 Days)' : 'Sign In'}
-              </button>
-            </form>
-
-            <div className="pt-2 text-center text-xs text-slate-400">
-              {authMode === 'signup' ? (
-                <span>Already have an account? <button onClick={() => setAuthMode('login')} className="text-emerald-400 font-medium">Log in</button></span>
-              ) : (
-                <span>New to BettaTraka? <button onClick={() => setAuthMode('signup')} className="text-emerald-400 font-medium">Sign up</button></span>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

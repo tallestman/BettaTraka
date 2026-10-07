@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useCrm } from '../../context/CrmContext';
-import { hasUserAccessToTab } from '../../utils/permissions';
+import { useWorkspaceUI } from '../../context/WorkspaceUIContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   LayoutGrid,
   ShoppingBag,
@@ -47,35 +47,13 @@ interface NavItem {
 }
 
 export const AdminSidebar: React.FC = () => {
-  const { 
-    adminActiveTab, 
-    setAdminActiveTab, 
-    orders, 
-    abandonedCarts, 
-    remittances,
-    distributors,
-    isMobileSidebarOpen,
-    setIsMobileSidebarOpen,
-    isSidebarCollapsed,
-    toggleSidebarCollapse,
-    currentUser,
-    persona,
-    setPersona,
-    settings,
-    notifications,
-    addNotification,
-    themeMode
-  } = useCrm();
-
-  const isLight = themeMode === 'light';
-  const isManager = currentUser?.role === 'Manager' || persona === 'manager';
-  const isAccountant = currentUser?.role === 'Accountant' || persona === 'accountant';
-  const permissions = currentUser?.permissions?.admin;
-  const hasAiAgent = !isManager || Boolean(permissions?.aiAgent);
-  const hasAiSandbox = !isManager || Boolean(permissions?.aiSandbox);
-  const hasTokenReporting = !isManager || Boolean(permissions?.tokenReporting);
-  const hasIntegrations = !isManager || Boolean(permissions?.integrations);
-
+  const {adminActiveTab,setAdminActiveTab,isMobileSidebarOpen,setIsMobileSidebarOpen,isSidebarCollapsed,toggleSidebarCollapse,themeMode}=useWorkspaceUI();
+  const {user,role,activeOrganization,logout}=useAuth();
+  const currentUser={name:user?.fullName??'',role:role??''};
+  const settings={name:activeOrganization?.name??'Workspace',tokenBalance:0};
+  const isLight=themeMode==='light';
+  const isManager=role==='Manager',isAccountant=role==='Accountant';
+  const hasAiAgent=false,hasAiSandbox=false,hasTokenReporting=false,hasIntegrations=false;
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Keyboard shortcut Ctrl/Cmd + B to toggle collapsible sidebar
@@ -90,29 +68,19 @@ export const AdminSidebar: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [toggleSidebarCollapse]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setShowLogoutConfirm(false);
     setIsMobileSidebarOpen(false);
-    setPersona('marketing');
-    if (addNotification) {
-      addNotification({
-        title: 'Signed Out',
-        message: 'You have been logged out of your session.',
-        type: 'info'
-      });
-    }
+    await logout();
   };
-
-  const newOrdersCount = orders.filter(o => o.status === 'NEW').length;
-  const openCartsCount = abandonedCarts.filter(c => c.status === 'ABANDONED' || c.status === 'ASSIGNED').length;
-  const pendingRemitCount = remittances.filter(r => r.status === 'Pending').length;
-  const unreadNotifsCount = notifications ? notifications.filter(n => !n.isRead).length : 0;
-  const distributorsCount = distributors ? distributors.length : 0;
-
+  // Deferred modules have no seeded badges or data authority.
+  const newOrdersCount=0,openCartsCount=0,pendingRemitCount=0,unreadNotifsCount=0,distributorsCount=0;
   // Exact navigation menu list matching BettaTraka CRM sidebar screenshot (side menu bar.png)
   const navItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
-    { id: 'orders', label: 'Orders', icon: ShoppingBag, badge: newOrdersCount > 0 ? newOrdersCount : undefined },
+    { id: 'orders', label: 'Orders', icon: ShoppingBag },
+    { id: 'new-order', label: 'New order', icon: ShoppingCart },
+    { id: 'products', label: 'Products', icon: Package },
     { id: 'abandoned-carts', label: 'Abandoned Carts', icon: ShoppingCart, badge: openCartsCount > 0 ? openCartsCount : undefined },
     { id: 'scheduled', label: 'Scheduled Deliveries', icon: CalendarClock },
     { id: 'deliveries', label: 'Deliveries', icon: Package },
@@ -147,7 +115,7 @@ export const AdminSidebar: React.FC = () => {
       id: 'tokens', 
       label: 'Token Reporting', 
       icon: Coins, 
-      badge: isManager && !hasTokenReporting ? '🔒 Locked' : `${settings?.tokenBalance ?? 0} tok` 
+      badge: isManager && !hasTokenReporting ? '🔒 Locked' : 'Unavailable'
     },
     { id: 'remittances', label: 'Remittances', icon: Banknote, badge: pendingRemitCount > 0 ? pendingRemitCount : undefined },
     { id: 'team-chat', label: 'Team Chat', icon: MessageSquare },
@@ -176,31 +144,15 @@ export const AdminSidebar: React.FC = () => {
     { id: 'settings', label: 'Accountant Settings', icon: Settings, badge: 'Preferences' },
   ];
 
-  const displayedNavItems = React.useMemo(() => {
-    if (isAccountant) {
-      const baseIds = new Set(accountantNavItems.map(i => i.id));
-      const extraGrantedItems = navItems
-        .filter(item => !baseIds.has(item.id) && hasUserAccessToTab(currentUser, item.id));
-
-      const updatedAccountantItems = accountantNavItems.map(item => {
-        const allowed = hasUserAccessToTab(currentUser, item.id);
-        if (!allowed && item.id !== 'dashboard' && item.id !== 'settings') {
-          return { ...item, badge: '🔒 Locked' };
-        }
-        return item;
-      });
-
-      return [...updatedAccountantItems, ...extraGrantedItems];
-    }
-
-    return navItems.map(item => {
-      const allowed = hasUserAccessToTab(currentUser, item.id);
-      if (!allowed && item.id !== 'dashboard' && item.id !== 'support' && item.id !== 'academy') {
-        return { ...item, badge: '🔒 Locked' };
-      }
-      return item;
-    });
-  }, [isAccountant, accountantNavItems, navItems, currentUser]);
+  const displayedNavItems = (() => {
+    if (role==='Sales Representative') return navItems.filter(i=>['dashboard','orders','new-order','scheduled','customers','team-chat','notifications','settings','support','academy'].includes(i.id));
+    if (isAccountant) return accountantNavItems;
+    if (role==='Distributor') return navItems.filter(i=>['dashboard','deliveries','inventory','remittances','settings','support'].includes(i.id));
+    if (role==='Inventory Manager') return navItems.filter(i=>['dashboard','inventory','distributors','settings','support'].includes(i.id));
+    if (role==='Media Buyer') return navItems.filter(i=>['dashboard','ad-tracking','order-reports','settings','support'].includes(i.id));
+    if (['Owner','Admin','Manager'].includes(role??'')) return navItems;
+    return navItems.filter(i=>['dashboard','settings','support'].includes(i.id));
+  })();
 
   // Render Expanded Content (Exact match to side menu bar.png)
   const renderExpandedContent = (isMobile = false) => (
@@ -288,7 +240,7 @@ export const AdminSidebar: React.FC = () => {
         }`}>
           <div className="flex items-center gap-2 truncate">
             <Store className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
-            <span className="truncate text-xs font-medium">{settings?.name || 'Betta Herbals Limited'}</span>
+            <span className="truncate text-xs font-medium">{settings?.name || 'Workspace'}</span>
           </div>
           <ChevronsUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
         </div>
@@ -305,6 +257,7 @@ export const AdminSidebar: React.FC = () => {
           return (
             <button
               key={item.id}
+              aria-current={isActive ? 'page' : undefined}
               onClick={() => {
                 setAdminActiveTab(item.id);
                 setIsMobileSidebarOpen(false);
@@ -355,13 +308,13 @@ export const AdminSidebar: React.FC = () => {
           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-sm ${
             isLight ? 'bg-emerald-100 text-emerald-950 border border-emerald-300' : 'bg-emerald-600 text-white'
           }`}>
-            {currentUser?.name ? currentUser.name.charAt(0) : 'D'}
+            {currentUser?.name ? currentUser.name.charAt(0) : '?'}
           </div>
           <div className="min-w-0 flex-1">
             <p className={`text-xs font-bold truncate leading-tight ${
               isLight ? 'text-slate-900' : 'text-white'
             }`} title={currentUser?.name}>
-              {currentUser?.name || (isAccountant ? 'Kemi Adeleke, FCA' : 'Desmond Ufuoma Okosi')}
+              {currentUser?.name || (isAccountant ? 'Staff' : 'Staff')}
             </p>
             <p className={`text-[10px] truncate leading-tight mt-0.5 ${
               isLight ? 'text-slate-500' : 'text-slate-400'
@@ -433,7 +386,7 @@ export const AdminSidebar: React.FC = () => {
                       ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                       : 'text-slate-400 hover:text-white hover:bg-slate-900'
                 }`}
-                title={item.label}
+                aria-label={item.label} title={item.label}
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
 
@@ -470,9 +423,9 @@ export const AdminSidebar: React.FC = () => {
       }`}>
         <div
           className="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-xs shadow-sm cursor-pointer"
-          title={`${currentUser?.name || 'Desmond Ufuoma Okosi'} (${currentUser?.role || 'Owner'})`}
+          title={`${currentUser?.name || 'Staff'} (${currentUser?.role || 'Owner'})`}
         >
-          {currentUser?.name ? currentUser.name.charAt(0) : 'D'}
+          {currentUser?.name ? currentUser.name.charAt(0) : '?'}
         </div>
 
         <button
@@ -493,7 +446,7 @@ export const AdminSidebar: React.FC = () => {
     <>
       {/* Desktop Persistent Sidebar (Collapsible) */}
       <aside 
-        className={`hidden md:flex flex-shrink-0 flex-col h-full select-none transition-all duration-300 ease-in-out ${
+        aria-label="Main navigation" className={`hidden md:flex flex-shrink-0 flex-col h-full select-none transition-all duration-300 ease-in-out ${
           isSidebarCollapsed ? 'w-[68px]' : 'w-64'
         } ${isLight ? 'bg-white border-r border-slate-200' : 'bg-[#090d16] border-r border-slate-800/80'}`}
       >
