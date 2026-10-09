@@ -73,10 +73,10 @@ export const MarketingSite: React.FC = () => {
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               onClick={() => {
-                setAuthMode('signup');
-                setShowAuthModal(true);
+                setPersona('login');
+                window.location.hash = '#register';
               }}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold text-sm text-white shadow-xl shadow-emerald-900/30 transition flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold text-sm text-white shadow-xl shadow-emerald-900/30 transition flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Start 14-Day Free Trial</span>
               <ArrowRight className="w-4 h-4" />
@@ -84,12 +84,12 @@ export const MarketingSite: React.FC = () => {
 
             <button
               onClick={() => {
-                setPersona('admin');
-                setAdminActiveTab('dashboard');
+                setPersona('login');
+                window.location.hash = '#login';
               }}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 font-semibold text-sm text-slate-200 transition"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 font-semibold text-sm text-slate-200 transition cursor-pointer"
             >
-              Explore Live Interactive Demo
+              Merchant Sign In
             </button>
           </div>
 
@@ -435,8 +435,8 @@ export const MarketingSite: React.FC = () => {
             </div>
 
             <button
-              onClick={() => { setAuthMode('signup'); setShowAuthModal(true); }}
-              className="w-full py-2.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition mt-4"
+              onClick={() => { setPersona('login'); window.location.hash = '#register'; }}
+              className="w-full py-2.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition mt-4 cursor-pointer"
             >
               Start 14-Day Free Trial
             </button>
@@ -472,8 +472,8 @@ export const MarketingSite: React.FC = () => {
             </div>
 
             <button
-              onClick={() => { setAuthMode('signup'); setShowAuthModal(true); }}
-              className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white transition shadow-md mt-4"
+              onClick={() => { setPersona('login'); window.location.hash = '#register'; }}
+              className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white transition shadow-md mt-4 cursor-pointer"
             >
               Start 14-Day Free Trial
             </button>
@@ -504,8 +504,8 @@ export const MarketingSite: React.FC = () => {
             </div>
 
             <button
-              onClick={() => { setAuthMode('signup'); setShowAuthModal(true); }}
-              className="w-full py-2.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition mt-4"
+              onClick={() => { setPersona('login'); window.location.hash = '#register'; }}
+              className="w-full py-2.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition mt-4 cursor-pointer"
             >
               Start 14-Day Free Trial
             </button>

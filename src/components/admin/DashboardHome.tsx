@@ -340,7 +340,7 @@ export const DashboardHome: React.FC = () => {
   };
 
   return (
-    <div className="p-3 sm:p-5 lg:p-7 space-y-6 max-w-7xl mx-auto text-slate-100">
+    <div className="p-2 sm:p-5 lg:p-7 space-y-6 max-w-7xl mx-auto text-slate-100 w-full max-w-full min-w-0 overflow-x-hidden">
       
       {/* 1. Header with Store Identity, Live Status & Quick Action Buttons */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800/90">

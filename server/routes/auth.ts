@@ -3,6 +3,7 @@ import { pool, withTransaction, checkDatabaseConnection } from '../db/index.js';
 import { hashPassword, comparePassword, validatePasswordStrength } from '../auth/passwords.js';
 import { signAccessToken, hashToken } from '../auth/jwt.js';
 import { authenticate } from '../auth/middleware.js';
+import { authService } from '../auth/authService.js';
 
 export const authRouter = Router();
 
@@ -343,3 +344,114 @@ authRouter.post('/switch-org', authenticate, async (req: Request, res: Response)
     res.status(500).json({ error: 'Failed to switch organization.' });
   }
 });
+
+// 7. POST /api/auth/forgot-password - Request password reset & dispatch verification token
+authRouter.post('/forgot-password', rateLimitAuth, async (req: Request, res: Response): Promise<void> => {
+  const { email } = req.body;
+
+  if (!email || typeof email !== 'string' || !email.includes('@')) {
+    res.status(400).json({ error: 'A valid email address is required.' });
+    return;
+  }
+
+  const result = await authService.requestPasswordReset(
+    email,
+    req.ip || req.socket.remoteAddress,
+    req.headers['user-agent']
+  );
+
+  if (!result.success) {
+    if (result.error === 'DB_UNAVAILABLE') {
+      res.status(503).json({
+        error: 'Database connection unavailable. Please verify PostgreSQL configuration.',
+        details: result.message,
+      });
+      return;
+    }
+    res.status(400).json({ error: result.message });
+    return;
+  }
+
+  res.json({
+    success: true,
+    message: result.message,
+    resetToken: result.resetToken, // Provided in development/preview testing
+  });
+});
+
+// 8. GET /api/auth/verify-reset-token & POST /api/auth/verify-reset-token - Check token validity
+authRouter.get('/verify-reset-token', async (req: Request, res: Response): Promise<void> => {
+  const token = typeof req.query.token === 'string' ? req.query.token : '';
+
+  if (!token) {
+    res.status(400).json({ valid: false, error: 'Verification token is required.' });
+    return;
+  }
+
+  const result = await authService.verifyResetToken(token);
+  if (!result.valid) {
+    res.status(400).json({ valid: false, error: result.error || 'Token is invalid or expired.' });
+    return;
+  }
+
+  res.json({ valid: true, email: result.email });
+});
+
+authRouter.post('/verify-reset-token', async (req: Request, res: Response): Promise<void> => {
+  const { token } = req.body;
+
+  if (!token || typeof token !== 'string') {
+    res.status(400).json({ valid: false, error: 'Verification token is required.' });
+    return;
+  }
+
+  const result = await authService.verifyResetToken(token);
+  if (!result.valid) {
+    res.status(400).json({ valid: false, error: result.error || 'Token is invalid or expired.' });
+    return;
+  }
+
+  res.json({ valid: true, email: result.email });
+});
+
+// 9. POST /api/auth/reset-password - Verify token and update password
+authRouter.post('/reset-password', rateLimitAuth, async (req: Request, res: Response): Promise<void> => {
+  const { token, password } = req.body;
+
+  if (!token || typeof token !== 'string') {
+    res.status(400).json({ error: 'Reset verification token is required.' });
+    return;
+  }
+
+  if (!password || typeof password !== 'string') {
+    res.status(400).json({ error: 'New password is required.' });
+    return;
+  }
+
+  const pwCheck = validatePasswordStrength(password);
+  if (!pwCheck.valid) {
+    res.status(400).json({ error: pwCheck.reason });
+    return;
+  }
+
+  const result = await authService.resetPassword(
+    token,
+    password,
+    req.ip || req.socket.remoteAddress
+  );
+
+  if (!result.success) {
+    if (result.error === 'DB_UNAVAILABLE') {
+      res.status(503).json({ error: 'Database unavailable.', details: result.message });
+      return;
+    }
+    res.status(400).json({ error: result.message });
+    return;
+  }
+
+  res.json({
+    success: true,
+    message: result.message,
+  });
+});
+

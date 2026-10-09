@@ -93,11 +93,12 @@ export const AdminSidebar: React.FC = () => {
   const handleLogout = () => {
     setShowLogoutConfirm(false);
     setIsMobileSidebarOpen(false);
-    setPersona('marketing');
+    setPersona('logout');
+    window.location.hash = '#logout';
     if (addNotification) {
       addNotification({
-        title: 'Signed Out',
-        message: 'You have been logged out of your session.',
+        title: 'Sign Out',
+        message: 'Redirecting to session termination page...',
         type: 'info'
       });
     }

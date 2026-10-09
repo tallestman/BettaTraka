@@ -14,8 +14,8 @@ export const UnauthorizedAccessGate: React.FC<Props> = ({
   backendStatus,
 }) => {
   return (
-    <div className="min-h-[80vh] flex items-center justify-center p-4">
-      <div className="w-full max-w-lg rounded-2xl border border-slate-700/80 bg-slate-900/90 p-8 text-center space-y-6 shadow-2xl backdrop-blur-sm animate-in fade-in">
+    <div className="min-h-[80vh] flex items-center justify-center p-3 sm:p-4 w-full max-w-full overflow-x-hidden">
+      <div className="w-full max-w-lg rounded-2xl border border-slate-700/80 bg-slate-900/90 p-5 sm:p-8 text-center space-y-6 shadow-2xl backdrop-blur-sm animate-in fade-in overflow-hidden">
         <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mx-auto flex items-center justify-center shadow-inner">
           <ShieldAlert className="w-8 h-8 stroke-[2.2]" />
         </div>
@@ -24,7 +24,7 @@ export const UnauthorizedAccessGate: React.FC<Props> = ({
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-bold tracking-wider uppercase bg-amber-950/80 text-amber-400 border border-amber-800/60">
             Authentication Required
           </div>
-          <h2 className="text-2xl font-black text-white tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
             Protected Business Workspace
           </h2>
           <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
@@ -34,15 +34,15 @@ export const UnauthorizedAccessGate: React.FC<Props> = ({
 
         {/* Database setup notice if disconnected */}
         {backendStatus && !backendStatus.connected && (
-          <div className="p-4 rounded-xl bg-amber-950/40 border border-amber-800/80 text-amber-300 text-xs text-left space-y-1.5">
+          <div className="p-3.5 sm:p-4 rounded-xl bg-amber-950/40 border border-amber-800/80 text-amber-300 text-xs text-left space-y-1.5 break-words">
             <div className="flex items-center gap-2 font-bold text-amber-400">
               <Server className="w-4 h-4 shrink-0" />
               <span>VPS Backend Configuration Required</span>
             </div>
-            <p className="text-[11px] text-amber-200/90 leading-relaxed">
+            <p className="text-[11px] text-amber-200/90 leading-relaxed break-words">
               {backendStatus.message}
             </p>
-            <p className="text-[10px] font-mono text-amber-400/80 pt-1 border-t border-amber-900/50">
+            <p className="text-[10px] font-mono text-amber-400/80 pt-1 border-t border-amber-900/50 break-all">
               Verify DATABASE_URL in your .env file on your VPS server.
             </p>
           </div>

@@ -151,7 +151,7 @@ export const ScheduledDeliveriesView: React.FC = () => {
   }, [activeTab, currentTabOrders.length]);
 
   return (
-    <div className={`p-3 sm:p-5 lg:p-8 space-y-5 max-w-[1440px] mx-auto animate-in fade-in ${
+    <div className={`p-3 sm:p-5 lg:p-8 space-y-5 max-w-[1440px] w-full max-w-full min-w-0 overflow-x-hidden mx-auto animate-in fade-in ${
       isLight ? 'text-slate-900' : 'text-slate-100'
     }`}>
       
@@ -168,7 +168,7 @@ export const ScheduledDeliveriesView: React.FC = () => {
       </div>
 
       {/* 2. Filter Bar: [📅 Today] button + Today / Tomorrow / Next tomorrow tabs (schd1.png) */}
-      <div className="flex items-center gap-4 text-xs font-medium pt-1">
+      <div className="flex items-center gap-3 sm:gap-4 text-xs font-medium pt-1 flex-wrap max-w-full">
         {/* Calendar Today button */}
         <div className="relative">
           <button

@@ -44,6 +44,9 @@ interface AuthContextType {
   authModalMode: 'login' | 'register';
   setAuthModalMode: (mode: 'login' | 'register') => void;
   refreshSession: () => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<{ success: boolean; message?: string; error?: string; resetToken?: string }>;
+  verifyResetToken: (token: string) => Promise<{ valid: boolean; email?: string; error?: string }>;
+  resetPassword: (token: string, password: string) => Promise<{ success: boolean; message?: string; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -284,6 +287,91 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const requestPasswordReset = async (
+    email: string
+  ): Promise<{ success: boolean; message?: string; error?: string; resetToken?: string }> => {
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        return {
+          success: false,
+          error: data.error || 'Failed to request password reset.',
+          message: data.details || data.error,
+        };
+      }
+
+      return {
+        success: true,
+        message: data.message,
+        resetToken: data.resetToken,
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        error: err.message || 'Network connection failed.',
+      };
+    }
+  };
+
+  const verifyResetToken = async (
+    token: string
+  ): Promise<{ valid: boolean; email?: string; error?: string }> => {
+    try {
+      const res = await fetch(`/api/auth/verify-reset-token?token=${encodeURIComponent(token)}`);
+      const data = await res.json();
+      if (!res.ok || !data.valid) {
+        return {
+          valid: false,
+          error: data.error || 'Verification token is invalid or has expired.',
+        };
+      }
+      return { valid: true, email: data.email };
+    } catch (err: any) {
+      return {
+        valid: false,
+        error: err.message || 'Failed to verify reset token.',
+      };
+    }
+  };
+
+  const resetPassword = async (
+    token: string,
+    password: string
+  ): Promise<{ success: boolean; message?: string; error?: string }> => {
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        return {
+          success: false,
+          error: data.error || 'Failed to reset password.',
+          message: data.details || data.error,
+        };
+      }
+
+      return {
+        success: true,
+        message: data.message || 'Password has been reset successfully.',
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        error: err.message || 'Network error occurred during password reset.',
+      };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -303,6 +391,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         authModalMode,
         setAuthModalMode,
         refreshSession,
+        requestPasswordReset,
+        verifyResetToken,
+        resetPassword,
       }}
     >
       {children}

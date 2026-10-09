@@ -205,7 +205,7 @@ export const OrdersView: React.FC = () => {
   const salesReps = users.filter(u => u.role === 'Sales Representative' || u.id.startsWith('user-rep') || u.role === 'Admin');
 
   return (
-    <div className={`p-4 lg:p-8 space-y-6 max-w-[1440px] mx-auto animate-in fade-in ${
+    <div className={`p-3 sm:p-4 lg:p-8 space-y-6 max-w-[1440px] w-full max-w-full min-w-0 overflow-x-hidden mx-auto animate-in fade-in ${
       isLight ? 'text-slate-900' : 'text-slate-100'
     }`}>
       
@@ -248,9 +248,9 @@ export const OrdersView: React.FC = () => {
       {/* 2. Date Tabs, Date Range, Currency & Action Buttons Bar (orders.png) */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Left Side: Today / This Week / This Month / This Year + Date Range + Currency */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 max-w-full">
           {/* Date Pills */}
-          <div className={`flex items-center gap-1 p-1 rounded-xl text-xs border ${
+          <div className={`flex items-center gap-1 p-1 rounded-xl text-xs border overflow-x-auto scrollbar-none max-w-full ${
             isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900/90 border-slate-800'
           }`}>
             <button

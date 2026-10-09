@@ -41,6 +41,8 @@ import { AccountantDashboardView } from './components/accountant/AccountantDashb
 import { AccountantSettingsView } from './components/accountant/AccountantSettingsView';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
+import { LoginPage } from './components/auth/LoginPage';
+import { LogoutPage } from './components/auth/LogoutPage';
 import { UnauthorizedAccessGate } from './components/auth/UnauthorizedAccessGate';
 import { hasUserAccessToTab } from './utils/permissions';
 import { Lock } from 'lucide-react';
@@ -94,7 +96,7 @@ const PermissionRestrictedGate: React.FC<{ sectionName: string }> = ({ sectionNa
 );
 
 function MainLayout() {
-  const { persona, adminActiveTab, themeMode, currentUser } = useCrm();
+  const { persona, setPersona, adminActiveTab, themeMode, currentUser } = useCrm();
   const { 
     isAuthenticated, 
     role: authRole, 
@@ -107,6 +109,33 @@ function MainLayout() {
   const isLight = themeMode === 'light';
   const themeClasses = isLight ? 'bg-slate-50 text-slate-900' : 'bg-black text-white';
 
+  // Handle URL Hash navigation across pages (#login, #register, #forgot-password, #logout, #marketing, #dashboard)
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.toLowerCase();
+      if (
+        hash === '#login' || 
+        hash === '#register' || 
+        hash === '#forgot-password' || 
+        hash.startsWith('#reset-password')
+      ) {
+        setPersona('login');
+      } else if (hash === '#logout') {
+        setPersona('logout');
+      } else if (hash === '#marketing' || hash === '#home') {
+        setPersona('marketing');
+      } else if (hash === '#order-form' || hash === '#form') {
+        setPersona('public_form');
+      } else if (hash === '#dashboard' && isAuthenticated) {
+        setPersona('admin');
+      }
+    };
+
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [setPersona, isAuthenticated]);
+
   if (authLoading) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${themeClasses}`}>
@@ -116,6 +145,22 @@ function MainLayout() {
         </div>
       </div>
     );
+  }
+
+  // Dedicated Login / Register / Forgot Password Page
+  if (persona === 'login') {
+    const hash = window.location.hash.toLowerCase();
+    const initialMode = (hash === '#forgot-password' || hash.startsWith('#reset-password'))
+      ? 'forgot_password'
+      : hash === '#register'
+      ? 'register'
+      : 'login';
+    return <LoginPage initialMode={initialMode} />;
+  }
+
+  // Dedicated Logout Page
+  if (persona === 'logout') {
+    return <LogoutPage />;
   }
 
   if (persona === 'marketing') {
@@ -144,12 +189,12 @@ function MainLayout() {
         <TopBar />
         <UnauthorizedAccessGate
           onSignIn={() => {
-            setAuthModalMode('login');
-            setShowLoginModal(true);
+            setPersona('login');
+            window.location.hash = '#login';
           }}
           onCreateWorkspace={() => {
-            setAuthModalMode('register');
-            setShowLoginModal(true);
+            setPersona('login');
+            window.location.hash = '#register';
           }}
           backendStatus={backendStatus}
         />
@@ -198,47 +243,55 @@ function MainLayout() {
 
   if (persona === 'rep') {
     return (
-      <div className={`min-h-screen flex flex-col ${themeClasses}`}>
+      <div className={`min-h-screen flex flex-col ${themeClasses} w-full max-w-full overflow-x-hidden`}>
         <TopBar />
-        <SalesRepView />
+        <main className="flex-1 min-w-0 w-full max-w-full overflow-x-hidden">
+          <SalesRepView />
+        </main>
       </div>
     );
   }
 
   if (persona === 'distributor') {
     return (
-      <div className={`min-h-screen flex flex-col ${themeClasses}`}>
+      <div className={`min-h-screen flex flex-col ${themeClasses} w-full max-w-full overflow-x-hidden`}>
         <TopBar />
-        <DistributorDashboardView />
+        <main className="flex-1 min-w-0 w-full max-w-full overflow-x-hidden">
+          <DistributorDashboardView />
+        </main>
       </div>
     );
   }
 
   if (persona === 'inventory') {
     return (
-      <div className={`min-h-screen flex flex-col ${themeClasses}`}>
+      <div className={`min-h-screen flex flex-col ${themeClasses} w-full max-w-full overflow-x-hidden`}>
         <TopBar />
-        <InventoryManagerView />
+        <main className="flex-1 min-w-0 w-full max-w-full overflow-x-hidden">
+          <InventoryManagerView />
+        </main>
       </div>
     );
   }
 
   if (persona === 'media_buyer') {
     return (
-      <div className={`min-h-screen flex flex-col ${themeClasses}`}>
+      <div className={`min-h-screen flex flex-col ${themeClasses} w-full max-w-full overflow-x-hidden`}>
         <TopBar />
-        <MediaBuyerDashboardView />
+        <main className="flex-1 min-w-0 w-full max-w-full overflow-x-hidden">
+          <MediaBuyerDashboardView />
+        </main>
       </div>
     );
   }
 
   // Admin persona with Sidebar & All 32 Pages
   return (
-    <div className={`min-h-screen flex flex-col ${themeClasses}`}>
+    <div className={`min-h-screen flex flex-col ${themeClasses} w-full max-w-full overflow-x-hidden`}>
       <TopBar />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden min-w-0 w-full max-w-full">
         <AdminSidebar />
-        <main className={`flex-1 overflow-y-auto ${themeMode === 'light' ? 'bg-slate-50 text-slate-900' : 'bg-black text-white'}`}>
+        <main className={`flex-1 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden ${themeMode === 'light' ? 'bg-slate-50 text-slate-900' : 'bg-black text-white'}`}>
           {!hasUserAccessToTab(currentUser, adminActiveTab) && 
            adminActiveTab !== 'dashboard' && 
            adminActiveTab !== 'support' && 

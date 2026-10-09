@@ -268,7 +268,7 @@ export const DeliveriesView: React.FC = () => {
   };
 
   return (
-    <div className="p-3 sm:p-5 lg:p-8 space-y-5 max-w-[1400px] mx-auto text-slate-100 animate-in fade-in">
+    <div className="p-3 sm:p-5 lg:p-8 space-y-5 max-w-[1400px] w-full max-w-full min-w-0 overflow-x-hidden mx-auto text-slate-100 animate-in fade-in">
       {/* Accountant Audit Notice Banner */}
       {isAccountant && (
         <div className="p-4 rounded-xl border border-sky-800/60 bg-sky-950/40 text-sky-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs animate-in fade-in">
@@ -292,9 +292,9 @@ export const DeliveriesView: React.FC = () => {
       {/* 1. TOP HEADER & FILTER BAR (Exactly as in BettaTraka) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-1">
         {/* Left Side: Date pills, Date Range button & Currency selector */}
-        <div className="flex items-center flex-wrap gap-2">
+        <div className="flex items-center flex-wrap gap-2 max-w-full">
           {/* Date Filter Pills */}
-          <div className="flex items-center bg-black/80 p-0.5 rounded-xl border border-neutral-800">
+          <div className="flex items-center bg-black/80 p-0.5 rounded-xl border border-neutral-800 overflow-x-auto scrollbar-none max-w-full">
             <button
               onClick={() => setDatePeriod('today')}
               className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${

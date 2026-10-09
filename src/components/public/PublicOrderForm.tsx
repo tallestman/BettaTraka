@@ -250,13 +250,13 @@ export const PublicOrderForm: React.FC = () => {
         </div>
 
         {/* Multi-Product Form Switcher */}
-        <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-slate-400 text-[11px] whitespace-nowrap">Switch Product Form:</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-2 border-t border-slate-800/80 gap-2">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 min-w-0 flex-1">
+            <span className="text-slate-400 text-[11px] shrink-0">Switch Product Form:</span>
             <select
               value={selectedFormId}
               onChange={(e) => setSelectedFormId(e.target.value)}
-              className="bg-slate-950 border border-slate-700 rounded-lg p-1.5 font-medium text-emerald-400 text-xs focus:outline-none"
+              className="bg-slate-950 border border-slate-700 rounded-lg p-1.5 font-medium text-emerald-400 text-xs focus:outline-none w-full sm:w-auto min-w-0"
             >
               {orderForms.map(f => {
                 const prod = products.find(p => p.id === f.productId);

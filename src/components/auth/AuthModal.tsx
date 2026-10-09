@@ -150,7 +150,21 @@ export const AuthModal: React.FC = () => {
           </div>
 
           <div>
-            <label className="text-slate-300 font-semibold block mb-1">Password *</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-slate-300 font-semibold block">Password *</label>
+              {isLogin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowLoginModal(false);
+                    window.location.hash = '#forgot-password';
+                  }}
+                  className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium cursor-pointer"
+                >
+                  Forgot password?
+                </button>
+              )}
+            </div>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
               <input

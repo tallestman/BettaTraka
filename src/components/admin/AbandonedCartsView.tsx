@@ -63,7 +63,7 @@ export const AbandonedCartsView: React.FC = () => {
   const salesReps = users.filter(u => u.role === 'Sales Representative' || u.role === 'Owner');
 
   return (
-    <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-4 lg:p-8 space-y-6 max-w-7xl w-full max-w-full min-w-0 overflow-x-hidden mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800">
         <div>
@@ -79,7 +79,7 @@ export const AbandonedCartsView: React.FC = () => {
         </div>
 
         {/* Time Filter */}
-        <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-lg text-xs">
+        <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-lg text-xs overflow-x-auto scrollbar-none max-w-full">
           {(['all', 'today', 'week', 'month'] as const).map((t) => (
             <button
               key={t}

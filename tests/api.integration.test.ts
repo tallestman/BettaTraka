@@ -57,6 +57,39 @@ describe('API & Tenancy Integration Suite', () => {
     assert.ok(logoutRes.body.error?.includes('Authentication required'));
   });
 
+  it('POST /api/auth/forgot-password rejects invalid or missing email', async () => {
+    const emptyRes = await request(app).post('/api/auth/forgot-password').send({});
+    assert.strictEqual(emptyRes.status, 400);
+    assert.ok(emptyRes.body.error?.includes('valid email'));
+
+    const invalidRes = await request(app).post('/api/auth/forgot-password').send({ email: 'notanemail' });
+    assert.strictEqual(invalidRes.status, 400);
+    assert.ok(invalidRes.body.error?.includes('valid email'));
+  });
+
+  it('GET and POST /api/auth/verify-reset-token reject missing token', async () => {
+    const getRes = await request(app).get('/api/auth/verify-reset-token');
+    assert.strictEqual(getRes.status, 400);
+    assert.strictEqual(getRes.body.valid, false);
+
+    const postRes = await request(app).post('/api/auth/verify-reset-token').send({});
+    assert.strictEqual(postRes.status, 400);
+    assert.strictEqual(postRes.body.valid, false);
+  });
+
+  it('POST /api/auth/reset-password rejects missing fields or weak passwords', async () => {
+    const noTokenRes = await request(app).post('/api/auth/reset-password').send({ password: 'StrongPassword123!' });
+    assert.strictEqual(noTokenRes.status, 400);
+    assert.ok(noTokenRes.body.error?.includes('token'));
+
+    const weakPwRes = await request(app).post('/api/auth/reset-password').send({
+      token: 'some-dummy-token-abc',
+      password: 'short',
+    });
+    assert.strictEqual(weakPwRes.status, 400);
+    assert.ok(weakPwRes.body.error?.includes('at least 8 characters'));
+  });
+
   it('Database connection handling or multi-tenant isolation verification', async (t) => {
     const dbStatus = await checkDatabaseConnection();
 

@@ -4,6 +4,7 @@ import { hashPassword, comparePassword, validatePasswordStrength } from '../serv
 import { signAccessToken, verifyAccessToken, hashToken } from '../server/auth/jwt.js';
 import { requireRole, preventSelfEscalation } from '../server/auth/middleware.js';
 import { parseDatabaseSsl } from '../server/db/index.js';
+import { authService, AuthService } from '../server/auth/authService.js';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_suite_ephemeral_jwt_secret_32_bytes_min_length_for_ci';
 
@@ -223,6 +224,54 @@ describe('Auth Security Unit Tests', () => {
       assert.strictEqual(nextCalled, false, 'Staff member must not alter their own role');
       assert.strictEqual(mockRes.statusCode, 403);
       assert.ok(mockRes.body.error?.includes('Security Violation'));
+    });
+  });
+
+  describe('AuthService & Password Reset Token Logic', () => {
+    it('generates cryptographically secure 64-character hex tokens and valid SHA-256 hashes', () => {
+      const pair = authService.generateResetTokenPair();
+
+      assert.ok(pair.rawToken, 'Must generate rawToken');
+      assert.strictEqual(pair.rawToken.length, 64, 'Raw token must be 64 hex chars (32 bytes)');
+      assert.ok(pair.tokenHash, 'Must generate tokenHash');
+      assert.strictEqual(pair.tokenHash.length, 64, 'SHA-256 hash must be 64 hex chars');
+      assert.ok(pair.expiresAt instanceof Date, 'Must set an expiration date');
+      assert.ok(pair.expiresAt.getTime() > Date.now(), 'Expiration must be in the future');
+
+      // Verify deterministic hashing
+      const manualHash = authService.hashResetToken(pair.rawToken);
+      assert.strictEqual(manualHash, pair.tokenHash, 'Token hash must match sha256 of raw token');
+    });
+
+    it('rejects invalid or empty tokens when hashing', () => {
+      assert.throws(() => {
+        authService.hashResetToken('');
+      }, /Reset token must be a non-empty string/);
+
+      assert.throws(() => {
+        authService.hashResetToken(null as any);
+      }, /Reset token must be a non-empty string/);
+    });
+
+    it('correctly assesses expiration timestamps with isTokenExpired', () => {
+      const past = new Date(Date.now() - 5000);
+      assert.strictEqual(authService.isTokenExpired(past), true, 'Past date must be expired');
+
+      const future = new Date(Date.now() + 60000);
+      assert.strictEqual(authService.isTokenExpired(future), false, 'Future date must not be expired');
+    });
+
+    it('rejects password resets with short or weak passwords', async () => {
+      const res = await authService.resetPassword('some-token-value', 'short');
+      assert.strictEqual(res.success, false);
+      assert.strictEqual(res.error, 'WEAK_PASSWORD');
+      assert.ok(res.message.includes('at least 8 characters'));
+    });
+
+    it('rejects password reset requests with invalid email syntax', async () => {
+      const res = await authService.requestPasswordReset('invalid-email-string');
+      assert.strictEqual(res.success, false);
+      assert.strictEqual(res.error, 'INVALID_EMAIL');
     });
   });
 });

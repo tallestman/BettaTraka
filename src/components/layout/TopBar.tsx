@@ -216,11 +216,11 @@ export const TopBar: React.FC = () => {
   ];
 
   return (
-    <header className={`sticky top-0 z-40 w-full h-14 backdrop-blur border-b flex items-center justify-between px-2 sm:px-4 lg:px-6 gap-1.5 sm:gap-2 transition-colors ${
+    <header className={`sticky top-0 z-40 w-full max-w-full h-14 backdrop-blur border-b flex items-center justify-between px-2 sm:px-4 lg:px-6 gap-1.5 sm:gap-2 transition-colors ${
       isLight ? 'bg-white/95 border-slate-200 text-slate-900 shadow-xs' : 'bg-black/95 border-neutral-800 text-white'
     }`}>
       {/* Zone 1: Mobile Hamburger, Desktop Collapse & Wordmark */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
         {(persona === 'admin' || persona === 'manager' || persona === 'accountant' || persona === 'rep' || persona === 'distributor' || persona === 'inventory' || persona === 'media_buyer') && (
           <>
             {/* Mobile Hamburger */}
@@ -257,17 +257,17 @@ export const TopBar: React.FC = () => {
         <a 
           href="#dashboard"
           onClick={(e) => { e.preventDefault(); setPersona('admin'); setAdminActiveTab('dashboard'); }}
-          className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base font-bold tracking-tight group"
+          className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base font-bold tracking-tight group min-w-0"
         >
-          <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-sm shadow-sm transition flex-shrink-0 ${
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-sm shadow-sm transition shrink-0 ${
             isLight ? 'bg-emerald-100 text-emerald-950 border border-emerald-300' : 'bg-emerald-600 text-white group-hover:bg-emerald-500'
           }`}>
             B
           </div>
-          <span className={`font-semibold tracking-tight hidden xs:inline sm:inline ${
+          <span className={`font-semibold tracking-tight hidden min-[360px]:inline truncate ${
             isLight ? 'text-slate-900' : 'text-slate-100'
           }`}>BettaTraka</span>
-          <span className={`text-[10px] tracking-wider uppercase font-mono font-semibold px-1.5 py-0.5 rounded hidden xl:inline-block border ${
+          <span className={`text-[10px] tracking-wider uppercase font-mono font-semibold px-1.5 py-0.5 rounded hidden xl:inline-block border shrink-0 ${
             isLight ? 'bg-lime-100 text-lime-800 border-lime-300' : 'text-emerald-400 bg-emerald-950/80 border-emerald-800/60'
           }`}>
             POD CRM
@@ -275,8 +275,8 @@ export const TopBar: React.FC = () => {
         </a>
       </div>
 
-      {/* Zone 2: Navigation & Role Access */}
-      <div className={`flex items-center p-0.5 rounded-lg border overflow-x-auto scrollbar-none min-w-0 flex-shrink max-w-[36vw] xs:max-w-[46vw] sm:max-w-none ${
+      {/* Zone 2: Navigation & Role Access (Visible on Desktop / Tablets) */}
+      <div className={`hidden md:flex items-center p-0.5 rounded-lg border overflow-x-auto scrollbar-none min-w-0 flex-shrink sm:max-w-none ${
         isLight ? 'bg-slate-100 border-slate-200' : 'bg-black/80 border-neutral-800'
       }`}>
         {/* If unauthenticated in production, only allow public pages & sign in */}
@@ -543,7 +543,7 @@ export const TopBar: React.FC = () => {
             setPersona('admin');
             setAdminActiveTab('tokens');
           }}
-          className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg border text-xs font-mono transition cursor-pointer group ${
+          className={`hidden min-[420px]:flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg border text-xs font-mono transition cursor-pointer group shrink-0 ${
             isLight
               ? 'bg-slate-100 hover:bg-slate-200/80 border-slate-200 text-slate-800 shadow-xs'
               : 'bg-neutral-900 hover:bg-neutral-800 border-neutral-800 hover:border-emerald-500/40 text-white'
@@ -582,82 +582,89 @@ export const TopBar: React.FC = () => {
           </button>
 
           {showNotifications && (
-            <div className={`absolute right-0 mt-2 w-[calc(100vw-1.5rem)] sm:w-96 max-w-sm rounded-xl border shadow-2xl p-4 text-xs z-50 animate-in fade-in slide-in-from-top-2 ${
-              isLight ? 'bg-white border-slate-200 text-slate-900 shadow-slate-300/50' : 'bg-neutral-950 border-neutral-800 text-white'
-            }`}>
-              <div className={`flex items-center justify-between pb-3 border-b ${
-                isLight ? 'border-slate-100' : 'border-neutral-800'
+            <>
+              {/* Mobile backdrop to dismiss */}
+              <div 
+                className="fixed inset-0 z-40 sm:hidden bg-black/40 backdrop-blur-[1px]" 
+                onClick={() => setShowNotifications(false)}
+              />
+              <div className={`fixed inset-x-2 top-16 sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-96 max-w-sm sm:max-w-none rounded-xl border shadow-2xl p-4 text-xs z-50 animate-in fade-in slide-in-from-top-2 ${
+                isLight ? 'bg-white border-slate-200 text-slate-900 shadow-slate-300/50' : 'bg-neutral-950 border-neutral-800 text-white'
               }`}>
-                <div className="flex items-center gap-2">
-                  <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Notifications</span>
-                  {unreadCount > 0 && (
-                    <span className={`px-1.5 py-0.2 rounded font-mono text-[10px] font-semibold border ${
-                      isLight ? 'bg-lime-100 text-lime-800 border-lime-300' : 'bg-emerald-950 text-emerald-400 border-emerald-800/60'
-                    }`}>
-                      {unreadCount} new
-                    </span>
+                <div className={`flex items-center justify-between pb-3 border-b ${
+                  isLight ? 'border-slate-100' : 'border-neutral-800'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className={`px-1.5 py-0.2 rounded font-mono text-[10px] font-semibold border ${
+                        isLight ? 'bg-lime-100 text-lime-800 border-lime-300' : 'bg-emerald-950 text-emerald-400 border-emerald-800/60'
+                      }`}>
+                        {unreadCount} new
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={markAllNotificationsAsRead}
+                    className={`transition font-medium cursor-pointer ${
+                      isLight ? 'text-slate-500 hover:text-lime-700' : 'text-slate-400 hover:text-emerald-400'
+                    }`}
+                  >
+                    Mark all read
+                  </button>
+                </div>
+
+                <div className={`divide-y max-h-72 overflow-y-auto mt-2 ${
+                  isLight ? 'divide-slate-100' : 'divide-slate-800/60'
+                }`}>
+                  {notifications.length === 0 ? (
+                    <p className={`py-6 text-center ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>No new notifications</p>
+                  ) : (
+                    notifications.slice(0, 6).map((n, idx) => (
+                      <div 
+                        key={`${n.id || 'notif'}-${idx}`} 
+                        className={`py-2.5 px-2 rounded transition ${
+                          isLight 
+                            ? (!n.isRead ? 'bg-lime-50/70' : 'hover:bg-slate-50') 
+                            : (!n.isRead ? 'bg-slate-800/20' : 'hover:bg-slate-800/40')
+                        }`}
+                      >
+                        <div className={`flex items-center justify-between text-[11px] ${
+                          isLight ? 'text-slate-500' : 'text-slate-400'
+                        }`}>
+                          <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-slate-200'}`}>{n.title}</span>
+                          <span>{n.timestamp}</span>
+                        </div>
+                        <p className={`mt-1 leading-normal text-[11px] break-words ${
+                          isLight ? 'text-slate-600' : 'text-slate-300'
+                        }`}>{n.message}</p>
+                      </div>
+                    ))
                   )}
                 </div>
-                <button
-                  onClick={markAllNotificationsAsRead}
-                  className={`transition font-medium cursor-pointer ${
-                    isLight ? 'text-slate-500 hover:text-lime-700' : 'text-slate-400 hover:text-emerald-400'
-                  }`}
-                >
-                  Mark all read
-                </button>
-              </div>
 
-              <div className={`divide-y max-h-72 overflow-y-auto mt-2 ${
-                isLight ? 'divide-slate-100' : 'divide-slate-800/60'
-              }`}>
-                {notifications.length === 0 ? (
-                  <p className={`py-6 text-center ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>No new notifications</p>
-                ) : (
-                  notifications.slice(0, 6).map((n, idx) => (
-                    <div 
-                      key={`${n.id || 'notif'}-${idx}`} 
-                      className={`py-2.5 px-2 rounded transition ${
-                        isLight 
-                          ? (!n.isRead ? 'bg-lime-50/70' : 'hover:bg-slate-50') 
-                          : (!n.isRead ? 'bg-slate-800/20' : 'hover:bg-slate-800/40')
-                      }`}
-                    >
-                      <div className={`flex items-center justify-between text-[11px] ${
-                        isLight ? 'text-slate-500' : 'text-slate-400'
-                      }`}>
-                        <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-slate-200'}`}>{n.title}</span>
-                        <span>{n.timestamp}</span>
-                      </div>
-                      <p className={`mt-1 leading-normal text-[11px] ${
-                        isLight ? 'text-slate-600' : 'text-slate-300'
-                      }`}>{n.message}</p>
-                    </div>
-                  ))
-                )}
+                <div className={`pt-2.5 mt-2 border-t ${
+                  isLight ? 'border-slate-100' : 'border-neutral-800'
+                }`}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNotifications(false);
+                      setPersona('admin');
+                      setAdminActiveTab('notifications');
+                    }}
+                    className={`w-full py-2 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                      isLight 
+                        ? 'bg-lime-50 hover:bg-lime-100 text-lime-900 border-lime-300' 
+                        : 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border-emerald-500/30'
+                    }`}
+                  >
+                    <Bell className="w-3.5 h-3.5" />
+                    <span>Open Full Notification Center</span>
+                  </button>
+                </div>
               </div>
-
-              <div className={`pt-2.5 mt-2 border-t ${
-                isLight ? 'border-slate-100' : 'border-neutral-800'
-              }`}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowNotifications(false);
-                    setPersona('admin');
-                    setAdminActiveTab('notifications');
-                  }}
-                  className={`w-full py-2 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                    isLight 
-                      ? 'bg-lime-50 hover:bg-lime-100 text-lime-900 border-lime-300' 
-                      : 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border-emerald-500/30'
-                  }`}
-                >
-                  <Bell className="w-3.5 h-3.5" />
-                  <span>Open Full Notification Center</span>
-                </button>
-              </div>
-            </div>
+            </>
           )}
         </div>
 
@@ -694,9 +701,15 @@ export const TopBar: React.FC = () => {
           </button>
 
           {showUserMenu && (
-            <div className={`absolute right-0 mt-2 w-72 rounded-xl border shadow-2xl p-3 z-50 animate-in fade-in slide-in-from-top-2 ${
-              isLight ? 'bg-white border-slate-200 text-slate-900 shadow-slate-300/50' : 'bg-slate-900 border-slate-800 text-white'
-            }`}>
+            <>
+              {/* Mobile backdrop to dismiss */}
+              <div 
+                className="fixed inset-0 z-40 sm:hidden bg-black/40 backdrop-blur-[1px]" 
+                onClick={() => setShowUserMenu(false)}
+              />
+              <div className={`fixed inset-x-2 top-16 sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-72 max-w-sm sm:max-w-none rounded-xl border shadow-2xl p-3 z-50 animate-in fade-in slide-in-from-top-2 ${
+                isLight ? 'bg-white border-slate-200 text-slate-900 shadow-slate-300/50' : 'bg-slate-900 border-slate-800 text-white'
+              }`}>
               <div className={`pb-2.5 border-b text-xs ${
                 isLight ? 'border-slate-100' : 'border-slate-800'
               }`}>
@@ -794,33 +807,49 @@ export const TopBar: React.FC = () => {
               }`}>
                 {isAuthenticated ? (
                   <button
-                    onClick={async () => {
+                    onClick={() => {
                       setShowUserMenu(false);
-                      await authLogout();
-                      crmLogout();
+                      setPersona('logout');
+                      window.location.hash = '#logout';
                     }}
                     className={`w-full flex items-center gap-2 px-2 py-1.5 rounded transition text-xs font-semibold cursor-pointer ${
                       isLight ? 'text-rose-600 hover:bg-rose-50' : 'text-rose-400 hover:bg-rose-500/10'
                     }`}
                   >
                     <LogOut className="w-3.5 h-3.5" />
-                    <span>Sign Out (Terminate Session)</span>
+                    <span>Sign Out (Session Termination)</span>
                   </button>
                 ) : (
-                  <button
-                    onClick={() => {
-                      setShowUserMenu(false);
-                      setAuthModalMode('login');
-                      setShowLoginModal(true);
-                    }}
-                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded transition text-xs font-semibold text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
-                  >
-                    <LogIn className="w-3.5 h-3.5" />
-                    <span>Sign In to VPS Backend</span>
-                  </button>
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        setPersona('login');
+                        window.location.hash = '#login';
+                      }}
+                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded transition text-xs font-semibold text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                      <span>Sign In to Account</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        setPersona('login');
+                        window.location.hash = '#register';
+                      }}
+                      className={`w-full flex items-center gap-2 px-2 py-1.5 rounded transition text-xs font-semibold cursor-pointer ${
+                        isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                      }`}
+                    >
+                      <Building2 className="w-3.5 h-3.5" />
+                      <span>Register Workspace</span>
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
+            </>
           )}
         </div>
       </div>

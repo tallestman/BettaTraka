@@ -57,7 +57,7 @@ import {
   INITIAL_ORDER_FORMS
 } from '../data/initialData';
 
-export type ActivePersona = 'admin' | 'manager' | 'accountant' | 'rep' | 'distributor' | 'inventory' | 'media_buyer' | 'public_form' | 'marketing';
+export type ActivePersona = 'admin' | 'manager' | 'accountant' | 'rep' | 'distributor' | 'inventory' | 'media_buyer' | 'public_form' | 'marketing' | 'login' | 'logout';
 
 interface CrmContextType {
   // Navigation & Personas
